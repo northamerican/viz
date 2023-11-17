@@ -5,9 +5,9 @@ import ffmpegPath from "ffmpeg-static";
 import cp from "child_process";
 import stream from "stream";
 
-export default (link, options = {}) => {
+export default (link: string, options?: ytdl.getInfoOptions) => {
   const result = new stream.PassThrough({
-    highWaterMark: options.highWaterMark || 1024 * 512,
+    highWaterMark: 1024 * 512
   });
 
   ytdl
@@ -68,8 +68,11 @@ export default (link, options = {}) => {
           ],
         }
       );
+      // @ts-ignore
       audioStream.pipe(ffmpegProcess.stdio[3]);
+      // @ts-ignore
       videoStream.pipe(ffmpegProcess.stdio[4]);
+      // @ts-ignore
       ffmpegProcess.stdio[5].pipe(result);
     })
     .catch((err) => result.emit("error", err));

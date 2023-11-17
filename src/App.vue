@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 import Login from './components/Login.vue'
-import { AppState } from './viz'
 import TrackList from './components/TrackList.vue'
+
+import type { AppState } from './types/viz'
+import { vizM3u8 } from './consts'
 
 const state = reactive<AppState>({
   token: '',
@@ -12,15 +14,34 @@ const state = reactive<AppState>({
 </script>
 
 <template>
-  <nav>viz <Login :state="state" /></nav>
+  <nav>
+    <h1>viz</h1>
+    <Login :state="state" />
+  </nav>
 
-  <!-- <video id="video" width="50%" src="./hls/viz.m3u8" controls muted autoplay /> -->
+  <main>
+    <video id="video" :src="`../hls/${vizM3u8}`" controls muted autoplay />
 
-  <div class="card">
-    <TrackList :state="state" />
-  </div>
+    <aside>
+      <TrackList :state="state" />
+    </aside>
+  </main>
 </template>
 
 <style scoped>
-/*  */
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  & h1 {
+    margin: 0;
+  }
+}
+main {
+  display: flex;
+  gap: 1rem;
+}
+video {
+  height: 500px;
+}
 </style>

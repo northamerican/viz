@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { AppState } from '../viz'
+import type { AppState } from '../types/viz'
 import { getCookie, removeCookie } from 'typescript-cookie'
 
 const { state } = defineProps<{ state: AppState }>()

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import axios from 'axios'
 import { onMounted } from 'vue'
-import { AppState, Track, TrackList } from '../viz'
+import type { AppState, Track, TrackList } from '../types/viz'
 
 const { state } = defineProps<{ state: AppState }>()
 
@@ -36,12 +36,11 @@ onMounted(async () => {
   <div v-if="state.trackList.length">
     <p v-for="track in state.trackList">
       <strong>{{ track.title }}</strong>
-      <br /><span>{{ track.artist }}</span>
       <span v-if="isCurrentTrack(track)">
-        <span v-if="state.currentTrack.is_playing"> ▶ </span>
+        <span v-if="state.currentTrack.isPlaying">▶</span>
         <span v-else>⏸</span>
       </span>
-      <!-- <span v-else>⏸</span> -->
+      <br /><span>{{ track.artist }}</span>
       <button @click="() => getVideo(track)">get video</button>
     </p>
   </div>

@@ -1,11 +1,10 @@
-import express from "express";
+import express, { Response } from "express";
 import compression from "compression";
 import { promises as fs, createReadStream } from "fs";
 import querystring from "node:querystring";
 import ViteExpress from "vite-express";
-import axios from "axios";
 
-import { sources, players, writeVideoStream } from "./viz.mjs";
+import { sources, players, writeVideoStream } from "./viz.ts";
 import {
   __dirname,
   playersApiKeys,
@@ -13,19 +12,23 @@ import {
   hlsDir,
   appUrl,
   appPort,
-} from "./consts.mjs";
+  vizM3u8,
+} from "./consts.ts";
+import { isAxiosError } from "axios";
+import { TrackList, VizPrefs } from "./types/viz";
+import toHls from "./to-hls.ts";
 
 const app = express();
 app.use(compression());
 app.use(express.json());
 
-const prefs = {
-  // rename, move
+// todo move
+const prefs: VizPrefs = {
   player: "spotify",
   source: "youtube",
 };
 
-function setToken(res, data) {
+function setToken(res: Response, data) {
   res.cookie("token", data.access_token);
   res.cookie("refresh_token", data.refresh_token);
   res.cookie("expires", data.expires);
@@ -35,6 +38,7 @@ function setToken(res, data) {
   app.locals.expires = data.expires;
 }
 
+// move to /players?
 app.get("/authorize", function (req, res) {
   const { clientId } = playersApiKeys.spotify;
   const scope =
@@ -42,12 +46,12 @@ app.get("/authorize", function (req, res) {
 
   res.redirect(
     "https://accounts.spotify.com/authorize?" +
-      querystring.stringify({
-        response_type: "code",
-        client_id: clientId,
-        scope: scope,
-        redirect_uri: `http://${appUrl}:${appPort}${redirectEndpoint}`,
-      })
+    querystring.stringify({
+      response_type: "code",
+      client_id: clientId,
+      scope: scope,
+      redirect_uri: `http://${appUrl}:${appPort}${redirectEndpoint}`,
+    })
   );
 });
 
@@ -75,8 +79,10 @@ app.get("/queue", async (req, res) => {
     // res.json(queue);
     res.send(JSON.stringify(queue));
   } catch (error) {
-    // if 401 handleRefreshToken();
-    res.status(error.response.status).send();
+    if (isAxiosError<TrackList>(error)) {
+      // if 401 handleRefreshToken();
+      res.status(error.response.status).send();
+    }
   }
 });
 
@@ -92,9 +98,10 @@ app.get("/current", async (req, res) => {
     // res.json(current);
     res.send(JSON.stringify(current));
   } catch (error) {
-    // if 401 handleRefreshToken();
-    console.log({ error });
-    res.status(error.response.status).send();
+    if (isAxiosError<TrackList>(error)) {
+      // if 401 handleRefreshToken();
+      res.status(error.response.status).send();
+    }
   }
 });
 
@@ -112,13 +119,14 @@ app.post("/video", async (req, res) => {
 
   videoStream.on("finish", function () {
     res.status(201).send({ videoId }); //.send(JSON.stringify({ videoPath }));
+    toHls(videoId)
   });
 });
 
-app.get("/hls/:filename.m3u8", async (req, res) => {
-  const { filename } = req.params;
+app.get(`/hls/${vizM3u8}`, async (_, res) => {
+  // TODO serve this generated on-demand
   try {
-    const contents = await fs.readFile(`${hlsDir}/${filename}.m3u8`);
+    const contents = await fs.readFile(`${hlsDir}${vizM3u8}`);
     if (!contents) return res.sendStatus(500);
 
     res.type("application/vnd.apple.mpegurl");
@@ -141,6 +149,10 @@ app.get("/hls/:filename.ts", async (req, res) => {
     return res.sendStatus(500);
   }
 });
+
+app.get('to-hls', async (req, res) => {
+  'ffmpeg -i 674KGKRQBPE.mp4 -profile:v high -level 3.0 -start_number 0 -hls_time 6 -hls_list_size 0 -f hls ../hls/674KGKRQBPE.m3u8'
+})
 
 const server = app.listen(appPort, appUrl, () =>
   console.log(`viz running at http://${appUrl}:${appPort}`)
