@@ -34,15 +34,40 @@ onMounted(async () => {
 
 <template>
   <div v-if="state.trackList.length">
-    <p v-for="track in state.trackList">
-      <strong>{{ track.title }}</strong>
-      <span v-if="isCurrentTrack(track)">
-        <span v-if="state.currentTrack.isPlaying">▶</span>
-        <span v-else>⏸</span>
-      </span>
-      <br /><span>{{ track.artist }}</span>
-      <button @click="() => getVideo(track)">get video</button>
-    </p>
+    <!-- <Track /> -->
+    <div v-for="track in state.trackList" class="track">
+      <div class="track-play-state">
+        <span v-if="isCurrentTrack(track)">
+          <span v-if="state.currentTrack.isPlaying">▶</span>
+          <span v-else>⏸</span>
+        </span>
+      </div>
+      <div class="track-info">
+        <strong>{{ track.title }}</strong>
+        <br /><span>{{ track.artist }}</span>
+      </div>
+      <div class="track-actions">
+        <button @click="() => getVideo(track)">get video</button>
+      </div>
+    </div>
   </div>
   <div v-else>Nothing playing or queued.</div>
 </template>
+
+<style>
+.track {
+  display: flex;
+  /* justify-content: space-between; */
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.track-play-state {
+  width: 2rem;
+  margin-right: 0;
+}
+
+.track-actions {
+  margin-left: auto;
+}
+</style>

@@ -1,10 +1,11 @@
-import express, { Response } from "express";
+import express from "express";
 import compression from "compression";
 import { promises as fs, createReadStream } from "fs";
 import querystring from "node:querystring";
 import ViteExpress from "vite-express";
 
-import { sources, players, writeVideoStream } from "./viz.ts";
+import sources from "./sources";
+import players from "./players";
 import {
   __dirname,
   playersApiKeys,
@@ -28,18 +29,8 @@ const prefs: VizPrefs = {
   source: "youtube",
 };
 
-function setToken(res: Response, data) {
-  res.cookie("token", data.access_token);
-  res.cookie("refresh_token", data.refresh_token);
-  res.cookie("expires", data.expires);
-
-  app.locals.token = data.access_token;
-  app.locals.refresh_token = data.refresh_token;
-  app.locals.expires = data.expires;
-}
-
 // move to /players?
-app.get("/authorize", function (req, res) {
+app.get("/authorize", (req, res) => {
   const { clientId } = playersApiKeys.spotify;
   const scope =
     "user-read-private user-read-email user-read-currently-playing user-read-playback-state";
@@ -60,8 +51,8 @@ app.get(redirectEndpoint, async (req, res) => {
 
   try {
     const data = await players[player].getToken(req);
-
-    setToken(res, data);
+    res.cookie("token", data.access_token);
+    res.cookie("refreshToken", data.refresh_token);
     res.redirect(`http://${appUrl}:${appPort}/`);
   } catch (e) {
     console.log(e);
@@ -69,15 +60,12 @@ app.get(redirectEndpoint, async (req, res) => {
 });
 
 app.get("/queue", async (req, res) => {
-  const { token } = req.app.locals;
   const { player } = prefs;
 
-  if (!token) return res.status(401).send();
   try {
-    const queue = await players[player].getQueue(token);
+    const queue = await players[player].getQueue(req);
 
-    // res.json(queue);
-    res.send(JSON.stringify(queue));
+    res.json(queue);
   } catch (error) {
     if (isAxiosError<TrackList>(error)) {
       // if 401 handleRefreshToken();
@@ -87,16 +75,12 @@ app.get("/queue", async (req, res) => {
 });
 
 app.get("/current", async (req, res) => {
-  const { token } = req.app.locals;
   const { player } = prefs;
 
-  if (!token) return res.status(401).send();
-
   try {
-    const current = await players[player].getCurrentlyPlaying(token);
+    const current = await players[player].getCurrentlyPlaying(req);
 
-    // res.json(current);
-    res.send(JSON.stringify(current));
+    res.json(current);
   } catch (error) {
     if (isAxiosError<TrackList>(error)) {
       // if 401 handleRefreshToken();
@@ -105,7 +89,7 @@ app.get("/current", async (req, res) => {
   }
 });
 
-app.get("/video", function (req, res) {
+app.get("/video", (req, res) => {
   //
 });
 
@@ -113,18 +97,21 @@ app.post("/video", async (req, res) => {
   const { artist, title } = req.body;
   const { source } = prefs;
 
+  console.log(`Getting video for ${title} - ${artist}`)
   const searchQuery = sources[source].createSearchQuery({ artist, title });
   const { video, videoId } = await sources[source].getVideo(searchQuery);
-  const videoStream = writeVideoStream(video, videoId);
+  const videoStream = sources[source].writeVideoStream(video, videoId);
 
-  videoStream.on("finish", function () {
-    res.status(201).send({ videoId }); //.send(JSON.stringify({ videoPath }));
+  videoStream.on("finish", () => {
+    console.log(`Got video ${videoId} for ${title} - ${artist}`)
+    res.status(201).json({ videoId });
     toHls(videoId)
   });
 });
 
 app.get(`/hls/${vizM3u8}`, async (_, res) => {
-  // TODO serve this generated on-demand
+  // TODO serve this generated on-demand from a db
+  // TODO confirm sending as gzip ?
   try {
     const contents = await fs.readFile(`${hlsDir}${vizM3u8}`);
     if (!contents) return res.sendStatus(500);
@@ -138,7 +125,6 @@ app.get(`/hls/${vizM3u8}`, async (_, res) => {
 
 app.get("/hls/:filename.ts", async (req, res) => {
   const { filename } = req.params;
-  console.log("getting", req.path);
   try {
     const stream = createReadStream(`${hlsDir}/${filename}.ts`, {
       highWaterMark: 64 * 1024, // TODO adjust?
@@ -149,10 +135,6 @@ app.get("/hls/:filename.ts", async (req, res) => {
     return res.sendStatus(500);
   }
 });
-
-app.get('to-hls', async (req, res) => {
-  'ffmpeg -i 674KGKRQBPE.mp4 -profile:v high -level 3.0 -start_number 0 -hls_time 6 -hls_list_size 0 -f hls ../hls/674KGKRQBPE.m3u8'
-})
 
 const server = app.listen(appPort, appUrl, () =>
   console.log(`viz running at http://${appUrl}:${appPort}`)

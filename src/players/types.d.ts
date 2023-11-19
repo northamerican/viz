@@ -1,8 +1,10 @@
 import { Request } from "express"
 
-declare module 'VizPlayer' {
-  export type RequestConfig = ({ accessToken }: { accessToken: string }) => object
-  export type GetToken = (req: Request) => object
-  export type GetQueue = (accessToken: string) => Promise<Partial<Track>[]>
-  export type GetCurrentlyPlaying = (accessToken: string) => Promise<Track>
+export type AuthState = {
+  token: string
+  refreshToken: string
 }
+
+export type GetToken = (req: Request) => Promise<{ access_token: string, refresh_token: string }>
+export type GetQueue = (req: Request) => Promise<Partial<Track>[]>
+export type GetCurrentlyPlaying = (req: Request) => Promise<Track>

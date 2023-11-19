@@ -13,7 +13,7 @@ function getTsDurations(filePath: fs.PathOrFileDescriptor) {
     .map(extInfDuration => +extInfDuration.match(/\#EXTINF:([\d\.]+),/)[1])
 }
 
-export default async (videoId: string) => {
+async function toHls(videoId: string) {
   const hlsVideoDir = `${hlsDir}${videoId}/`;
 
   if (!fs.existsSync(hlsVideoDir)) {
@@ -47,22 +47,14 @@ export default async (videoId: string) => {
   ], { stdio: ['ignore', 'ignore', 'pipe'] });
 
   process
-    // .on('error'...)
     .on('close', async () => {
-      console.log(`Appending #EXTINF to ${vizM3u8}`)
-
       const tsDurations = getTsDurations(`${hlsVideoDir}${videoId}.m3u8`)
-
-      // TODO use tsDurations or refine all this
-
       const out = tsDurations.map((duration, i) => {
         return `#EXTINF:${duration},\n${videoId}/${videoId}${i}.ts\n`
       }).join('')
 
-      fs.appendFileSync(`${hlsDir}${vizM3u8}`, out)
-      fs.appendFileSync(`${hlsDir}${vizM3u8}`, m3uDiscontinuity)
-
-      console.log(tsDurations)
+      fs.appendFileSync(`${hlsDir}${vizM3u8}`, `${out}${m3uDiscontinuity}`)
+      console.log(`Video ${videoId} appended to ${vizM3u8}.`)
     });
 
   process.stdio[2].on('data', data => console.log(data.toString()))
@@ -70,4 +62,10 @@ export default async (videoId: string) => {
   return process
 };
 
+export default toHls
 
+// Run from node script
+const [, path, videoId] = process.argv
+if (!path.includes('server.ts') && videoId) {
+  toHls(videoId)
+}
