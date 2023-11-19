@@ -14,20 +14,21 @@ import {
   appUrl,
   appPort,
   vizM3u8,
+  dbDir,
 } from "./consts.ts";
 import { isAxiosError } from "axios";
 import { TrackList, VizPrefs } from "./types/viz";
 import toHls from "./to-hls.ts";
+import { JSONPreset } from 'lowdb/node'
+
+const prefs = await JSONPreset<VizPrefs>(`${dbDir}prefs.json`, {
+  "player": "spotify",
+  "source": "youtube",
+})
 
 const app = express();
 app.use(compression());
 app.use(express.json());
-
-// todo move
-const prefs: VizPrefs = {
-  player: "spotify",
-  source: "youtube",
-};
 
 // move to /players?
 app.get("/authorize", (req, res) => {
@@ -47,20 +48,34 @@ app.get("/authorize", (req, res) => {
 });
 
 app.get(redirectEndpoint, async (req, res) => {
-  const { player } = prefs;
+  const { player } = prefs.data;
 
   try {
-    const data = await players[player].getToken(req);
-    res.cookie("token", data.access_token);
-    res.cookie("refreshToken", data.refresh_token);
+    await players[player].getToken(req);
+
+    res.cookie("isLoggedIn", true);
     res.redirect(`http://${appUrl}:${appPort}/`);
   } catch (e) {
     console.log(e);
   }
 });
 
+app.get("/logout", async (req, res) => {
+  const { player } = prefs.data;
+
+  try {
+    await players[player].logout();
+
+    res.status(204).send()
+  } catch (error) {
+    if (isAxiosError<TrackList>(error)) {
+      res.status(error.response.status).send();
+    }
+  }
+});
+
 app.get("/queue", async (req, res) => {
-  const { player } = prefs;
+  const { player } = prefs.data;
 
   try {
     const queue = await players[player].getQueue(req);
@@ -68,14 +83,13 @@ app.get("/queue", async (req, res) => {
     res.json(queue);
   } catch (error) {
     if (isAxiosError<TrackList>(error)) {
-      // if 401 handleRefreshToken();
       res.status(error.response.status).send();
     }
   }
 });
 
 app.get("/current", async (req, res) => {
-  const { player } = prefs;
+  const { player } = prefs.data;
 
   try {
     const current = await players[player].getCurrentlyPlaying(req);
@@ -83,7 +97,6 @@ app.get("/current", async (req, res) => {
     res.json(current);
   } catch (error) {
     if (isAxiosError<TrackList>(error)) {
-      // if 401 handleRefreshToken();
       res.status(error.response.status).send();
     }
   }
@@ -95,7 +108,7 @@ app.get("/video", (req, res) => {
 
 app.post("/video", async (req, res) => {
   const { artist, title } = req.body;
-  const { source } = prefs;
+  const { source } = prefs.data;
 
   console.log(`Getting video for ${title} - ${artist}`)
   const searchQuery = sources[source].createSearchQuery({ artist, title });

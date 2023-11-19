@@ -1,30 +1,24 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import type { AppState } from '../types/viz'
-import { getCookie, removeCookie } from 'typescript-cookie'
+import axios from 'axios'
+import { AppState } from '../types/viz'
+import { removeCookie } from 'typescript-cookie'
 
-const { state } = defineProps<{ state: AppState }>()
-
-const getToken = () => {
-  state.token = getCookie('token')
-}
+const props = defineProps<{ state: AppState }>()
 
 const handleLogin = () => {
   window.location.assign('/authorize')
 }
 
 const handleLogout = async () => {
-  removeCookie('token')
-  state.token = null
+  // removeCookie('isLoggedIn')
+  await axios.get('/logout')
+  removeCookie('isLoggedIn')
+  props.state.isLoggedIn = false
 }
-
-onMounted(async () => {
-  getToken()
-})
 </script>
 
 <template>
-  <div v-if="state.token">
+  <div v-if="state.isLoggedIn">
     <button @click="handleLogout">[Spotify] Logout</button>
   </div>
   <div v-else>

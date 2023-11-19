@@ -3,18 +3,18 @@ import axios from 'axios'
 import { onMounted } from 'vue'
 import type { AppState, Track, TrackList } from '../types/viz'
 
-const { state } = defineProps<{ state: AppState }>()
+const props = defineProps<{ state: AppState }>()
 
 const getCurrent = async () => {
   const { data } = await axios.get<Track>('/current')
-  state.currentTrack = data
+  props.state.currentTrack = data
   // if (status === 204) throw new Error("No track playing");
 }
 
 const getTrackList = async () => {
   const { data } = await axios.get<TrackList>('/queue')
   // if (status === 204) throw new Error("No tracks queued");
-  state.trackList = data
+  props.state.trackList = data
 }
 
 const getVideo = async ({ artist, title }: Partial<Track>) => {
@@ -24,7 +24,8 @@ const getVideo = async ({ artist, title }: Partial<Track>) => {
   })
 }
 
-const isCurrentTrack = (track: Track) => track.id === state.currentTrack.id
+const isCurrentTrack = (track: Track) =>
+  track.id === props.state.currentTrack.id
 
 onMounted(async () => {
   getCurrent()
@@ -51,7 +52,7 @@ onMounted(async () => {
       </div>
     </div>
   </div>
-  <div v-else>Nothing playing or queued.</div>
+  <div v-else>Nothing playing.</div>
 </template>
 
 <style>

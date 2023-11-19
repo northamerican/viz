@@ -5,20 +5,20 @@ import {
   maxVideoDuration,
   mp4Dir
 } from "../consts.ts";
-import type { Track } from "../types/viz";
+import { CreateSearchQuery, GetVideo, WriteVideoStream } from "./types";
 
 function durationToSeconds(duration: string) {
   return duration.split(":").reduce((acc, time) => 60 * acc + +time, 0);
 }
 
-const createSearchQuery = (track: Partial<Track>) => {
+const createSearchQuery: CreateSearchQuery = (track) => {
   const { artist, title } = track;
 
   // TODO logic here, removing text beyond a dash or inside parens (ex: rework, remix?, remaster,)
 
   return `${artist} ${title} music video`;
 }
-const getVideo = async (query: string) => {
+const getVideo: GetVideo = async (query: string) => {
   const filters1 = await ytsr.getFilters(query);
   const filter1 = filters1.get("Type").get("Video");
   const { items } = await ytsr(filter1.url, {
@@ -44,7 +44,7 @@ const getVideo = async (query: string) => {
 }
 
 
-function writeVideoStream(video, id) {
+function writeVideoStream(video, id): WriteVideoStream {
   const videoPath = mp4Dir + `${id}.mp4`;
   video.pipe(fs.createWriteStream(videoPath));
 

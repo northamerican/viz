@@ -1,6 +1,5 @@
 export interface AppState {
-  token: string
-
+  isLoggedIn: boolean,
   trackList: TrackList
   currentTrack: Track
 }
@@ -23,4 +22,9 @@ export type SourceNames = 'youtube'
 export type VizPrefs = {
   player: PlayerNames
   source: SourceNames
+}
+
+export type AuthState = {
+  token: string
+  refreshToken: string
 }

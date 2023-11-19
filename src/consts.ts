@@ -4,6 +4,7 @@ export const appPort = 5173;
 export const __dirname = new URL(import.meta.url + "/..").pathname;
 export const mp4Dir = __dirname + "../public/mp4/";
 export const hlsDir = __dirname + "../public/hls/";
+export const dbDir = __dirname + "db/";
 export const vizM3u8 = 'viz.m3u8'
 
 export const maxVideoDuration = 12 * 60;

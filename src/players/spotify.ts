@@ -1,30 +1,24 @@
 import axios from "axios";
-import { appPort, appUrl, playersApiKeys, redirectEndpoint } from "../consts";
+import { appPort, appUrl, dbDir, playersApiKeys, redirectEndpoint } from "../consts";
 import type {
-  AuthState,
   GetToken,
   GetQueue,
   GetCurrentlyPlaying
 } from './types'
-// } from 'VizPlayer'
+import { JSONPreset } from "lowdb/node";
+import { AuthState } from "../types/viz";
 
-const state: AuthState = {
+const auth = await JSONPreset<AuthState>(`${dbDir}auth.json`, {
   token: null,
   refreshToken: null
-}
+})
 
-const spotifyAxios = axios.create(
-  // {
-  //   baseURL: "https://api.spotify.com/v1/",
-  // }
-);
-
-const tokenUrl = "https://accounts.spotify.com/api/token"
+const spotifyAxios = axios.create();
 
 // Request interceptor for API calls
 spotifyAxios.interceptors.request.use(
   async config => {
-    config.headers.Authorization = config.headers.Authorization || `Bearer ${state.token}`
+    config.headers.Authorization = config.headers.Authorization || `Bearer ${auth.data.token}`
     return config;
   },
   error => {
@@ -32,70 +26,56 @@ spotifyAxios.interceptors.request.use(
   }
 );
 
-// Response interceptor for API calls
 spotifyAxios.interceptors.response.use((response) => {
   return response
 }, async function (error) {
   const originalRequest = error.config;
+  console.log(error.response)
   if (error.response.status === 401 && !originalRequest._retry) {
     console.log('token expired. getting new one.')
     originalRequest._retry = true;
-    await refreshAccessToken();
-    axios.defaults.headers.common['Authorization'] = 'Bearer ' + state.token;
+    await getRefreshToken();
+    axios.defaults.headers.common['Authorization'] = 'Bearer ' + auth.data.token;
     return spotifyAxios(originalRequest);
   }
   return Promise.reject(error);
 });
 
-const refreshAccessToken = async () => {
+const getToken: GetToken = async (req, refresh) => {
   const { clientId, clientSecret } = playersApiKeys.spotify;
-  const { refreshToken } = state;
 
-  const { data } = await axios.post(
-    tokenUrl,
-    {
-      grant_type: "refresh_token",
-      refresh_token: refreshToken,
-      client_id: clientId
-    },
-    {
-      headers: {
-        "content-type": "application/x-www-form-urlencoded",
-        Authorization:
-          "Basic " +
-          Buffer.from(clientId + ":" + clientSecret).toString("base64"),
-      },
-    }
-  );
-
-  state.token = data.access_token
-  state.refreshToken = data.refresh_token
-};
-
-const getToken: GetToken = async (req) => {
-  const { clientId, clientSecret } = playersApiKeys.spotify;
   const { data } = await spotifyAxios.post(
-    tokenUrl,
-    {
-      grant_type: "authorization_code",
-      code: req.query.code,
-      redirect_uri: `http://${appUrl}:${appPort}${redirectEndpoint}`,
-    },
+    "https://accounts.spotify.com/api/token",
+    refresh ?
+      {
+        grant_type: "refresh_token",
+        refresh_token: auth.data.refreshToken,
+        client_id: clientId
+      }
+      : {
+        grant_type: "authorization_code",
+        code: req.query.code,
+        redirect_uri: `http://${appUrl}:${appPort}${redirectEndpoint}`,
+      },
     {
       headers: {
         "content-type": "application/x-www-form-urlencoded",
         Authorization:
-          "Basic " +
-          Buffer.from(clientId + ":" + clientSecret).toString("base64"),
+          "Basic " + Buffer.from(clientId + ":" + clientSecret).toString("base64"),
       },
     }
   );
 
-  state.token = data.access_token
-  state.refreshToken = data.refresh_token
+  auth.data = {
+    token: data.access_token,
+    refreshToken: data.refresh_token,
+  }
+  auth.write()
 
   return data;
 };
+
+const getRefreshToken = getToken.bind(this, null, true)
 
 const getQueue: GetQueue = async (req) => {
   try {
@@ -118,13 +98,21 @@ const getQueue: GetQueue = async (req) => {
   }
 }
 
+const logout = async () => {
+  auth.data = {
+    token: null,
+    refreshToken: null
+  }
+  auth.write()
+}
+
 const getCurrentlyPlaying: GetCurrentlyPlaying = async (req) => {
   try {
     const { data } = await spotifyAxios.get<SpotifyApi.CurrentPlaybackResponse>(
       "https://api.spotify.com/v1/me/player",
     );
 
-    // if (!data.item) return {};
+    if (!data.item) return {};
 
     return {
       id: data.item.id,
@@ -143,6 +131,7 @@ const getCurrentlyPlaying: GetCurrentlyPlaying = async (req) => {
 }
 
 export const spotify = {
+  logout,
   getToken,
   getQueue,
   getCurrentlyPlaying

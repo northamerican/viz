@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import { getCookie } from 'typescript-cookie'
+
 import Login from './components/Login.vue'
 import TrackList from './components/TrackList.vue'
 
@@ -9,7 +11,7 @@ import { vizM3u8 } from './consts'
 // import './hlsjs.ts'
 
 const state = reactive<AppState>({
-  token: '',
+  isLoggedIn: !!getCookie('isLoggedIn'),
   trackList: [],
   currentTrack: null
 })
@@ -37,7 +39,7 @@ const video = ref(null)
     </section>
 
     <aside>
-      <TrackList :state="state" />
+      <TrackList :state="state" v-if="state.isLoggedIn" />
     </aside>
   </main>
 </template>
