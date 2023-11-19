@@ -4,7 +4,7 @@ import type {
   GetToken,
   GetQueue,
   GetCurrentlyPlaying
-} from './types'
+} from '../types/players'
 import { JSONPreset } from "lowdb/node";
 import { AuthState } from "../types/viz";
 
@@ -35,7 +35,7 @@ spotifyAxios.interceptors.response.use((response) => {
     console.log('token expired. getting new one.')
     originalRequest._retry = true;
     await getRefreshToken();
-    axios.defaults.headers.common['Authorization'] = 'Bearer ' + auth.data.token;
+    // axios.defaults.headers.common['Authorization'] = 'Bearer ' + auth.data.token;
     return spotifyAxios(originalRequest);
   }
   return Promise.reject(error);
@@ -77,7 +77,7 @@ const getToken: GetToken = async (req, refresh) => {
 
 const getRefreshToken = getToken.bind(this, null, true)
 
-const getQueue: GetQueue = async (req) => {
+const getQueue: GetQueue = async () => {
   try {
     const { data } = await spotifyAxios.get<SpotifyApi.UsersQueueResponse>(
       "https://api.spotify.com/v1/me/player/queue"
@@ -106,7 +106,7 @@ const logout = async () => {
   auth.write()
 }
 
-const getCurrentlyPlaying: GetCurrentlyPlaying = async (req) => {
+const getCurrentlyPlaying: GetCurrentlyPlaying = async () => {
   try {
     const { data } = await spotifyAxios.get<SpotifyApi.CurrentPlaybackResponse>(
       "https://api.spotify.com/v1/me/player",
@@ -124,7 +124,7 @@ const getCurrentlyPlaying: GetCurrentlyPlaying = async (req) => {
       progressMs: data.progress_ms,
       shuffleState: data.shuffle_state,
       isPlaying: data.is_playing,
-    };
+    }
   } catch (error) {
     return Promise.reject(error);
   }

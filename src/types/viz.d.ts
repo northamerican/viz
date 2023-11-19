@@ -1,7 +1,12 @@
-export interface AppState {
-  isLoggedIn: boolean,
+export type AppState = {
+  isLoggedIn: boolean
   trackList: TrackList
   currentTrack: Track
+}
+
+export type AuthState = {
+  token: string
+  refreshToken: string
 }
 
 export type Track = {
@@ -13,8 +18,15 @@ export type Track = {
   shuffleState: boolean
   isPlaying: boolean
 }
-
 export type TrackList = Track[]
+
+export type Video = {
+  id: string
+  source: SourceNames
+  duration: number,
+  segmentDurations: number[]
+}
+export type Videos = Video[]
 
 export type PlayerNames = 'spotify'
 export type SourceNames = 'youtube'
@@ -22,9 +34,4 @@ export type SourceNames = 'youtube'
 export type VizPrefs = {
   player: PlayerNames
   source: SourceNames
-}
-
-export type AuthState = {
-  token: string
-  refreshToken: string
 }

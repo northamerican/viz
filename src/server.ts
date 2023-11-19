@@ -1,8 +1,9 @@
 import express from "express";
 import compression from "compression";
-import { promises as fs, createReadStream } from "fs";
+import { createReadStream } from "fs";
 import querystring from "node:querystring";
 import ViteExpress from "vite-express";
+import { join } from "path"
 
 import sources from "./sources";
 import players from "./players";
@@ -18,8 +19,8 @@ import {
 } from "./consts.ts";
 import { isAxiosError } from "axios";
 import { TrackList, VizPrefs } from "./types/viz";
-import toHls from "./to-hls.ts";
 import { JSONPreset } from 'lowdb/node'
+import { VizM3u8 } from "./VizM3u8.ts";
 
 const prefs = await JSONPreset<VizPrefs>(`${dbDir}prefs.json`, {
   "player": "spotify",
@@ -31,7 +32,7 @@ app.use(compression());
 app.use(express.json());
 
 // move to /players?
-app.get("/authorize", (req, res) => {
+app.get("/authorize", (_, res) => {
   const { clientId } = playersApiKeys.spotify;
   const scope =
     "user-read-private user-read-email user-read-currently-playing user-read-playback-state";
@@ -60,7 +61,7 @@ app.get(redirectEndpoint, async (req, res) => {
   }
 });
 
-app.get("/logout", async (req, res) => {
+app.get("/logout", async (_, res) => {
   const { player } = prefs.data;
 
   try {
@@ -74,11 +75,11 @@ app.get("/logout", async (req, res) => {
   }
 });
 
-app.get("/queue", async (req, res) => {
+app.get("/queue", async (_, res) => {
   const { player } = prefs.data;
 
   try {
-    const queue = await players[player].getQueue(req);
+    const queue = await players[player].getQueue();
 
     res.json(queue);
   } catch (error) {
@@ -88,11 +89,11 @@ app.get("/queue", async (req, res) => {
   }
 });
 
-app.get("/current", async (req, res) => {
+app.get("/current", async (_, res) => {
   const { player } = prefs.data;
 
   try {
-    const current = await players[player].getCurrentlyPlaying(req);
+    const current = await players[player].getCurrentlyPlaying();
 
     res.json(current);
   } catch (error) {
@@ -102,9 +103,9 @@ app.get("/current", async (req, res) => {
   }
 });
 
-app.get("/video", (req, res) => {
-  //
-});
+// app.get("/video", (req, res) => {
+// 
+// });
 
 app.post("/video", async (req, res) => {
   const { artist, title } = req.body;
@@ -113,24 +114,19 @@ app.post("/video", async (req, res) => {
   console.log(`Getting video for ${title} - ${artist}`)
   const searchQuery = sources[source].createSearchQuery({ artist, title });
   const { video, videoId } = await sources[source].getVideo(searchQuery);
-  const videoStream = sources[source].writeVideoStream(video, videoId);
 
-  videoStream.on("finish", () => {
-    console.log(`Got video ${videoId} for ${title} - ${artist}`)
-    res.status(201).json({ videoId });
-    toHls(videoId)
-  });
+  await sources[source].writeVideoStream(video, videoId);
+
+  res.status(201).send();
 });
 
 app.get(`/hls/${vizM3u8}`, async (_, res) => {
-  // TODO serve this generated on-demand from a db
   // TODO confirm sending as gzip ?
   try {
-    const contents = await fs.readFile(`${hlsDir}${vizM3u8}`);
-    if (!contents) return res.sendStatus(500);
-
-    res.type("application/vnd.apple.mpegurl");
-    return res.status(200).send(contents);
+    const m3u8 = VizM3u8.buildM3u8()
+    return res.type("application/vnd.apple.mpegurl")
+      .status(200)
+      .send(m3u8);
   } catch (error) {
     return res.sendStatus(500);
   }
@@ -143,6 +139,16 @@ app.get("/hls/:filename.ts", async (req, res) => {
       highWaterMark: 64 * 1024, // TODO adjust?
     });
     res.type("video/MP2T");
+    return stream.pipe(res);
+  } catch (error) {
+    return res.sendStatus(500);
+  }
+});
+
+app.get("/db/videos.json", async (_, res) => {
+  try {
+    const stream = createReadStream(join(dbDir, 'videos.json'));
+    res.type('json')
     return stream.pipe(res);
   } catch (error) {
     return res.sendStatus(500);

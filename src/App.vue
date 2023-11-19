@@ -3,20 +3,16 @@ import { reactive, ref } from 'vue'
 import { getCookie } from 'typescript-cookie'
 
 import Login from './components/Login.vue'
+import Player from './components/Player.vue'
 import TrackList from './components/TrackList.vue'
 
 import type { AppState } from './types/viz'
-import { vizM3u8 } from './consts'
-
-// import './hlsjs.ts'
 
 const state = reactive<AppState>({
   isLoggedIn: !!getCookie('isLoggedIn'),
   trackList: [],
   currentTrack: null
 })
-
-const video = ref(null)
 </script>
 
 <template>
@@ -27,19 +23,12 @@ const video = ref(null)
 
   <main>
     <section class="video-content">
-      <video
-        id="video"
-        ref="video"
-        :src="`../hls/${vizM3u8}`"
-        controls
-        muted
-        autoplay
-      />
-      <button @click="() => video.fastSeek(215)">skip</button>
+      <Player :state="state" />
     </section>
 
     <aside>
       <TrackList :state="state" v-if="state.isLoggedIn" />
+      <p v-else>Log in to see your playlist</p>
     </aside>
   </main>
 </template>
@@ -65,10 +54,6 @@ main {
 }
 .video-content {
   flex-grow: 1;
-}
-video {
-  width: 100%;
-  height: auto;
 }
 
 aside {

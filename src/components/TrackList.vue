@@ -51,8 +51,24 @@ onMounted(async () => {
         <button @click="() => getVideo(track)">get video</button>
       </div>
     </div>
+
+    <div v-for="track in state.trackList" class="track">
+      <div class="track-play-state">
+        <span v-if="isCurrentTrack(track)">
+          <span v-if="state.currentTrack.isPlaying">▶</span>
+          <span v-else>⏸</span>
+        </span>
+      </div>
+      <div class="track-info">
+        <strong>{{ track.title }}</strong>
+        <br /><span>{{ track.artist }}</span>
+      </div>
+      <div class="track-actions">
+        <button @click="() => getVideo(track)">get video</button>
+      </div>
+    </div>
   </div>
-  <div v-else>Nothing playing.</div>
+  <p v-else>Nothing playing.</p>
 </template>
 
 <style>

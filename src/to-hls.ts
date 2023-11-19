@@ -1,11 +1,10 @@
 import cp from "child_process";
 import fs from "fs";
 import ffmpegPath from "ffmpeg-static";
-import { hlsDir, mp4Dir, vizM3u8 } from "./consts";
+import { hlsDir, mp4Dir } from "./consts";
+import { VideosDb } from "./VideosDb";
 
-const m3uDiscontinuity = '#EXT-X-DISCONTINUITY\n\n'
-
-function getTsDurations(filePath: fs.PathOrFileDescriptor) {
+function getSegmentDurations(filePath: fs.PathOrFileDescriptor) {
   return fs.readFileSync(filePath)
     .toString()
     .split('\n')
@@ -15,16 +14,19 @@ function getTsDurations(filePath: fs.PathOrFileDescriptor) {
 
 async function toHls(videoId: string) {
   const hlsVideoDir = `${hlsDir}${videoId}/`;
+  const m3u8FilePath = `${hlsVideoDir}${videoId}.m3u8`;
+  const mp4FilePath = `${mp4Dir}${videoId}.mp4`;
 
   if (!fs.existsSync(hlsVideoDir)) {
     fs.mkdirSync(hlsVideoDir);
   }
 
   console.log(`Generating HLS files for video ${videoId}`)
+  console.time('in')
 
   const process = cp.spawn(ffmpegPath, [
     "-i",
-    `${mp4Dir}${videoId}.mp4`,
+    mp4FilePath,
     //
     "-profile:v",
     "baseline",
@@ -43,21 +45,30 @@ async function toHls(videoId: string) {
     //
     "-f",
     "hls",
-    `${hlsVideoDir}${videoId}.m3u8`,
+    m3u8FilePath,
   ], { stdio: ['ignore', 'ignore', 'pipe'] });
+
+  // This needs to be here or the ffmpeg process seems to die?
+  process.stdio[2].on('data', data => {
+    // Does this have to be here?
+    // if (data.includes(hlsDir)) console.log(data.toString())
+
+    if (!fs.existsSync(m3u8FilePath)) return
+
+    VideosDb.editVideo(videoId, {
+      segmentDurations: getSegmentDurations(m3u8FilePath)
+    })
+  })
 
   process
     .on('close', async () => {
-      const tsDurations = getTsDurations(`${hlsVideoDir}${videoId}.m3u8`)
-      const out = tsDurations.map((duration, i) => {
-        return `#EXTINF:${duration},\n${videoId}/${videoId}${i}.ts\n`
-      }).join('')
+      VideosDb.editVideo(videoId, {
+        duration: getSegmentDurations(m3u8FilePath).reduce((total, dur) => total + dur, 0),
+      })
 
-      fs.appendFileSync(`${hlsDir}${vizM3u8}`, `${out}${m3uDiscontinuity}`)
-      console.log(`Video ${videoId} appended to ${vizM3u8}.`)
+      console.log(`Wrote ${videoId} segments to videos db`)
+      console.timeEnd('in')
     });
-
-  process.stdio[2].on('data', data => console.log(data.toString()))
 
   return process
 };
