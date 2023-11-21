@@ -1,6 +1,7 @@
 import cp from "child_process";
 import fs from "fs";
 import ffmpegPath from "ffmpeg-static";
+import { join } from "path";
 import { hlsDir, mp4Dir } from "./consts";
 import { VideosDb } from "./VideosDb";
 
@@ -9,13 +10,14 @@ function getSegmentDurations(filePath: fs.PathOrFileDescriptor) {
     .toString()
     .split('\n')
     .filter(line => line.startsWith('#EXTINF'))
-    .map(extInfDuration => +extInfDuration.match(/\#EXTINF:([\d\.]+),/)[1])
+    .map(extInfDuration => extInfDuration.match(/\#EXTINF:([\d\.]+),/)[1])
 }
 
 async function toHls(videoId: string) {
-  const hlsVideoDir = `${hlsDir}${videoId}/`;
-  const m3u8FilePath = `${hlsVideoDir}${videoId}.m3u8`;
-  const mp4FilePath = `${mp4Dir}${videoId}.mp4`;
+
+  const hlsVideoDir = join(hlsDir, videoId)
+  const m3u8FilePath = join(hlsVideoDir, `${videoId}.m3u8`);
+  const mp4FilePath = join(mp4Dir, `${videoId}.mp4`);
 
   if (!fs.existsSync(hlsVideoDir)) {
     fs.mkdirSync(hlsVideoDir);
@@ -40,6 +42,12 @@ async function toHls(videoId: string) {
     "-hls_time",
     "6",
     //
+    // "-forced-idr",
+    // "1",
+    //
+    // "-force_key_frames",
+    // "'expr:gte(t,n_forced*2)'",
+    //
     "-hls_list_size",
     "0 ",
     //
@@ -49,8 +57,8 @@ async function toHls(videoId: string) {
   ], { stdio: ['ignore', 'ignore', 'pipe'] });
 
   // This needs to be here or the ffmpeg process seems to die?
-  process.stdio[2].on('data', data => {
-    // Does this have to be here?
+  process.stdio[2].on('data', () => {
+    // Does this have to be here? seems not
     // if (data.includes(hlsDir)) console.log(data.toString())
 
     if (!fs.existsSync(m3u8FilePath)) return
@@ -63,7 +71,7 @@ async function toHls(videoId: string) {
   process
     .on('close', async () => {
       VideosDb.editVideo(videoId, {
-        duration: getSegmentDurations(m3u8FilePath).reduce((total, dur) => total + dur, 0),
+        duration: getSegmentDurations(m3u8FilePath).reduce((total, dur) => total + +dur, 0),
       })
 
       console.log(`Wrote ${videoId} segments to videos db`)

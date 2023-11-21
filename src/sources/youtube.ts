@@ -1,12 +1,13 @@
 import fs from "fs";
 import ytsr from "ytsr";
+import { join } from "path";
 import ytdlMuxer from "../ytdl-muxer.ts";
 import {
   maxVideoDuration,
   mp4Dir
 } from "../consts.ts";
 import { CreateSearchQuery, GetVideo, WriteVideoStream } from "../types/sources";
-import toHls from "../to-hls.ts";
+import toHls from "../toHls.ts";
 import { VideosDb } from "../VideosDb.ts";
 
 function durationToSeconds(duration: string) {
@@ -55,7 +56,7 @@ const getVideo: GetVideo = async (query: string) => {
 }
 
 const writeVideoStream: WriteVideoStream = (video, videoId) => {
-  const videoPath = mp4Dir + `${videoId}.mp4`;
+  const videoPath = join(mp4Dir, `${videoId}.mp4`);
 
   video.pipe(fs.createWriteStream(videoPath));
   video.on("finish", () => {

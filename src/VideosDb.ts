@@ -1,8 +1,9 @@
 import { JSONPreset } from "lowdb/node";
+import { join } from "path";
 import { Video, Videos } from "./types/viz";
 import { dbDir } from "./consts";
 
-const videosDb = await JSONPreset<{ videos: Videos }>(`${dbDir}videos.json`, {
+const videosDb = await JSONPreset<{ videos: Videos }>(join(dbDir, 'videos.json'), {
   videos: []
 })
 

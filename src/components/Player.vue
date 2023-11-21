@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { vizM3u8 } from '../consts'
 import type { Videos } from '../types/viz.d.ts'
 // import './hlsjs.ts'
@@ -17,36 +17,51 @@ const getVideosDb = async () => {
       const lastTimestamp = (videoTimestamps.at(-1) || 0) + duration
       return videoTimestamps.concat(lastTimestamp)
     },
-    []
+    [0]
   )
 }
 
+let getVideosDbInterval: NodeJS.Timeout
 onMounted(async () => {
   getVideosDb()
+  getVideosDbInterval = setInterval(() => {
+    getVideosDb()
+  }, 5000)
 })
+
+onUnmounted(() => clearInterval(getVideosDbInterval))
 </script>
 
 <template>
-  <video
-    id="video"
-    ref="videoEl"
-    :src="`../hls/${vizM3u8}`"
-    controls
-    muted
-    autoplay
-  />
-  <div>
-    <!-- this will be queue, not videos.json  -->
-    skip to
-    <div v-for="(video, i) in videos">
-      <button @click="() => videoEl.fastSeek(videoTimestamps[i])">
-        {{ video.id }}
-      </button>
+  <section class="player">
+    <video
+      id="video"
+      ref="videoEl"
+      :src="`/api/hls/${vizM3u8}`"
+      controls
+      muted
+      autoplay
+    />
+    <div>
+      <!-- TODO  this will be queue, not videos.json  -->
+      <span>skip to</span>
+      <span v-for="(video, i) in videos">
+        <button
+          v-if="video.segmentDurations.length"
+          @click="() => videoEl.fastSeek(videoTimestamps[i])"
+        >
+          {{ video.id }}
+        </button>
+      </span>
     </div>
-  </div>
+  </section>
 </template>
 
 <style scoped>
+.player {
+  flex-grow: 1;
+}
+
 video {
   width: 100%;
   height: auto;

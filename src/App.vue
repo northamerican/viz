@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive } from 'vue'
 import { getCookie } from 'typescript-cookie'
 
 import Login from './components/Login.vue'
@@ -22,9 +22,7 @@ const state = reactive<AppState>({
   </nav>
 
   <main>
-    <section class="video-content">
-      <Player :state="state" />
-    </section>
+    <Player :state="state" />
 
     <aside>
       <TrackList :state="state" v-if="state.isLoggedIn" />
@@ -51,9 +49,6 @@ main {
   overflow: auto;
   height: calc(100vh - 50px);
   padding: 1rem;
-}
-.video-content {
-  flex-grow: 1;
 }
 
 aside {

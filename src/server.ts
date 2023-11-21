@@ -1,28 +1,27 @@
 import express from "express";
 import compression from "compression";
 import { createReadStream } from "fs";
-import querystring from "node:querystring";
 import ViteExpress from "vite-express";
 import { join } from "path"
 
 import sources from "./sources";
 import players from "./players";
 import {
-  __dirname,
-  playersApiKeys,
   redirectEndpoint,
   hlsDir,
   appUrl,
   appPort,
   vizM3u8,
   dbDir,
+  appIp,
 } from "./consts.ts";
 import { isAxiosError } from "axios";
 import { TrackList, VizPrefs } from "./types/viz";
 import { JSONPreset } from 'lowdb/node'
 import { VizM3u8 } from "./VizM3u8.ts";
 
-const prefs = await JSONPreset<VizPrefs>(`${dbDir}prefs.json`, {
+// move to a PrefsDb
+const prefs = await JSONPreset<VizPrefs>(join(dbDir, 'prefs.json'), {
   "player": "spotify",
   "source": "youtube",
 })
@@ -31,21 +30,15 @@ const app = express();
 app.use(compression());
 app.use(express.json());
 
-// move to /players?
 app.get("/authorize", (_, res) => {
-  const { clientId } = playersApiKeys.spotify;
-  const scope =
-    "user-read-private user-read-email user-read-currently-playing user-read-playback-state";
+  const { player } = prefs.data;
+  try {
+    const redirectUrl = players[player].authorize();
 
-  res.redirect(
-    "https://accounts.spotify.com/authorize?" +
-    querystring.stringify({
-      response_type: "code",
-      client_id: clientId,
-      scope: scope,
-      redirect_uri: `http://${appUrl}:${appPort}${redirectEndpoint}`,
-    })
-  );
+    res.redirect(redirectUrl);
+  } catch (e) {
+    console.log(e)
+  }
 });
 
 app.get(redirectEndpoint, async (req, res) => {
@@ -55,9 +48,9 @@ app.get(redirectEndpoint, async (req, res) => {
     await players[player].getToken(req);
 
     res.cookie("isLoggedIn", true);
-    res.redirect(`http://${appUrl}:${appPort}/`);
+    res.redirect(appUrl);
   } catch (e) {
-    console.log(e);
+    console.log(`${redirectEndpoint} failed.`)
   }
 });
 
@@ -120,25 +113,28 @@ app.post("/video", async (req, res) => {
   res.status(201).send();
 });
 
-app.get(`/hls/${vizM3u8}`, async (_, res) => {
+// TODO rename join('api', 'stream')
+app.get(`/api/hls/${vizM3u8}`, async (_, res) => {
   // TODO confirm sending as gzip ?
   try {
     const m3u8 = VizM3u8.buildM3u8()
-    return res.type("application/vnd.apple.mpegurl")
-      .status(200)
+
+    return res
+      .setHeader('Content-Type', "application/vnd.apple.mpegurl")
       .send(m3u8);
   } catch (error) {
     return res.sendStatus(500);
   }
 });
 
-app.get("/hls/:filename.ts", async (req, res) => {
-  const { filename } = req.params;
+// TODO rename join('api', 'ts', ':filename')
+app.get("/api/hls/:dir/:filename.ts", async (req, res) => {
+  const { dir, filename } = req.params;
   try {
-    const stream = createReadStream(`${hlsDir}/${filename}.ts`, {
+    const stream = createReadStream(join(hlsDir, dir, `${filename}.ts`), {
       highWaterMark: 64 * 1024, // TODO adjust?
     });
-    res.type("video/MP2T");
+    res.setHeader('Content-Type', 'video/mp2t');
     return stream.pipe(res);
   } catch (error) {
     return res.sendStatus(500);
@@ -155,8 +151,8 @@ app.get("/db/videos.json", async (_, res) => {
   }
 });
 
-const server = app.listen(appPort, appUrl, () =>
-  console.log(`viz running at http://${appUrl}:${appPort}`)
+const server = app.listen(appPort, appIp, () =>
+  console.log(`viz running at ${appUrl}`)
 );
 
 ViteExpress.bind(app, server);

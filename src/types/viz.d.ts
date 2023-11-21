@@ -24,7 +24,7 @@ export type Video = {
   id: string
   source: SourceNames
   duration: number,
-  segmentDurations: number[]
+  segmentDurations: string[]
 }
 export type Videos = Video[]
 

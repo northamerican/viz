@@ -1,16 +1,17 @@
-export const appUrl = "192.168.68.115";
 export const appPort = 5173;
+export const appIp = "192.168.68.115"
+export const appUrl = `http://${appIp}:${appPort}/`;
 
-export const __dirname = new URL(import.meta.url + "/..").pathname;
+const __dirname = new URL(import.meta.url + "/..").pathname;
 export const mp4Dir = __dirname + "../public/mp4/";
 export const hlsDir = __dirname + "../public/hls/";
 export const dbDir = __dirname + "db/";
 export const vizM3u8 = 'viz.m3u8'
+export const redirectEndpoint = `/token`;
 
 export const maxVideoDuration = 12 * 60;
 
-export const redirectEndpoint = `/token`;
-
+// TODO move to env
 export const playersApiKeys = {
   spotify: {
     clientId: "a3d79c3e9aca4b4b9bd332d0e1b1fe26",
@@ -18,6 +19,3 @@ export const playersApiKeys = {
   },
 };
 
-export const settings = {
-  aspectRatios: ["4:3"],
-};

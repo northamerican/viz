@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import type { AppState, Track, TrackList } from '../types/viz'
 
 const props = defineProps<{ state: AppState }>()
@@ -31,27 +31,23 @@ onMounted(async () => {
   getCurrent()
   getTrackList()
 })
+
+let getTracklistInterval: NodeJS.Timeout
+onMounted(async () => {
+  getCurrent()
+  getTrackList()
+  getTracklistInterval = setInterval(() => {
+    getCurrent()
+    getTrackList()
+  }, 5000)
+})
+
+onUnmounted(() => clearInterval(getTracklistInterval))
 </script>
 
 <template>
   <div v-if="state.trackList.length">
     <!-- <Track /> -->
-    <div v-for="track in state.trackList" class="track">
-      <div class="track-play-state">
-        <span v-if="isCurrentTrack(track)">
-          <span v-if="state.currentTrack.isPlaying">▶</span>
-          <span v-else>⏸</span>
-        </span>
-      </div>
-      <div class="track-info">
-        <strong>{{ track.title }}</strong>
-        <br /><span>{{ track.artist }}</span>
-      </div>
-      <div class="track-actions">
-        <button @click="() => getVideo(track)">get video</button>
-      </div>
-    </div>
-
     <div v-for="track in state.trackList" class="track">
       <div class="track-play-state">
         <span v-if="isCurrentTrack(track)">
@@ -74,7 +70,6 @@ onMounted(async () => {
 <style>
 .track {
   display: flex;
-  /* justify-content: space-between; */
   align-items: center;
   margin-bottom: 1rem;
 }
