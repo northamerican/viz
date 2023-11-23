@@ -2,7 +2,7 @@
 import axios from 'axios'
 import { onMounted, onUnmounted, ref } from 'vue'
 import { vizM3u8 } from '../consts'
-import type { Videos } from '../types/viz.d.ts'
+import type { Videos } from 'Viz'
 // import './hlsjs.ts'
 
 const videoEl = ref(null)

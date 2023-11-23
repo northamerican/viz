@@ -1,7 +1,7 @@
 import { JSONPreset } from "lowdb/node";
 import { join } from "path";
-import { Video, Videos } from "./types/viz";
 import { dbDir } from "./consts";
+import type { Video, Videos } from "Viz";
 
 const videosDb = await JSONPreset<{ videos: Videos }>(join(dbDir, 'videos.json'), {
   videos: []
@@ -9,21 +9,21 @@ const videosDb = await JSONPreset<{ videos: Videos }>(join(dbDir, 'videos.json')
 
 const { videos } = videosDb.data
 
-export class VideosDb {
-  static getVideos() {
+export const VideosDb = {
+  getVideos() {
     return videos
-  }
+  },
 
-  static getVideo(videoId: string) {
+  getVideo(videoId: string) {
     return videos.find(({ id }) => id === videoId)
-  }
+  },
 
-  static addVideo(video: Video) {
+  addVideo(video: Video) {
     videos.push(video)
     videosDb.write()
-  }
+  },
 
-  static editVideo(videoId: string, props: Partial<Video>) {
+  editVideo(videoId: string, props: Partial<Video>) {
     const video = this.getVideo(videoId)
 
     Object.assign(video, props)

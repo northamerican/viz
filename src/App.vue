@@ -6,7 +6,7 @@ import Login from './components/Login.vue'
 import Player from './components/Player.vue'
 import TrackList from './components/TrackList.vue'
 
-import type { AppState } from './types/viz'
+import type { AppState } from 'Viz'
 
 const state = reactive<AppState>({
   isLoggedIn: !!getCookie('isLoggedIn'),

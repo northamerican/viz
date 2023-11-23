@@ -2,13 +2,9 @@ import axios from "axios";
 import querystring from "node:querystring";
 import { join } from "path";
 import { appUrl, dbDir, playersApiKeys, redirectEndpoint } from "../consts";
-import type {
-  GetToken,
-  GetQueue,
-  GetCurrentlyPlaying
-} from '../types/players'
 import { JSONPreset } from "lowdb/node";
-import { AuthState } from "../types/viz";
+import type { AuthState } from "Viz";
+import type { GetToken, GetQueue, GetCurrentlyPlaying } from "VizPlayer";
 
 // TODO make spotify-specific?
 const auth = await JSONPreset<AuthState>(join(dbDir, 'auth.json'), {

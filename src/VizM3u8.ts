@@ -21,8 +21,8 @@ const m3u8Template = `#EXTM3U
 
 const m3u8Discontinuity = '#EXT-X-DISCONTINUITY\n'
 
-export class VizM3u8 {
-  static buildM3u8() {
+export const VizM3u8 = {
+  buildM3u8() {
     const videos = VideosDb.getVideos()
     const tsSegments = videos.map(video => {
       const { id, segmentDurations } = video

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import axios from 'axios'
 import { onMounted, onUnmounted } from 'vue'
-import type { AppState, Track, TrackList } from '../types/viz'
+import type { AppState, Track, TrackList } from 'Viz'
 
 const props = defineProps<{ state: AppState }>()
 

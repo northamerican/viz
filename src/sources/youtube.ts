@@ -6,9 +6,13 @@ import {
   maxVideoDuration,
   mp4Dir
 } from "../consts.ts";
-import { CreateSearchQuery, GetVideo, WriteVideoStream } from "../types/sources";
 import toHls from "../toHls.ts";
 import { VideosDb } from "../VideosDb.ts";
+import type {
+  CreateSearchQuery,
+  GetVideo,
+  WriteVideoStream
+} from "VizSource";
 
 function durationToSeconds(duration: string) {
   return duration.split(":").reduce((acc, time) => 60 * acc + +time, 0);

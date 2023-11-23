@@ -16,9 +16,9 @@ import {
   appIp,
 } from "./consts.ts";
 import { isAxiosError } from "axios";
-import { TrackList, VizPrefs } from "./types/viz";
 import { JSONPreset } from 'lowdb/node'
 import { VizM3u8 } from "./VizM3u8.ts";
+import type { TrackList, VizPrefs } from "Viz";
 
 // move to a PrefsDb
 const prefs = await JSONPreset<VizPrefs>(join(dbDir, 'prefs.json'), {
