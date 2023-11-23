@@ -111,12 +111,17 @@ const getQueue: GetQueue = async () => {
 
     if (!data.currently_playing) return [];
 
+    // TODO handle podcast playing
+    // if (data.currently_playing.type === 'episode') {
+    //   return []
+    // }
+
     return [
       data.currently_playing as SpotifyApi.TrackObjectFull,
       ...data.queue as SpotifyApi.TrackObjectFull[]
     ].map((track) => ({
       id: track.id,
-      artist: track.artists[0].name,
+      artist: track.artists?.[0].name,
       title: track.name,
     }));
   } catch (error) {

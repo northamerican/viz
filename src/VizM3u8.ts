@@ -2,12 +2,13 @@ import { VideosDb } from "./VideosDb";
 import { join } from "path";
 
 const m3u8Template = `#EXTM3U
-#EXT-X-VERSION:6
-#EXT-X-TARGETDURATION:9999999
+#EXT-X-VERSION:12
+# low values, even 60 eventually kill the video for some reason.
+# a high value works realiably but doesn't fetch the m3u8 continuously 
+#EXT-X-TARGETDURATION:40
 #EXT-X-MEDIA-SEQUENCE:0
-#EXT-X-START:TIME-OFFSET=0
-#EXT-X-PLAYLIST-TYPE:EVENT
-#EXT-X-DISCONTINUITY\n`
+#EXT-X-START:TIME-OFFSET=0\n`
+// #EXT-X-PROGRAM-DATE-TIME:${(new Date).toISOString()}\n`
 
 //   `#EXTM3U
 // #EXT-X-VERSION:3
@@ -33,6 +34,5 @@ export class VizM3u8 {
     }).join(m3u8Discontinuity)
 
     return `${m3u8Template}${tsSegments}`
-    // return `${m3u8Template}${tsSegments}\n#EXT-X-ENDLIST`
   }
 }
