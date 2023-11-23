@@ -3,11 +3,11 @@ import querystring from "node:querystring";
 import { join } from "path";
 import { appUrl, dbDir, playersApiKeys, redirectEndpoint } from "../consts";
 import { JSONPreset } from "lowdb/node";
-import type { AuthState } from "Viz";
+import type { AuthStateDbType } from "Viz";
 import type { GetToken, GetQueue, GetCurrentlyPlaying } from "VizPlayer";
 
 // TODO make spotify-specific?
-const auth = await JSONPreset<AuthState>(join(dbDir, 'auth.json'), {
+const auth = await JSONPreset<AuthStateDbType>(join(dbDir, 'auth.json'), {
   token: null,
   refreshToken: null
 })

@@ -5,7 +5,7 @@ declare module "Viz" {
     currentTrack: Track
   }
 
-  export type AuthState = {
+  export type AuthStateDbType = {
     token: string
     refreshToken: string
   }
@@ -29,10 +29,15 @@ declare module "Viz" {
   }
   export type Videos = Video[]
 
+  export type VideosDbType = {
+    startTime: number,
+    videos: Videos
+  }
+
   export type PlayerNames = 'spotify'
   export type SourceNames = 'youtube'
 
-  export type VizPrefs = {
+  export type VizPrefsDbType = {
     player: PlayerNames
     source: SourceNames
   }

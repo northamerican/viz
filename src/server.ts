@@ -18,10 +18,11 @@ import {
 import { isAxiosError } from "axios";
 import { JSONPreset } from 'lowdb/node'
 import { VizM3u8 } from "./VizM3u8.ts";
-import type { TrackList, VizPrefs } from "Viz";
+import type { TrackList, VizPrefsDbType } from "Viz";
+import { VideosDb } from "./VideosDb.ts";
 
 // move to a PrefsDb
-const prefs = await JSONPreset<VizPrefs>(join(dbDir, 'prefs.json'), {
+const prefs = await JSONPreset<VizPrefsDbType>(join(dbDir, 'prefs.json'), {
   "player": "spotify",
   "source": "youtube",
 })
@@ -29,6 +30,8 @@ const prefs = await JSONPreset<VizPrefs>(join(dbDir, 'prefs.json'), {
 const app = express();
 app.use(compression());
 app.use(express.json());
+
+VideosDb.setStartTime();
 
 app.get("/authorize", (_, res) => {
   const { player } = prefs.data;
@@ -96,10 +99,7 @@ app.get("/current", async (_, res) => {
   }
 });
 
-// app.get("/video", (req, res) => {
-// 
-// });
-
+// TODO rename /api /add-video
 app.post("/video", async (req, res) => {
   const { artist, title } = req.body;
   const { source } = prefs.data;
@@ -113,7 +113,7 @@ app.post("/video", async (req, res) => {
   res.status(201).send();
 });
 
-// TODO rename join('api', 'stream')
+// TODO rename join('api', 'video-stream')
 app.get(`/api/hls/${vizM3u8}`, async (_, res) => {
   // TODO confirm sending as gzip ?
   try {

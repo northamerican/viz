@@ -5,7 +5,7 @@ import ffmpegPath from "ffmpeg-static";
 import cp from "child_process";
 import stream from "stream";
 
-export default (link: string, options?: ytdl.getInfoOptions) => {
+function ytdlMuxer(link: string, options?: ytdl.getInfoOptions) {
   const result = new stream.PassThrough({
     highWaterMark: 1024 * 512
   });
@@ -40,7 +40,10 @@ export default (link: string, options?: ytdl.getInfoOptions) => {
           "1:v",
           //
           "-c:v",
-          "libx265",
+          "libx264",
+          //
+          // "-force_key_frames",
+          // "expr:gte(t,n_forced*2)",
           //
           "-crf",
           "18",
@@ -79,3 +82,5 @@ export default (link: string, options?: ytdl.getInfoOptions) => {
 
   return result;
 };
+
+export default ytdlMuxer

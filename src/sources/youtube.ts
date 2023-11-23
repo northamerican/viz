@@ -1,7 +1,7 @@
 import fs from "fs";
 import ytsr from "ytsr";
 import { join } from "path";
-import ytdlMuxer from "../ytdl-muxer.ts";
+import ytdlMuxer from "../ytdlMuxer.ts";
 import {
   maxVideoDuration,
   mp4Dir

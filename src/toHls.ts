@@ -14,7 +14,6 @@ function getSegmentDurations(filePath: fs.PathOrFileDescriptor) {
 }
 
 async function toHls(videoId: string) {
-
   const hlsVideoDir = join(hlsDir, videoId)
   const m3u8FilePath = join(hlsVideoDir, `${videoId}.m3u8`);
   const mp4FilePath = join(mp4Dir, `${videoId}.mp4`);
@@ -41,13 +40,14 @@ async function toHls(videoId: string) {
     //
     "-hls_time",
     "6",
+
     //
     // "-forced-idr",
     // "1",
     //
-    // "-force_key_frames",
-    // "'expr:gte(t,n_forced*2)'",
-    //
+    "-force_key_frames",
+    "expr:gte(t,n_forced*2)",
+
     "-hls_list_size",
     "0 ",
     //
@@ -56,21 +56,23 @@ async function toHls(videoId: string) {
     m3u8FilePath,
   ], { stdio: ['ignore', 'ignore', 'pipe'] });
 
-  // This needs to be here or the ffmpeg process seems to die?
   process.stdio[2].on('data', () => {
-    // Does this have to be here? seems not
-    // if (data.includes(hlsDir)) console.log(data.toString())
+    // For debugging
+    // console.log(data.toString())
 
     if (!fs.existsSync(m3u8FilePath)) return
 
-    VideosDb.editVideo(videoId, {
+    const video = VideosDb.getVideo(videoId)
+    VideosDb.editVideo(video, {
       segmentDurations: getSegmentDurations(m3u8FilePath)
     })
   })
 
   process
     .on('close', async () => {
-      VideosDb.editVideo(videoId, {
+
+      const video = VideosDb.getVideo(videoId)
+      VideosDb.editVideo(video, {
         duration: getSegmentDurations(m3u8FilePath).reduce((total, dur) => total + +dur, 0),
       })
 
