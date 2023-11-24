@@ -10,7 +10,7 @@ function getSegmentDurations(filePath: fs.PathOrFileDescriptor) {
     .toString()
     .split('\n')
     .filter(line => line.startsWith('#EXTINF'))
-    .map(extInfDuration => extInfDuration.match(/\#EXTINF:([\d\.]+),/)[1])
+    .map(extInfDuration => +extInfDuration.match(/\#EXTINF:([\d\.]+),/)[1])
 }
 
 async function toHls(videoId: string) {
@@ -73,7 +73,8 @@ async function toHls(videoId: string) {
 
       const video = VideosDb.getVideo(videoId)
       VideosDb.editVideo(video, {
-        duration: getSegmentDurations(m3u8FilePath).reduce((total, dur) => total + +dur, 0),
+        duration: getSegmentDurations(m3u8FilePath).reduce(
+          (total, duration) => total + duration, 0),
       })
 
       console.log(`Wrote ${videoId} segments to videos db`)

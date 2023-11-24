@@ -14,7 +14,7 @@ const getVideosDb = async () => {
   videos.value = data.videos
   videoTimestamps.value = data.videos.reduce(
     (videoTimestamps, { duration }) => {
-      const lastTimestamp = (videoTimestamps.at(-1) || 0) + +duration
+      const lastTimestamp = (videoTimestamps.at(-1) || 0) + duration
       return videoTimestamps.concat(lastTimestamp)
     },
     [0]

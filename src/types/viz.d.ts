@@ -25,7 +25,7 @@ declare module "Viz" {
     id: string
     source: SourceNames
     duration: number,
-    segmentDurations: string[]
+    segmentDurations: number[]
   }
   export type Videos = Video[]
 

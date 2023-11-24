@@ -28,6 +28,16 @@ export const VideosDb = {
     return videos.find(({ id }) => id === videoId)
   },
 
+  getVideoSegmentInfo() {
+    return videos.flatMap(({ segmentDurations, id }) => {
+      return segmentDurations.map((duration, segmentIndex) => ({
+        segmentIndex,
+        videoId: id,
+        duration,
+      }))
+    })
+  },
+
   addVideo(props: Video) {
     const existingVideo = this.getVideo(props.id)
     if (existingVideo) {

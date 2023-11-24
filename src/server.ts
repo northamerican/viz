@@ -141,6 +141,7 @@ app.get("/api/hls/:dir/:filename.ts", async (req, res) => {
   }
 });
 
+// TODO simpler endpoint with less info (might not need each segment length)
 app.get("/db/videos.json", async (_, res) => {
   try {
     const stream = createReadStream(join(dbDir, 'videos.json'));
