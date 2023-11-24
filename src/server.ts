@@ -117,7 +117,7 @@ app.post("/video", async (req, res) => {
 app.get(`/api/hls/${vizM3u8}`, async (_, res) => {
   // TODO confirm sending as gzip ?
   try {
-    const m3u8 = VizM3u8.buildM3u8()
+    const m3u8 = VizM3u8.getM3u8()
 
     return res
       .setHeader('Content-Type', "application/vnd.apple.mpegurl")

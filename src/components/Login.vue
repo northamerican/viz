@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { AppState } from 'Viz'
 import { removeCookie } from 'typescript-cookie'
+import type { AppState } from 'Viz'
 
 const props = defineProps<{ state: AppState }>()
 

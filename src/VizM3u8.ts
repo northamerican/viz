@@ -1,18 +1,19 @@
 import { VideosDb } from "./VideosDb";
 import { join } from "path";
 
-const m3u8Template = `#EXTM3U
+const m3u8Discontinuity = '#EXT-X-DISCONTINUITY'
+
+const m3u8Template = () => `#EXTM3U
 #EXT-X-VERSION:3
 # setting it to 9 for less polling but it was working fine at 6
 #EXT-X-TARGETDURATION:9
 #EXT-X-MEDIA-SEQUENCE:0
-#EXT-X-START:TIME-OFFSET=0\n`
-
-const m3u8Discontinuity = '#EXT-X-DISCONTINUITY'
+#EXT-X-START:TIME-OFFSET=${(Date.now() - VideosDb.getStartTime()) / 1000}\n`
 
 export const VizM3u8 = {
-  buildM3u8() {
+  getM3u8() {
     let totalDuration = 0
+    // let mediaSequence = 0
 
     const tsSegments = VideosDb.getVideoSegmentInfo().map(({ videoId, duration, segmentIndex }) => {
       const timeOffset = VideosDb.getStartTime() + (1000 * totalDuration);
@@ -22,11 +23,10 @@ export const VizM3u8 = {
       const discontinuity = segmentIndex === 0 ? m3u8Discontinuity : ''
 
       totalDuration += duration
-      // return `${discontinuity}\n${programDateTime}\n${infDuration}\n${url}\n`
       return [discontinuity, programDateTime, infDuration, url].join('\n');
-    }).join('\n')
+    }).join('')
 
-    return `${m3u8Template}${tsSegments}`
+    return `${m3u8Template()}${tsSegments}`
   }
 }
 
