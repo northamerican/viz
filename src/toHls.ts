@@ -70,7 +70,6 @@ async function toHls(videoId: string) {
 
   process
     .on('close', async () => {
-
       const video = VideosDb.getVideo(videoId)
       VideosDb.editVideo(video, {
         duration: getSegmentDurations(m3u8FilePath).reduce(

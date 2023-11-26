@@ -28,6 +28,7 @@ export const VideosDb = {
     return videos.find(({ id }) => id === videoId)
   },
 
+  // TODO cache this? may need to give each segment an id
   getVideoSegmentInfo() {
     return videos.flatMap(({ segmentDurations, id }) => {
       return segmentDurations.map((duration, segmentIndex) => ({

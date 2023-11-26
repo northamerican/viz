@@ -43,8 +43,7 @@ onUnmounted(() => clearInterval(getVideosDbInterval))
       autoplay
     />
     <div>
-      <!-- TODO  this will be queue, not videos.json  -->
-      <span>skip to</span>
+      <!-- <span>skip to</span>
       <span v-for="(video, i) in videos">
         <button
           v-if="video.segmentDurations.length"
@@ -52,7 +51,7 @@ onUnmounted(() => clearInterval(getVideosDbInterval))
         >
           {{ video.id }}
         </button>
-      </span>
+      </span> -->
     </div>
   </section>
 </template>
@@ -60,10 +59,11 @@ onUnmounted(() => clearInterval(getVideosDbInterval))
 <style scoped>
 .player {
   flex-grow: 1;
+  text-align: center;
 }
 
 video {
-  width: 100%;
+  width: 80%;
   height: auto;
 }
 </style>

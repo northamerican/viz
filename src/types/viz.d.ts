@@ -3,6 +3,8 @@ declare module "Viz" {
     isLoggedIn: boolean
     trackList: TrackList
     currentTrack: Track
+    playlists: any
+    selectedPlaylist: any
   }
 
   export type AuthStateDbType = {
@@ -12,8 +14,8 @@ declare module "Viz" {
 
   export type Track = {
     id: string
-    artist: string
-    title: string
+    artists: string[]
+    title: string // TODO change to name ?
     durationMs: number
     progressMs: number
     shuffleState: boolean

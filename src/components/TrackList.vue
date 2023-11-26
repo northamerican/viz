@@ -1,44 +1,35 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { onMounted, onUnmounted } from 'vue'
-import type { AppState, Track, TrackList } from 'Viz'
+import { computed, onMounted, onUnmounted } from 'vue'
+import type { AppState, Track } from 'Viz'
 
 const props = defineProps<{ state: AppState }>()
 
-const getCurrent = async () => {
-  const { data } = await axios.get<Track>('/current')
-  props.state.currentTrack = data
-  // if (status === 204) throw new Error("No track playing");
-}
-
-const getTrackList = async () => {
-  const { data } = await axios.get<TrackList>('/queue')
-  // if (status === 204) throw new Error("No tracks queued");
-  props.state.trackList = data
-}
-
-const getVideo = async ({ artist, title }: Partial<Track>) => {
+const getVideo = async ({ artists, title }: Partial<Track>) => {
   axios.post('/video', {
-    artist,
+    artist: artists[0],
     title
   })
 }
 
-const isCurrentTrack = (track: Track) =>
-  track.id === props.state.currentTrack.id
+const playPlaylist = () => {
+  axios.post('/api/play/')
+}
 
-onMounted(async () => {
-  getCurrent()
-  getTrackList()
-})
+const playlistTitle = computed(
+  () =>
+    props.state.playlists.items?.find(
+      playlist => playlist.id === props.state.selectedPlaylist.id
+    ).name
+)
 
 let getTracklistInterval: NodeJS.Timeout
 onMounted(async () => {
-  getCurrent()
-  getTrackList()
+  // getCurrent()
+  // getTrackList()
   getTracklistInterval = setInterval(() => {
-    getCurrent()
-    getTrackList()
+    // getCurrent()
+    // getTrackList()
   }, 5000)
 })
 
@@ -46,37 +37,69 @@ onUnmounted(() => clearInterval(getTracklistInterval))
 </script>
 
 <template>
-  <div v-if="state.trackList.length">
+  <div v-if="state.selectedPlaylist">
+    <header>
+      <h2 class="title">
+        {{ playlistTitle }}
+      </h2>
+      <button class="play" @click="playPlaylist">▶</button>
+    </header>
     <!-- <Track /> -->
-    <div v-for="track in state.trackList" class="track">
+    <div class="track" v-for="track in state.selectedPlaylist.items">
       <div class="track-play-state">
-        <span v-if="isCurrentTrack(track)">
+        <!-- <span v-if="isCurrentTrack(track)">
           <span v-if="state.currentTrack.isPlaying">▶</span>
           <span v-else>⏸</span>
-        </span>
+        </span> -->
       </div>
       <div class="track-info">
         <strong>{{ track.title }}</strong>
-        <br /><span>{{ track.artist }}</span>
+        <br /><span class="track-artist" v-for="artist in track.artists">
+          {{ artist }}
+        </span>
       </div>
       <div class="track-actions">
         <button @click="() => getVideo(track)">get video</button>
       </div>
     </div>
   </div>
-  <p v-else>Nothing playing.</p>
+  <!-- <p v-else>Nothing playing.</p> -->
 </template>
 
 <style>
+header {
+  display: flex;
+  justify-content: space-between;
+  margin-inline: 1rem;
+
+  & .title {
+    margin-top: 0;
+  }
+
+  button.play {
+  }
+}
+
 .track {
   display: flex;
   align-items: center;
-  margin-bottom: 1rem;
+  padding-block: 0.5rem;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(0, 0, 0, 15%);
+  }
 }
 
 .track-play-state {
-  width: 2rem;
+  width: 1rem;
   margin-right: 0;
+}
+
+.track-info {
+  .track-artist + .track-artist::before {
+    content: ', ';
+  }
 }
 
 .track-actions {

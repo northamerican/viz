@@ -5,6 +5,7 @@ import { appUrl, dbDir, playersApiKeys, redirectEndpoint } from "../consts";
 import { JSONPreset } from "lowdb/node";
 import type { AuthStateDbType } from "Viz";
 import type { GetToken, GetQueue, GetCurrentlyPlaying } from "VizPlayer";
+import { VideosDb } from "../VideosDb";
 
 // TODO make spotify-specific?
 const auth = await JSONPreset<AuthStateDbType>(join(dbDir, 'auth.json'), {
@@ -80,7 +81,7 @@ const getRefreshToken = getToken.bind(this, null, true)
 const authorize = () => {
   const { clientId } = playersApiKeys.spotify;
   const scope =
-    "user-read-private user-read-email user-read-currently-playing user-read-playback-state";
+    "user-read-private user-read-email user-read-currently-playing user-read-playback-state playlist-read-private";
 
   return "https://accounts.spotify.com/authorize?" +
     querystring.stringify({
@@ -117,7 +118,7 @@ const getQueue: GetQueue = async () => {
       ...data.queue as SpotifyApi.TrackObjectFull[]
     ].map((track) => ({
       id: track.id,
-      artist: track.artists?.[0].name,
+      artists: track.artists.map(artist => artist.name),
       title: track.name,
     }));
   } catch (error) {
@@ -137,7 +138,7 @@ const getCurrentlyPlaying: GetCurrentlyPlaying = async () => {
     return {
       id: data.item.id,
       // @ts-ignore
-      artist: data.item.artists[0].name,
+      artists: data.item.artists.map(artist => artist.name),
       title: data.item.name,
       // @ts-ignore
       durationMs: data.duration_ms,
@@ -150,10 +151,53 @@ const getCurrentlyPlaying: GetCurrentlyPlaying = async () => {
   }
 }
 
+const getPlaylists = async () => {
+  try {
+    const { data } = await spotifyAxios.get<SpotifyApi.ListOfCurrentUsersPlaylistsResponse>(
+      "https://api.spotify.com/v1/me/playlists",
+    );
+
+    return data
+  } catch (error) {
+    return Promise.reject(error);
+  }
+}
+
+const getPlaylist = async (playlistId: string) => {
+  try {
+    // TODO recursively get all of them by calling offset param until total is reached
+    const { data } = await spotifyAxios.get<SpotifyApi.PlaylistTrackResponse>(
+      `https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+      params: {
+        limit: 50,
+        // fields: 'offset,total,items(track(name,artist))'
+      }
+    });
+
+    return {
+      ...data,
+      id: playlistId,
+      items: data.items.map(item => ({
+        artists: item.track.artists.map(artist => artist.name),
+        title: item.track.name
+      }))
+    }
+  } catch (error) {
+    return Promise.reject(error);
+  }
+}
+
+const playPlaylist = async () => {
+  VideosDb.setStartTime();
+}
+
 export const spotify = {
   getToken,
   authorize,
   logout,
   getQueue,
-  getCurrentlyPlaying
+  getCurrentlyPlaying,
+  getPlaylists,
+  getPlaylist,
+  playPlaylist
 };

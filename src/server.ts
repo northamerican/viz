@@ -19,7 +19,6 @@ import { isAxiosError } from "axios";
 import { JSONPreset } from 'lowdb/node'
 import { VizM3u8 } from "./VizM3u8.ts";
 import type { TrackList, VizPrefsDbType } from "Viz";
-import { VideosDb } from "./VideosDb.ts";
 
 // move to a PrefsDb
 const prefs = await JSONPreset<VizPrefsDbType>(join(dbDir, 'prefs.json'), {
@@ -30,8 +29,6 @@ const prefs = await JSONPreset<VizPrefsDbType>(join(dbDir, 'prefs.json'), {
 const app = express();
 app.use(compression());
 app.use(express.json());
-
-VideosDb.setStartTime();
 
 app.get("/authorize", (_, res) => {
   const { player } = prefs.data;
@@ -99,6 +96,46 @@ app.get("/current", async (_, res) => {
   }
 });
 
+app.get("/api/playlists", async (_, res) => {
+  const { player } = prefs.data;
+
+  try {
+    const playlists = await players[player].getPlaylists();
+
+    res.json(playlists);
+  } catch (error) {
+    if (isAxiosError<TrackList>(error)) {
+      res.status(error.response.status).send();
+    }
+  }
+});
+
+app.get("/api/playlist/:playlistId", async (req, res) => {
+  const { player } = prefs.data;
+  const { playlistId } = req.params;
+
+  try {
+    const playlist = await players[player].getPlaylist(playlistId);
+
+    res.json(playlist);
+  } catch (error) {
+    if (isAxiosError<TrackList>(error)) {
+      res.status(error.response.status).send();
+    }
+  }
+});
+
+app.post("/api/play", async (_, res) => {
+  const { player } = prefs.data;
+  // const { playlistId } = req.params;
+
+  res.status(200).send();
+  try {
+    await players[player].playPlaylist();
+  } catch (error) {
+  }
+});
+
 // TODO rename /api /add-video
 app.post("/video", async (req, res) => {
   const { artist, title } = req.body;
@@ -120,7 +157,7 @@ app.get(`/api/hls/${vizM3u8}`, async (_, res) => {
     const m3u8 = VizM3u8.getM3u8()
 
     return res
-      .setHeader('Content-Type', "application/vnd.apple.mpegurl")
+      .type("application/vnd.apple.mpegurl")
       .send(m3u8);
   } catch (error) {
     return res.sendStatus(500);

@@ -5,13 +5,16 @@ import { getCookie } from 'typescript-cookie'
 import Login from './components/Login.vue'
 import Player from './components/Player.vue'
 import TrackList from './components/TrackList.vue'
+import Playlists from './components/Playlists.vue'
 
 import type { AppState } from 'Viz'
 
 const state = reactive<AppState>({
   isLoggedIn: !!getCookie('isLoggedIn'),
   trackList: [],
-  currentTrack: null
+  currentTrack: null,
+  playlists: [],
+  selectedPlaylist: null
 })
 </script>
 
@@ -23,11 +26,18 @@ const state = reactive<AppState>({
 
   <main>
     <Player :state="state" />
-
-    <aside>
-      <TrackList :state="state" v-if="state.isLoggedIn" />
-      <p v-else>Log in to see your playlist</p>
-    </aside>
+    <section v-if="state.isLoggedIn" class="library">
+      <Playlists :state="state" />
+      <TrackList :state="state" />
+    </section>
+    <section v-else>Log in to see your playlists</section>
+    <section>
+      <!-- tab with youtube playlists. -->
+      <!-- is youtube a Player in this case? supplemental content? -->
+      <!-- i guess player with which we can fetch content from... -->
+      <!-- <Queue /> -->
+      queue here
+    </section>
   </main>
 </template>
 
@@ -42,18 +52,13 @@ nav {
     margin: 0;
   }
 }
-main {
-  display: flex;
-  gap: 1rem;
-  flex: 1;
-  overflow: auto;
-  height: calc(100vh - 50px);
-  padding: 1rem;
-}
 
-aside {
-  max-height: 100%;
-  min-width: 500px;
-  overflow-y: scroll;
+.library {
+  display: flex;
+  flex-direction: row;
+
+  & > * {
+    flex: 0 50%;
+  }
 }
 </style>
