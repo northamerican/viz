@@ -19,6 +19,7 @@ import { isAxiosError } from "axios";
 import { JSONPreset } from 'lowdb/node'
 import { VizM3u8 } from "./VizM3u8.ts";
 import type { VizPrefsDbType } from "Viz";
+import { QueueDb } from "./QueueDb.ts";
 
 // move to a PrefsDb
 const prefs = await JSONPreset<VizPrefsDbType>(join(dbDir, 'prefs.json'), {
@@ -60,10 +61,10 @@ app.get("/logout", async (_, res) => {
   try {
     await players[player].logout();
 
-    res.status(204).send()
+    res.sendStatus(204)
   } catch (error) {
     if (isAxiosError(error)) {
-      res.status(error.response.status).send();
+      res.sendStatus(error.response.status);
     }
   }
 });
@@ -77,7 +78,7 @@ app.get("/api/playlists", async (_, res) => {
     res.json(playlists);
   } catch (error) {
     if (isAxiosError(error)) {
-      res.status(error.response.status).send();
+      res.sendStatus(error.response.status);
     }
   }
 });
@@ -93,7 +94,7 @@ app.get("/api/playlist/:playlistId", async (req, res) => {
     res.json(playlist);
   } catch (error) {
     if (isAxiosError(error)) {
-      res.status(error.response.status).send();
+      res.sendStatus(error.response.status);
     }
   }
 });
@@ -102,7 +103,7 @@ app.post("/api/play", async (_, res) => {
   const { player } = prefs.data;
   // const { playlistId } = req.params;
 
-  res.status(200).send();
+  res.sendStatus(200)
   try {
     await players[player].playPlaylist();
   } catch (error) {
@@ -120,7 +121,7 @@ app.post("/video", async (req, res) => {
 
   await sources[source].writeVideoStream(video, videoId);
 
-  res.status(201).send();
+  res.sendStatus(201);
 });
 
 // TODO rename join('api', 'video-stream')
@@ -154,6 +155,7 @@ app.get("/api/hls/:dir/:filename.ts", async (req, res) => {
 // TODO simpler endpoint with less info (might not need each segment length)
 app.get("/db/videos.json", async (_, res) => {
   try {
+    // TODO get db straight from VideosDb.ts
     const videosDbFile = join(dbDir, 'videos.json')
 
     const videosDbExists = (await stat(videosDbFile)).isFile();
@@ -166,6 +168,29 @@ app.get("/db/videos.json", async (_, res) => {
     return res.sendStatus(500);
   }
 });
+
+app.get("/api/queue/", async (_, res) => {
+  try {
+    return res.json(QueueDb.data).send;
+  } catch (error) {
+    return res.sendStatus(500);
+  }
+});
+
+app.post("/api/queue/", async (req, res) => {
+  try {
+    const { items } = req.body
+    QueueDb.addItems(items)
+
+    // return stream.pipe(res);
+    return res.sendStatus(200);
+  } catch (error) {
+    return res.sendStatus(500);
+  }
+});
+
+// app.post("/api/queue/play")
+
 
 const server = app.listen(appPort, appIp, () =>
   console.log(`viz running at ${appUrl}`)

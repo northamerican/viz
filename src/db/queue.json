@@ -1,0 +1,142 @@
+{
+  "startTime": 0,
+  "seekOffsetTime": 0,
+  "currentQueue": "1a9d9523-4bc5-491c-abad-6494b17776c1",
+  "queues": [
+    {
+      "id": "1a9d9523-4bc5-491c-abad-6494b17776c1",
+      "items": [
+        {
+          "track": {
+            "id": "0jX5phmoEyevUXOk6WH3Iz",
+            "player": "spotify",
+            "artists": [
+              "Jack Stauber"
+            ],
+            "title": "Databend"
+          },
+          "videoId": null,
+          "downloaded": false,
+          "id": "8fe2e2d7-fb66-47dd-8593-d01d20fe9e3b"
+        },
+        {
+          "track": {
+            "id": "2xaFtNhCw5Q4hn1EKsrkLv",
+            "player": "spotify",
+            "artists": [
+              "Bomfunk MC's"
+            ],
+            "title": "Freestyler - Radio Edit"
+          },
+          "videoId": null,
+          "downloaded": false,
+          "id": "03ded36e-1a42-478f-ab63-ac014f908409"
+        },
+        {
+          "track": {
+            "id": "7IBLt4Qarf4JDLxIQDv2O5",
+            "player": "spotify",
+            "artists": [
+              "A$AP Rocky"
+            ],
+            "title": "D.M.B."
+          },
+          "videoId": null,
+          "downloaded": false,
+          "id": "f0736897-248c-4fed-8f97-ab5de54422b1"
+        },
+        {
+          "track": {
+            "id": "4aAk4O7SQXqEAwl41P1cVY",
+            "player": "spotify",
+            "artists": [
+              "Vladimir Cauchemar"
+            ],
+            "title": "Aulos"
+          },
+          "videoId": null,
+          "downloaded": false,
+          "id": "5abf371d-8036-436c-9cf7-0252c893243f"
+        },
+        {
+          "track": {
+            "id": "7KvSuH86lIT2aTl9PBCAfd",
+            "player": "spotify",
+            "artists": [
+              "Sneaker Pimps"
+            ],
+            "title": "6 Underground"
+          },
+          "videoId": null,
+          "downloaded": false,
+          "id": "c81dd2dc-7759-4633-b936-1ce248aa837e"
+        },
+        {
+          "track": {
+            "id": "3W8hvNnVNEOx8J38dDdzny",
+            "player": "spotify",
+            "artists": [
+              "Tom Tom Club"
+            ],
+            "title": "As Above, so Below"
+          },
+          "videoId": null,
+          "downloaded": false,
+          "id": "5cb8fe36-7645-44ab-81fd-8eb55d9b467a"
+        },
+        {
+          "track": {
+            "id": "5AGy7y5onMvRM1Vd8QqJku",
+            "player": "spotify",
+            "artists": [
+              "Moon King"
+            ],
+            "title": "In & Out"
+          },
+          "videoId": null,
+          "downloaded": false,
+          "id": "7354bdd2-b0b5-4e9b-86bc-2ee9d8951678"
+        },
+        {
+          "track": {
+            "id": "4RkKf3UBRxF2kn2Vh0ww8l",
+            "player": "spotify",
+            "artists": [
+              "Thomas Dolby"
+            ],
+            "title": "She Blinded Me With Science"
+          },
+          "videoId": null,
+          "downloaded": false,
+          "id": "0529880c-0ea7-477e-a5e2-29dc0b328f69"
+        },
+        {
+          "track": {
+            "id": "3cAeVEM3e2qv2V4lVhMpdR",
+            "player": "spotify",
+            "artists": [
+              "Omar Souleyman"
+            ],
+            "title": "Warni Warni"
+          },
+          "videoId": null,
+          "downloaded": false,
+          "id": "a0233af2-acb9-4959-af26-394a9fc28544"
+        },
+        {
+          "track": {
+            "id": "0aWhxzFrP2Yyz3CetJe0xE",
+            "player": "spotify",
+            "artists": [
+              "The Knife"
+            ],
+            "title": "Pass This On"
+          },
+          "videoId": null,
+          "downloaded": false,
+          "id": "24bdf46f-d93d-4cbf-8767-8c7b01614384"
+        }
+      ]
+    }
+  ]
+}

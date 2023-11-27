@@ -150,6 +150,8 @@ const getPlaylist: GetPlaylist = async (playlistId, total) => {
 
     const allTracks = playlistTrackResponses.flatMap(({ data }) => {
       return data.items.map(item => ({
+        id: item.track.id,
+        player: 'spotify' as const,
         artists: item.track.artists.map(artist => artist.name),
         title: item.track.name
       }))

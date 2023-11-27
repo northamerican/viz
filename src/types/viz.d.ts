@@ -1,9 +1,9 @@
 declare module "Viz" {
   export type AppState = {
     isLoggedIn: boolean
-    // currentTrack: 
-    playlists: any
-    selectedPlaylist: any
+    playlists: PlaylistList
+    selectedPlaylist: Playlist
+    queue: Queue
   }
 
   export type AuthStateDbType = {
@@ -14,17 +14,14 @@ declare module "Viz" {
   export type Track = {
     id: string
     artists: string[]
-    title: string // TODO change to name ?
-    durationMs: number
-    progressMs: number
-    shuffleState: boolean
-    isPlaying: boolean
+    title: string // TODO change to name
+    player: PlayerNames
   }
 
   export type Playlist = {
     id: string
     name: string
-    tracks: Partial<Track>[]
+    tracks: Track[]
   }
 
   export type PlaylistListItem = {
@@ -32,7 +29,6 @@ declare module "Viz" {
     name: string
     total: number
   }
-
   export type PlaylistList = {
     items: PlaylistListItem[]
   }
@@ -44,10 +40,26 @@ declare module "Viz" {
     segmentDurations: number[]
   }
   export type Videos = Video[]
-
   export type VideosDbType = {
     startTime: number,
     videos: Videos
+  }
+
+  export type QueueItem = {
+    id: string
+    track: Track
+    videoId: string
+    downloaded: boolean
+  }
+  export type Queue = {
+    id: string,
+    items: QueueItem[]
+  }
+  export type QueueDbType = {
+    startTime: number,
+    seekOffsetTime: number,
+    currentQueue: string
+    queues: Queue[]
   }
 
   export type PlayerNames = 'spotify'

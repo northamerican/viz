@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import axios from 'axios'
 import { onMounted, onUnmounted } from 'vue'
-import type { AppState, Track } from 'Viz'
+import type { AppState, Playlist, Track } from 'Viz'
 import ListItem from './ListItem.vue'
 
 const props = defineProps<{ state: AppState }>()
@@ -10,6 +10,15 @@ const getVideo = async ({ artists, title }: Partial<Track>) => {
   axios.post('/video', {
     artist: artists[0],
     title
+  })
+}
+
+const addToQueue = (playlist: Playlist) => {
+  const { tracks } = playlist
+  axios.post('/api/queue', {
+    items: tracks.map(track => {
+      return { track: track, videoId: null, downloaded: false }
+    })
   })
 }
 
@@ -39,7 +48,10 @@ onUnmounted(() => clearInterval(getPlaylistInterval))
         <button @click="unselectPlaylist">⇦</button>
         {{ state.selectedPlaylist.name }}
       </h2>
-      <button class="play" @click="playPlaylist">▶</button>
+      <div>
+        <button @click="() => addToQueue(state.selectedPlaylist)">+</button>
+        <button @click="playPlaylist">▶</button>
+      </div>
     </header>
     <ListItem v-for="track in state.selectedPlaylist.tracks">
       <div class="track-info">
@@ -60,6 +72,7 @@ onUnmounted(() => clearInterval(getPlaylistInterval))
 header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-inline: 0.5rem;
 }
 

@@ -6,14 +6,18 @@ import Login from './components/Login.vue'
 import Player from './components/Player.vue'
 import Playlist from './components/Playlist.vue'
 import Playlists from './components/Playlists.vue'
+import Queue from './components/Queue.vue'
 
 import type { AppState } from 'Viz'
 
 const state = reactive<AppState>({
   isLoggedIn: !!getCookie('isLoggedIn'),
-  // currentTrack: null,
-  playlists: [],
-  selectedPlaylist: null
+  playlists: {
+    items: []
+  },
+  selectedPlaylist: null,
+  queue: null
+  // currentQueue:
 })
 </script>
 
@@ -30,8 +34,7 @@ const state = reactive<AppState>({
       <Playlist :state="state" v-else />
 
       <div>
-        <!-- <Queue /> -->
-        <h1>Queue</h1>
+        <Queue :state="state" />
       </div>
     </section>
     <section v-else>Log in to see your playlists</section>
