@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
-    "server": "yarn tsx ./src/server.ts"
+    "server": "yarn tsx --env-file .env ./src/server.ts"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.13.2",

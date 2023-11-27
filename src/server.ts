@@ -4,7 +4,6 @@ import { createReadStream } from "fs";
 import { stat } from "fs/promises";
 import ViteExpress from "vite-express";
 import { join } from "path"
-
 import sources from "./sources";
 import players from "./players";
 import {
@@ -114,9 +113,10 @@ app.get("/api/playlists", async (_, res) => {
 app.get("/api/playlist/:playlistId", async (req, res) => {
   const { player } = prefs.data;
   const { playlistId } = req.params;
+  const { total } = req.query;
 
   try {
-    const playlist = await players[player].getPlaylist(playlistId);
+    const playlist = await players[player].getPlaylist(playlistId, Number(total));
 
     res.json(playlist);
   } catch (error) {

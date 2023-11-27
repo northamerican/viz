@@ -1,19 +1,25 @@
 <script setup lang="ts">
 import axios from 'axios'
 import { onMounted, onUnmounted } from 'vue'
-import type { AppState } from 'Viz'
+import type { AppState, Playlist, PlaylistList, PlaylistListItem } from 'Viz'
+import ListItem from './ListItem.vue'
 
 const props = defineProps<{ state: AppState }>()
 
 const getPlaylists = async () => {
-  const { data } = await axios.get<any>('/api/playlists')
+  const { data } = await axios.get<PlaylistList>('/api/playlists')
   props.state.playlists = data
   // if (status === 204) throw new Error("");
 }
 
-const getPlaylist = async (playlistId: string) => {
+const getPlaylist = async (playlist: PlaylistListItem) => {
+  const { id, total } = playlist
   props.state.selectedPlaylist = null
-  const { data } = await axios.get<any>(`/api/playlist/${playlistId}`)
+  const { data } = await axios.get<Playlist>(`/api/playlist/${id}`, {
+    params: {
+      total
+    }
+  })
   props.state.selectedPlaylist = data
   // if (status === 204) throw new Error("");
 }
@@ -35,21 +41,31 @@ onUnmounted(() => clearInterval(getPlaylistsInterval))
 
 <template>
   <div v-if="state.playlists.items?.length">
-    <div v-for="playlist in state.playlists.items" class="playlist">
-      <div>
-        <button @click="getPlaylist(playlist.id)">{{ playlist.name }}</button>
-      </div>
-      <div class="playlist-actions">...</div>
+    <div v-for="playlist in state.playlists.items">
+      <ListItem>
+        <strong class="playlist-title" @click="getPlaylist(playlist)">{{
+          playlist.name
+        }}</strong>
+        <div class="playlist-actions">...</div>
+      </ListItem>
     </div>
   </div>
   <p v-else>Loading...</p>
 </template>
 
 <style>
-.playlist {
+/* .playlist {
   display: flex;
   align-items: center;
   margin-bottom: 1rem;
+} */
+
+.playlist-title {
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .playlist-actions {

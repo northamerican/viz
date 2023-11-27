@@ -1,11 +1,14 @@
 import axios from "axios";
 import querystring from "node:querystring";
 import { join } from "path";
-import { appUrl, dbDir, playersApiKeys, redirectEndpoint } from "../consts";
+import { appUrl, dbDir, redirectEndpoint } from "../consts";
 import { JSONPreset } from "lowdb/node";
 import type { AuthStateDbType } from "Viz";
-import type { GetToken, GetQueue, GetCurrentlyPlaying } from "VizPlayer";
+import type { GetToken, GetQueue, GetCurrentlyPlaying, GetPlaylist, GetPlaylists } from "VizPlayer";
 import { VideosDb } from "../VideosDb";
+
+const clientId = process.env.SPOTIFY_CLIENT_ID
+const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
 
 // TODO make spotify-specific?
 const auth = await JSONPreset<AuthStateDbType>(join(dbDir, 'auth.json'), {
@@ -40,7 +43,6 @@ spotifyAxios.interceptors.response.use((response) => {
 });
 
 const getToken: GetToken = async (req, refresh) => {
-  const { clientId, clientSecret } = playersApiKeys.spotify;
   try {
     const { data } = await spotifyAxios.post(
       "https://accounts.spotify.com/api/token",
@@ -76,10 +78,9 @@ const getToken: GetToken = async (req, refresh) => {
   }
 };
 
-const getRefreshToken = getToken.bind(this, null, true)
+const getRefreshToken = () => getToken(null, true)
 
 const authorize = () => {
-  const { clientId } = playersApiKeys.spotify;
   const scope =
     "user-read-private user-read-email user-read-currently-playing user-read-playback-state playlist-read-private";
 
@@ -151,36 +152,64 @@ const getCurrentlyPlaying: GetCurrentlyPlaying = async () => {
   }
 }
 
-const getPlaylists = async () => {
+// TODO pagination
+const getPlaylists: GetPlaylists = async (offset = 0) => {
   try {
     const { data } = await spotifyAxios.get<SpotifyApi.ListOfCurrentUsersPlaylistsResponse>(
-      "https://api.spotify.com/v1/me/playlists",
-    );
+      "https://api.spotify.com/v1/me/playlists", {
+      params: {
+        offset
+      }
+    });
 
-    return data
+    return {
+      // offset,
+      // total,
+      items: data.items.map(({ id, name, tracks }) => ({
+        id,
+        name,
+        total: tracks.total
+      }))
+    }
   } catch (error) {
     return Promise.reject(error);
   }
 }
 
-const getPlaylist = async (playlistId: string) => {
-  try {
-    // TODO recursively get all of them by calling offset param until total is reached
-    const { data } = await spotifyAxios.get<SpotifyApi.PlaylistTrackResponse>(
-      `https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
-      params: {
-        limit: 50,
-        // fields: 'offset,total,items(track(name,artist))'
-      }
-    });
+const getPlaylist: GetPlaylist = async (playlistId, total) => {
+  const itemsMaxLimit = 50
+  const callsCount = Math.ceil(total / itemsMaxLimit)
+  const offsets = [...Array(callsCount).keys()]
 
-    return {
-      ...data,
-      id: playlistId,
-      items: data.items.map(item => ({
+  // console.log({ offsets })
+
+  try {
+    const [playlistObjectFullResponse, ...playlistTrackResponses] = await Promise.all([
+      // This call returns the playlist name
+      spotifyAxios.get<SpotifyApi.PlaylistObjectFull>(
+        `https://api.spotify.com/v1/playlists/${playlistId}`, {
+      }),
+      // These return all tracks info
+      ...offsets.map(offset => spotifyAxios.get<SpotifyApi.PlaylistTrackResponse>(
+        `https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+        params: {
+          offset,
+          limit: itemsMaxLimit,
+          fields: 'offset,total,items(track(id,name,artists))'
+        }
+      }))])
+
+    const allTracks = playlistTrackResponses.flatMap(({ data }) => {
+      return data.items.map(item => ({
         artists: item.track.artists.map(artist => artist.name),
         title: item.track.name
       }))
+    })
+
+    return {
+      id: playlistId,
+      name: playlistObjectFullResponse.data.name,
+      tracks: allTracks
     }
   } catch (error) {
     return Promise.reject(error);

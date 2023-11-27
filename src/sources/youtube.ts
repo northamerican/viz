@@ -3,7 +3,6 @@ import ytsr from "ytsr";
 import { join } from "path";
 import ytdlMuxer from "../ytdlMuxer.ts";
 import {
-  maxVideoDuration,
   mp4Dir
 } from "../consts.ts";
 import toHls from "../toHls.ts";
@@ -13,6 +12,8 @@ import type {
   GetVideo,
   WriteVideoStream
 } from "VizSource";
+
+const maxVideoDuration = 12 * 60;
 
 function durationToSeconds(duration: string) {
   return duration.split(":").reduce((acc, time) => 60 * acc + +time, 0);

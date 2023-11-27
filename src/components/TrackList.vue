@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { computed, onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import type { AppState, Track } from 'Viz'
+import ListItem from './ListItem.vue'
 
 const props = defineProps<{ state: AppState }>()
 
@@ -16,12 +17,9 @@ const playPlaylist = () => {
   axios.post('/api/play/')
 }
 
-const playlistTitle = computed(
-  () =>
-    props.state.playlists.items?.find(
-      playlist => playlist.id === props.state.selectedPlaylist.id
-    ).name
-)
+const unselectPlaylist = () => {
+  props.state.selectedPlaylist = null
+}
 
 let getTracklistInterval: NodeJS.Timeout
 onMounted(async () => {
@@ -40,13 +38,12 @@ onUnmounted(() => clearInterval(getTracklistInterval))
   <div v-if="state.selectedPlaylist">
     <header>
       <h2 class="title">
-        <button>⇦</button>
-        {{ playlistTitle }}
+        <button @click="unselectPlaylist">⇦</button>
+        {{ state.selectedPlaylist.name }}
       </h2>
       <button class="play" @click="playPlaylist">▶</button>
     </header>
-    <!-- <Track /> -->
-    <div class="track" v-for="track in state.selectedPlaylist.items">
+    <ListItem v-for="track in state.selectedPlaylist.tracks">
       <div class="track-play-state">
         <!-- <span v-if="isCurrentTrack(track)">
           <span v-if="state.currentTrack.isPlaying">▶</span>
@@ -62,7 +59,7 @@ onUnmounted(() => clearInterval(getTracklistInterval))
       <div class="track-actions">
         <button @click="() => getVideo(track)">get video</button>
       </div>
-    </div>
+    </ListItem>
   </div>
   <!-- <p v-else>Nothing playing.</p> -->
 </template>
@@ -75,20 +72,6 @@ header {
 
   & .title {
     margin-top: 0;
-  }
-
-  button.play {
-  }
-}
-
-.track {
-  display: flex;
-  align-items: center;
-  padding-block: 0.5rem;
-  cursor: pointer;
-
-  &:hover {
-    background: rgba(0, 0, 0, 15%);
   }
 }
 

@@ -23,6 +23,22 @@ declare module "Viz" {
   }
   export type TrackList = Track[]
 
+  export type Playlist = {
+    id: string
+    name: string
+    tracks: Partial<Track>[]
+  }
+
+  export type PlaylistListItem = {
+    id: string
+    name: string
+    total: number
+  }
+
+  export type PlaylistList = {
+    items: PlaylistListItem[]
+  }
+
   export type Video = {
     id: string
     source: SourceNames

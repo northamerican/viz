@@ -27,17 +27,15 @@ const state = reactive<AppState>({
   <main>
     <Player :state="state" />
     <section v-if="state.isLoggedIn" class="library">
-      <Playlists :state="state" />
-      <TrackList :state="state" />
+      <Playlists :state="state" v-if="state.selectedPlaylist === null" />
+      <TrackList :state="state" v-else />
+
+      <div>
+        <!-- <Queue /> -->
+        queue here
+      </div>
     </section>
     <section v-else>Log in to see your playlists</section>
-    <section>
-      <!-- tab with youtube playlists. -->
-      <!-- is youtube a Player in this case? supplemental content? -->
-      <!-- i guess player with which we can fetch content from... -->
-      <!-- <Queue /> -->
-      queue here
-    </section>
   </main>
 </template>
 

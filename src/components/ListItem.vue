@@ -1,0 +1,20 @@
+<script setup lang="ts"></script>
+
+<template>
+  <div class="list-item">
+    <slot />
+  </div>
+</template>
+
+<style>
+.list-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  min-height: 64px;
+
+  &:hover {
+    background: rgba(0, 0, 0, 15%);
+  }
+}
+</style>
