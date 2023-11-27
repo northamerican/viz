@@ -40,6 +40,7 @@ onUnmounted(() => clearInterval(getTracklistInterval))
   <div v-if="state.selectedPlaylist">
     <header>
       <h2 class="title">
+        <button>⇦</button>
         {{ playlistTitle }}
       </h2>
       <button class="play" @click="playPlaylist">▶</button>

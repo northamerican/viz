@@ -23,7 +23,8 @@ async function toHls(videoId: string) {
   }
 
   console.log(`Generating HLS files for video ${videoId}`)
-  console.time('in')
+  const wroteToDbMsg = `Wrote ${videoId} segments to videos db in`
+  console.time(wroteToDbMsg)
 
   const process = cp.spawn(ffmpegPath, [
     "-i",
@@ -76,8 +77,7 @@ async function toHls(videoId: string) {
           (total, duration) => total + duration, 0),
       })
 
-      console.log(`Wrote ${videoId} segments to videos db`)
-      console.timeEnd('in')
+      console.timeEnd(wroteToDbMsg)
     });
 
   return process

@@ -1,6 +1,7 @@
 import express from "express";
 import compression from "compression";
 import { createReadStream } from "fs";
+import { stat } from "fs/promises";
 import ViteExpress from "vite-express";
 import { join } from "path"
 
@@ -154,7 +155,7 @@ app.post("/video", async (req, res) => {
 app.get(`/api/hls/${vizM3u8}`, async (_, res) => {
   // TODO confirm sending as gzip ?
   try {
-    const m3u8 = VizM3u8.getM3u8()
+    const m3u8 = VizM3u8()
 
     return res
       .type("application/vnd.apple.mpegurl")
@@ -181,7 +182,12 @@ app.get("/api/hls/:dir/:filename.ts", async (req, res) => {
 // TODO simpler endpoint with less info (might not need each segment length)
 app.get("/db/videos.json", async (_, res) => {
   try {
-    const stream = createReadStream(join(dbDir, 'videos.json'));
+    const videosDbFile = join(dbDir, 'videos.json')
+
+    const videosDbExists = (await stat(videosDbFile)).isFile();
+    if (!videosDbExists) return res.json({})
+
+    const stream = createReadStream(videosDbFile);
     res.type('json')
     return stream.pipe(res);
   } catch (error) {

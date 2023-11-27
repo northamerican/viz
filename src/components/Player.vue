@@ -42,17 +42,6 @@ onUnmounted(() => clearInterval(getVideosDbInterval))
       muted
       autoplay
     />
-    <div>
-      <!-- <span>skip to</span>
-      <span v-for="(video, i) in videos">
-        <button
-          v-if="video.segmentDurations.length"
-          @click="() => videoEl.fastSeek(videoTimestamps[i])"
-        >
-          {{ video.id }}
-        </button>
-      </span> -->
-    </div>
   </section>
 </template>
 
@@ -63,7 +52,7 @@ onUnmounted(() => clearInterval(getVideosDbInterval))
 }
 
 video {
-  width: 80%;
-  height: auto;
+  width: auto;
+  max-height: 80vh;
 }
 </style>
