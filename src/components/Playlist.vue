@@ -21,15 +21,15 @@ const unselectPlaylist = () => {
   props.state.selectedPlaylist = null
 }
 
-let getTracklistInterval: NodeJS.Timeout
+let getPlaylistInterval: NodeJS.Timeout
 onMounted(async () => {
   //
-  getTracklistInterval = setInterval(() => {
+  getPlaylistInterval = setInterval(() => {
     //
   }, 5000)
 })
 
-onUnmounted(() => clearInterval(getTracklistInterval))
+onUnmounted(() => clearInterval(getPlaylistInterval))
 </script>
 
 <template>
@@ -60,11 +60,7 @@ onUnmounted(() => clearInterval(getTracklistInterval))
 header {
   display: flex;
   justify-content: space-between;
-  margin-inline: 1rem;
-
-  & .title {
-    margin-top: 0;
-  }
+  margin-inline: 0.5rem;
 }
 
 .track-info {

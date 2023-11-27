@@ -1,7 +1,6 @@
 declare module "Viz" {
   export type AppState = {
     isLoggedIn: boolean
-    trackList: TrackList
     // currentTrack: 
     playlists: any
     selectedPlaylist: any
@@ -21,7 +20,6 @@ declare module "Viz" {
     shuffleState: boolean
     isPlaying: boolean
   }
-  export type TrackList = Track[]
 
   export type Playlist = {
     id: string

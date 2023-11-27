@@ -4,15 +4,14 @@ import { getCookie } from 'typescript-cookie'
 
 import Login from './components/Login.vue'
 import Player from './components/Player.vue'
-import TrackList from './components/TrackList.vue'
+import Playlist from './components/Playlist.vue'
 import Playlists from './components/Playlists.vue'
 
 import type { AppState } from 'Viz'
 
 const state = reactive<AppState>({
   isLoggedIn: !!getCookie('isLoggedIn'),
-  trackList: [],
-  currentTrack: null,
+  // currentTrack: null,
   playlists: [],
   selectedPlaylist: null
 })
@@ -20,7 +19,7 @@ const state = reactive<AppState>({
 
 <template>
   <nav>
-    <h1>viz</h1>
+    <h1 class="logo"></h1>
     <Login :state="state" />
   </nav>
 
@@ -28,7 +27,7 @@ const state = reactive<AppState>({
     <Player :state="state" />
     <section v-if="state.isLoggedIn" class="library">
       <Playlists :state="state" v-if="state.selectedPlaylist === null" />
-      <TrackList :state="state" v-else />
+      <Playlist :state="state" v-else />
 
       <div>
         <!-- <Queue /> -->

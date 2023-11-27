@@ -18,7 +18,7 @@ import {
 import { isAxiosError } from "axios";
 import { JSONPreset } from 'lowdb/node'
 import { VizM3u8 } from "./VizM3u8.ts";
-import type { TrackList, VizPrefsDbType } from "Viz";
+import type { VizPrefsDbType } from "Viz";
 
 // move to a PrefsDb
 const prefs = await JSONPreset<VizPrefsDbType>(join(dbDir, 'prefs.json'), {
@@ -62,7 +62,7 @@ app.get("/logout", async (_, res) => {
 
     res.status(204).send()
   } catch (error) {
-    if (isAxiosError<TrackList>(error)) {
+    if (isAxiosError(error)) {
       res.status(error.response.status).send();
     }
   }
@@ -76,7 +76,7 @@ app.get("/api/playlists", async (_, res) => {
 
     res.json(playlists);
   } catch (error) {
-    if (isAxiosError<TrackList>(error)) {
+    if (isAxiosError(error)) {
       res.status(error.response.status).send();
     }
   }
@@ -92,7 +92,7 @@ app.get("/api/playlist/:playlistId", async (req, res) => {
 
     res.json(playlist);
   } catch (error) {
-    if (isAxiosError<TrackList>(error)) {
+    if (isAxiosError(error)) {
       res.status(error.response.status).send();
     }
   }

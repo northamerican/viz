@@ -55,12 +55,6 @@ onUnmounted(() => clearInterval(getPlaylistsInterval))
 </template>
 
 <style>
-/* .playlist {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
-} */
-
 .playlist-title {
   cursor: pointer;
 
