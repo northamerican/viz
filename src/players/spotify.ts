@@ -4,7 +4,7 @@ import { join } from "path";
 import { appUrl, dbDir, redirectEndpoint } from "../consts";
 import { JSONPreset } from "lowdb/node";
 import type { AuthStateDbType } from "Viz";
-import type { GetToken, GetQueue, GetCurrentlyPlaying, GetPlaylist, GetPlaylists } from "VizPlayer";
+import type { GetToken, GetPlaylist, GetPlaylists } from "VizPlayer";
 import { VideosDb } from "../VideosDb";
 
 const clientId = process.env.SPOTIFY_CLIENT_ID
@@ -82,7 +82,7 @@ const getRefreshToken = () => getToken(null, true)
 
 const authorize = () => {
   const scope =
-    "user-read-private user-read-email user-read-currently-playing user-read-playback-state playlist-read-private";
+    "user-read-private user-read-email playlist-read-private";
 
   return "https://accounts.spotify.com/authorize?" +
     querystring.stringify({
@@ -99,57 +99,6 @@ const logout = async () => {
     refreshToken: null
   }
   auth.write()
-}
-
-const getQueue: GetQueue = async () => {
-  try {
-    const { data } = await spotifyAxios.get<SpotifyApi.UsersQueueResponse>(
-      "https://api.spotify.com/v1/me/player/queue"
-    );
-
-    if (!data.currently_playing) return [];
-
-    // TODO handle podcast playing
-    // if (data.currently_playing.type === 'episode') {
-    //   return []
-    // }
-
-    return [
-      data.currently_playing as SpotifyApi.TrackObjectFull,
-      ...data.queue as SpotifyApi.TrackObjectFull[]
-    ].map((track) => ({
-      id: track.id,
-      artists: track.artists.map(artist => artist.name),
-      title: track.name,
-    }));
-  } catch (error) {
-    return Promise.reject(error);
-  }
-}
-
-// @ts-ignore
-const getCurrentlyPlaying: GetCurrentlyPlaying = async () => {
-  try {
-    const { data } = await spotifyAxios.get<SpotifyApi.CurrentPlaybackResponse>(
-      "https://api.spotify.com/v1/me/player",
-    );
-
-    if (!data.item) return {};
-
-    return {
-      id: data.item.id,
-      // @ts-ignore
-      artists: data.item.artists.map(artist => artist.name),
-      title: data.item.name,
-      // @ts-ignore
-      durationMs: data.duration_ms,
-      progressMs: data.progress_ms,
-      shuffleState: data.shuffle_state,
-      isPlaying: data.is_playing,
-    }
-  } catch (error) {
-    return Promise.reject(error);
-  }
 }
 
 // TODO pagination
@@ -224,8 +173,6 @@ export const spotify = {
   getToken,
   authorize,
   logout,
-  getQueue,
-  getCurrentlyPlaying,
   getPlaylists,
   getPlaylist,
   playPlaylist

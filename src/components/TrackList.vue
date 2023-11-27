@@ -23,11 +23,9 @@ const unselectPlaylist = () => {
 
 let getTracklistInterval: NodeJS.Timeout
 onMounted(async () => {
-  // getCurrent()
-  // getTrackList()
+  //
   getTracklistInterval = setInterval(() => {
-    // getCurrent()
-    // getTrackList()
+    //
   }, 5000)
 })
 
@@ -44,12 +42,6 @@ onUnmounted(() => clearInterval(getTracklistInterval))
       <button class="play" @click="playPlaylist">▶</button>
     </header>
     <ListItem v-for="track in state.selectedPlaylist.tracks">
-      <div class="track-play-state">
-        <!-- <span v-if="isCurrentTrack(track)">
-          <span v-if="state.currentTrack.isPlaying">▶</span>
-          <span v-else>⏸</span>
-        </span> -->
-      </div>
       <div class="track-info">
         <strong>{{ track.title }}</strong>
         <br /><span class="track-artist" v-for="artist in track.artists">
@@ -73,11 +65,6 @@ header {
   & .title {
     margin-top: 0;
   }
-}
-
-.track-play-state {
-  width: 1rem;
-  margin-right: 0;
 }
 
 .track-info {

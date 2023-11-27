@@ -30,6 +30,7 @@ export const VizM3u8 = () => {
 
     if (excludeSegment) return ''
 
+    // Lowest segment index indicates the first sequence
     mediaSequence = Math.min(mediaSequence, playlistSegmentIndex)
 
     const discontinuity = segmentIndex === 0 ? '\n#EXT-X-DISCONTINUITY' : ''

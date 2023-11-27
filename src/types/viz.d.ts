@@ -2,7 +2,7 @@ declare module "Viz" {
   export type AppState = {
     isLoggedIn: boolean
     trackList: TrackList
-    currentTrack: Track
+    // currentTrack: 
     playlists: any
     selectedPlaylist: any
   }

@@ -68,34 +68,6 @@ app.get("/logout", async (_, res) => {
   }
 });
 
-app.get("/queue", async (_, res) => {
-  const { player } = prefs.data;
-
-  try {
-    const queue = await players[player].getQueue();
-
-    res.json(queue);
-  } catch (error) {
-    if (isAxiosError<TrackList>(error)) {
-      res.status(error.response.status).send();
-    }
-  }
-});
-
-app.get("/current", async (_, res) => {
-  const { player } = prefs.data;
-
-  try {
-    const current = await players[player].getCurrentlyPlaying();
-
-    res.json(current);
-  } catch (error) {
-    if (isAxiosError<TrackList>(error)) {
-      res.status(error.response.status).send();
-    }
-  }
-});
-
 app.get("/api/playlists", async (_, res) => {
   const { player } = prefs.data;
 

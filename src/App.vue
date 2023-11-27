@@ -32,7 +32,7 @@ const state = reactive<AppState>({
 
       <div>
         <!-- <Queue /> -->
-        queue here
+        <h1>Queue</h1>
       </div>
     </section>
     <section v-else>Log in to see your playlists</section>

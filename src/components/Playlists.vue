@@ -41,6 +41,7 @@ onUnmounted(() => clearInterval(getPlaylistsInterval))
 
 <template>
   <div v-if="state.playlists.items?.length">
+    <h1>Playlists</h1>
     <div v-for="playlist in state.playlists.items">
       <ListItem>
         <strong class="playlist-title" @click="getPlaylist(playlist)">{{
