@@ -5,7 +5,7 @@ import type { Video, VideosDbType } from "Viz";
 
 const videosDb = await JSONPreset<VideosDbType>(join(dbDir, 'videos.json'), {
   startTime: 0,
-  videos: []
+  videos: {}
 })
 
 const { videos } = videosDb.data
@@ -25,12 +25,12 @@ export const VideosDb = {
   },
 
   getVideo(videoId: string) {
-    return videos.find(({ id }) => id === videoId)
+    return videos[videoId]
   },
 
   // TODO cache this? may need to give each segment an id
   getVideoSegmentInfo() {
-    return videos.flatMap(({ segmentDurations, id }) => {
+    return Object.values(videos).flatMap(({ segmentDurations, id }) => {
       return segmentDurations.map((duration, segmentIndex) => ({
         segmentIndex,
         videoId: id,
@@ -45,7 +45,7 @@ export const VideosDb = {
       return this.editVideo(existingVideo, props)
     }
 
-    videos.push(props)
+    videos[props.id] = props
     videosDb.write()
   },
 

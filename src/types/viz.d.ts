@@ -39,7 +39,9 @@ declare module "Viz" {
     duration: number,
     segmentDurations: number[]
   }
-  export type Videos = Video[]
+  export type Videos = {
+    [id: string]: Video
+  }
   export type VideosDbType = {
     startTime: number,
     videos: Videos

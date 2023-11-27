@@ -1,7 +1,7 @@
 {
   "startTime": 1701111606500,
-  "videos": [
-    {
+  "videos": {
+    "W6j5DYoCz5Q": {
       "id": "W6j5DYoCz5Q",
       "source": "youtube",
       "duration": 199.28,
@@ -42,7 +42,7 @@
         1.28
       ]
     },
-    {
+    "ymNFyxvIdaM": {
       "id": "ymNFyxvIdaM",
       "source": "youtube",
       "duration": 292.44,
@@ -98,7 +98,7 @@
         4.44
       ]
     },
-    {
+    "0NzlbBmkM3E": {
       "id": "0NzlbBmkM3E",
       "source": "youtube",
       "duration": 293.125,
@@ -154,7 +154,7 @@
         5.125
       ]
     },
-    {
+    "hpjV962DLWs": {
       "id": "hpjV962DLWs",
       "source": "youtube",
       "duration": 172,
@@ -190,7 +190,7 @@
         4
       ]
     },
-    {
+    "Wuwfe3DRJzE": {
       "id": "Wuwfe3DRJzE",
       "source": "youtube",
       "duration": 235.52,
@@ -237,7 +237,7 @@
         1.52
       ]
     },
-    {
+    "PJ4XD4sAbS4": {
       "id": "PJ4XD4sAbS4",
       "source": "youtube",
       "duration": 281.531623,
@@ -291,7 +291,7 @@
         5.505867
       ]
     },
-    {
+    "Vny8StvRAzY": {
       "id": "Vny8StvRAzY",
       "source": "youtube",
       "duration": 300.25831199999993,
@@ -349,5 +349,5 @@
         0.250267
       ]
     }
-  ]
+  }
 }
