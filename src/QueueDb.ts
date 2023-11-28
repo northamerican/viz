@@ -1,29 +1,69 @@
 import { JSONPreset } from "lowdb/node";
 import { join } from "path";
 import { dbDir } from "./consts";
-import type { QueueDbType, QueueItem } from "Viz";
+import type { Queue, QueueDbType, QueueItem } from "Viz";
 import { v4 as uuidv4 } from 'uuid';
+import { VideosDb } from "./VideosDb";
 
 const defaultUuid = uuidv4()
+// TODO queue.json and other db filenames into consts
 const queueDb = await JSONPreset<QueueDbType>(join(dbDir, 'queue.json'), {
   startTime: 0,
   seekOffsetTime: 0,
-  currentQueue: defaultUuid,
+  currentQueueId: defaultUuid,
   queues: [{
     id: defaultUuid,
     items: []
   }]
 })
 
-const { currentQueue, queues } = queueDb.data
+const { currentQueueId, queues, startTime } = queueDb.data
 
 export const QueueDb = {
-  get currentQueue() {
-    return queues.find(queue => queue.id === currentQueue)
+  get queues() {
+    return queues
   },
 
   get data() {
     return queueDb.data
+  },
+
+  get startTime() {
+    return startTime
+  },
+
+  get currentQueue(): Queue {
+    return this.queues.find(queue => queue.id === currentQueueId)
+  },
+
+  get currentQueueWithVideos(): Queue {
+    return {
+      ...this.currentQueue,
+      items: this.currentQueue.items.map(this.getItemWithVideo)
+    }
+  },
+
+  getQueue(queueId: string): Queue {
+    return this.queues.find(({ id }) => id === queueId)
+  },
+
+  getQueueWithVideos(queueId: string): Queue {
+    const queue = this.getQueue(queueId)
+    return {
+      ...queue,
+      items: queue.items.map(this.getItemWithVideo)
+    }
+  },
+
+  getItem(queueId: string, queueItemId: string): QueueItem {
+    return this.getQueue(queueId).items.find(({ id }) => id === queueItemId)
+  },
+
+  getItemWithVideo(item: QueueItem): QueueItem {
+    return {
+      ...item,
+      video: VideosDb.getVideo(item.videoId) || null
+    }
   },
 
   setStartTime() {
@@ -31,19 +71,8 @@ export const QueueDb = {
     queueDb.write()
   },
 
-  getStartTime() {
-    return queueDb.data.startTime
-  },
-
-  getQueues() {
-    return queues
-  },
-
   addItem(props: QueueItem) {
-    this.currentQueue.items.push({
-      ...props,
-      id: uuidv4()
-    })
+    this.addItems([props])
     queueDb.write()
   },
 
@@ -52,6 +81,12 @@ export const QueueDb = {
       ...props,
       id: uuidv4()
     })))
+    queueDb.write()
+  },
+
+  editItem(queueId: string, queueItemId: string, props: Partial<QueueItem>) {
+    const queueItem = this.getItem(queueId, queueItemId)
+    Object.assign(queueItem, props)
     queueDb.write()
   }
 }

@@ -4,6 +4,7 @@ declare module "Viz" {
     playlists: PlaylistList
     selectedPlaylist: Playlist
     queue: Queue
+    // currentQueue
   }
 
   export type AuthStateDbType = {
@@ -36,7 +37,10 @@ declare module "Viz" {
   export type Video = {
     id: string
     source: SourceNames
+    sourceUrl: string,
     duration: number,
+    downloading: boolean
+    downloaded: boolean
     segmentDurations: number[]
   }
   export type Videos = {
@@ -51,16 +55,19 @@ declare module "Viz" {
     id: string
     track: Track
     videoId: string
-    downloaded: boolean
+    video?: Video
   }
   export type Queue = {
     id: string,
     items: QueueItem[]
+    // TODO use this for fetching new tracks from playlist
+    // and updating queue with new tracks
+    // playlistId: string
   }
   export type QueueDbType = {
     startTime: number,
     seekOffsetTime: number,
-    currentQueue: string
+    currentQueueId: string
     queues: Queue[]
   }
 

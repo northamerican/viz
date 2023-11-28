@@ -31,6 +31,8 @@ const app = express();
 app.use(compression());
 app.use(express.json());
 
+// Player
+
 app.get("/authorize", (_, res) => {
   const { player } = prefs.data;
   try {
@@ -102,26 +104,28 @@ app.get("/api/playlist/:playlistId", async (req, res) => {
 app.post("/api/play", async (_, res) => {
   const { player } = prefs.data;
   // const { playlistId } = req.params;
-
-  res.sendStatus(200)
   try {
     await players[player].playPlaylist();
+    res.sendStatus(200)
   } catch (error) {
   }
 });
 
-// TODO rename /api /add-video
-app.post("/video", async (req, res) => {
-  const { artist, title } = req.body;
+// Video streaming
+
+app.post("/api/video", async (req, res) => {
+  const { artist, title, queueId, queueItemId } = req.body;
   const { source } = prefs.data;
 
   console.log(`Getting video for ${title} - ${artist}`)
   const searchQuery = sources[source].createSearchQuery({ artist, title });
   const { video, videoId } = await sources[source].getVideo(searchQuery);
 
+  QueueDb.editItem(queueId, queueItemId, { videoId })
+
   await sources[source].writeVideoStream(video, videoId);
 
-  res.sendStatus(201);
+  res.status(201).json({ videoId });
 });
 
 // TODO rename join('api', 'video-stream')
@@ -152,6 +156,7 @@ app.get("/api/hls/:dir/:filename.ts", async (req, res) => {
   }
 });
 
+// TODO might not need this at all?
 // TODO simpler endpoint with less info (might not need each segment length)
 app.get("/db/videos.json", async (_, res) => {
   try {
@@ -169,9 +174,11 @@ app.get("/db/videos.json", async (_, res) => {
   }
 });
 
-app.get("/api/queue/", async (_, res) => {
+// Queue
+
+app.get("/api/queue/current", async (_, res) => {
   try {
-    return res.json(QueueDb.data).send;
+    return res.json(QueueDb.currentQueueWithVideos);
   } catch (error) {
     return res.sendStatus(500);
   }
@@ -189,7 +196,17 @@ app.post("/api/queue/", async (req, res) => {
   }
 });
 
-// app.post("/api/queue/play")
+app.put("/api/queue/:id", async (req, res) => {
+  try {
+    // const { id } = req.params;
+    // QueueDb.addItems(items)
+
+    // return stream.pipe(res);
+    return res.sendStatus(200);
+  } catch (error) {
+    return res.sendStatus(500);
+  }
+});
 
 
 const server = app.listen(appPort, appIp, () =>

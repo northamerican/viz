@@ -9,10 +9,11 @@ window.addEventListener("load", () => {
   });
 
   // chrome?
-  // const video = document.getElementById("video");
-  // hls.attachMedia(video);
+  const video = document.getElementById("video");
+  //@ts-ignore
+  hls.attachMedia(video);
 
-  hls.loadSource(`../hls/${vizM3u8}`);
+  hls.loadSource(`/api/hls/${vizM3u8}`);
 
   hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
     console.log(data);

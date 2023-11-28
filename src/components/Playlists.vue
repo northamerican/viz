@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { onMounted, onUnmounted } from 'vue'
 import type { AppState, Playlist, PlaylistList, PlaylistListItem } from 'Viz'
 import ListItem from './ListItem.vue'
+import { onMounted } from 'vue'
 
 const props = defineProps<{ state: AppState }>()
 
@@ -24,19 +24,7 @@ const getPlaylist = async (playlist: PlaylistListItem) => {
   // if (status === 204) throw new Error("");
 }
 
-onMounted(async () => {
-  getPlaylists()
-})
-
-let getPlaylistsInterval: NodeJS.Timeout
-onMounted(async () => {
-  getPlaylists()
-  getPlaylistsInterval = setInterval(() => {
-    getPlaylists()
-  }, 10000)
-})
-
-onUnmounted(() => clearInterval(getPlaylistsInterval))
+onMounted(() => getPlaylists())
 </script>
 
 <template>

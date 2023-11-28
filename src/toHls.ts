@@ -63,18 +63,18 @@ async function toHls(videoId: string) {
 
     if (!fs.existsSync(m3u8FilePath)) return
 
-    const video = VideosDb.getVideo(videoId)
-    VideosDb.editVideo(video, {
+    VideosDb.editVideo(videoId, {
       segmentDurations: getSegmentDurations(m3u8FilePath)
     })
   })
 
   process
     .on('close', async () => {
-      const video = VideosDb.getVideo(videoId)
-      VideosDb.editVideo(video, {
+      VideosDb.editVideo(videoId, {
         duration: getSegmentDurations(m3u8FilePath).reduce(
           (total, duration) => total + duration, 0),
+        downloaded: true,
+        downloading: false,
       })
 
       console.timeEnd(wroteToDbMsg)

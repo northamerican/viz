@@ -17,7 +17,7 @@ const state = reactive<AppState>({
   },
   selectedPlaylist: null,
   queue: null
-  // currentQueue:
+  // TODO currentQueue:
 })
 </script>
 
@@ -29,15 +29,17 @@ const state = reactive<AppState>({
 
   <main>
     <Player :state="state" />
-    <section v-if="state.isLoggedIn" class="library">
-      <Playlists :state="state" v-if="state.selectedPlaylist === null" />
-      <Playlist :state="state" v-else />
+    <section class="library">
+      <div v-if="state.isLoggedIn">
+        <Playlists :state="state" v-if="state.selectedPlaylist === null" />
+        <Playlist :state="state" v-else />
+      </div>
+      <div v-else>Log in to see your playlists</div>
 
       <div>
         <Queue :state="state" />
       </div>
     </section>
-    <section v-else>Log in to see your playlists</section>
   </main>
 </template>
 

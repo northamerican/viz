@@ -53,7 +53,10 @@ const getVideo: GetVideo = async (query: string) => {
   VideosDb.addVideo({
     id: videoId,
     source: 'youtube',
+    sourceUrl: url,
     duration: 0,
+    downloaded: false,
+    downloading: true,
     segmentDurations: []
   })
 

@@ -17,10 +17,10 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <div v-if="state.isLoggedIn">
-    <button @click="handleLogout">[Spotify] Logout</button>
-  </div>
-  <div v-else>
-    <button @click="handleLogin">Login with Spotify</button>
+  <div>
+    <button v-if="state.isLoggedIn" @click="handleLogout">
+      [Spotify] Logout
+    </button>
+    <button v-else @click="handleLogin">Login with Spotify</button>
   </div>
 </template>

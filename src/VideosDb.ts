@@ -40,17 +40,12 @@ export const VideosDb = {
   },
 
   addVideo(props: Video) {
-    const existingVideo = this.getVideo(props.id)
-    if (existingVideo) {
-      return this.editVideo(existingVideo, props)
-    }
-
     videos[props.id] = props
     videosDb.write()
   },
 
-  editVideo(video: Video, props: Partial<Video>) {
-    Object.assign(video, props)
+  editVideo(videoId: string, props: Partial<Video>) {
+    Object.assign(this.getVideo(videoId), props)
     videosDb.write()
   }
 }

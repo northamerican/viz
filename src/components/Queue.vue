@@ -1,29 +1,35 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { onMounted, onUnmounted, ref } from 'vue'
-import type { AppState, QueueDbType, Track } from 'Viz'
+import { ref } from 'vue'
+import type { AppState, QueueItem } from 'Viz'
 import ListItem from './ListItem.vue'
 import ActionsMenu from './ActionsMenu.vue'
+import { Queue } from 'Viz'
+import { mountWithInterval } from '../helpers'
 
 const props = defineProps<{ state: AppState }>()
+const actionsMenu = ref(null)
 
-const actionsMenu = ref(0)
-
-const getVideo = async ({ artists, title }: Partial<Track>) => {
-  axios.post('/video', {
+const getVideo = async (item: QueueItem) => {
+  const { track, id: queueItemId } = item
+  const { artists, title } = track
+  await axios.post('/api/video', {
+    queueId: props.state.queue.id,
+    queueItemId,
     artist: artists[0],
     title
   })
 }
 
 const getQueue = async () => {
-  const { data } = await axios.get<QueueDbType>('/api/queue')
-  props.state.queue = data.queues[0]
+  const { data } = await axios.get<Queue>('/api/queue/current')
+  props.state.queue = data
   // if (status === 204) throw new Error("");
 }
 
 const playQueue = () => {
   axios.post('/api/play/')
+  // TODO fastSeek video el to 0
 }
 
 const openActions = () => {
@@ -31,15 +37,27 @@ const openActions = () => {
   // actionsMenu.click()
 }
 
-// let getQueueInterval: NodeJS.Timeout
-onMounted(async () => {
-  getQueue()
-  // getQueueInterval = setInterval(() => {
-  //   getQueue();
-  // }, 5000)
-})
+const actionsMenuOptions = (item: QueueItem) => [
+  {
+    action: () => getVideo(item),
+    label: 'Get Video',
+    disabled: item.video?.downloaded
+  },
+  { action: () => {}, label: 'Replace Video...', disabled: true },
+  { action: () => {}, label: 'Remove from Queue', disabled: true },
+  {},
+  {
+    action: () => {
+      console.log(item)
+      // window.open(item.video.sourceUrl, '_blank')
+    },
+    // TODO label can read "[Video title] on Youtube...""
+    label: 'Go to YouTube Video...'
+  },
+  { action: () => {}, label: 'Go to Spotify Song...' }
+]
 
-// onUnmounted(() => clearInterval(getQueueInterval))
+mountWithInterval(getQueue, 5000)
 </script>
 
 <template>
@@ -61,19 +79,13 @@ onMounted(async () => {
         </span>
       </div>
       <div class="track-actions">
-        {{ item.downloaded ? '✔' : '⌛︎ ' }}
-        <ActionsMenu>
-          <!-- <option disabled value>Actions</option> -->
-          <option value="remove">Replace Video...</option>
-          <option value="remove">Remove from Queue</option>
-          <hr />
-          <option value="goToSource">Go to YouTube Video...</option>
-          <option value="goToPlayer">Go to Spotify Song...</option>
-        </ActionsMenu>
+        {{ item.video?.downloading ? '⌛︎' : '' }}
+        {{ item.video?.downloaded ? '✔' : '' }}
+        <ActionsMenu :options="actionsMenuOptions(item)" />
       </div>
     </ListItem>
   </div>
-  <!-- <p v-else>Nothing playing.</p> -->
+  <p v-else>Nothing queued.</p>
 </template>
 
 <style>
