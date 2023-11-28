@@ -19,6 +19,7 @@ const getVideo = async (item: QueueItem) => {
     artist: artists[0],
     title
   })
+  getQueue()
 }
 
 const getQueue = async () => {
@@ -32,11 +33,6 @@ const playQueue = () => {
   // TODO fastSeek video el to 0
 }
 
-const openActions = () => {
-  console.log(actionsMenu)
-  // actionsMenu.click()
-}
-
 const actionsMenuOptions = (item: QueueItem) => [
   {
     action: () => getVideo(item),
@@ -48,13 +44,13 @@ const actionsMenuOptions = (item: QueueItem) => [
   {},
   {
     action: () => {
-      console.log(item)
-      // window.open(item.video.sourceUrl, '_blank')
+      window.open(item.video.sourceUrl, '_blank')
     },
     // TODO label can read "[Video title] on Youtube...""
-    label: 'Go to YouTube Video...'
+    label: 'Go to YouTube Video...',
+    disabled: !item.video?.sourceUrl
   },
-  { action: () => {}, label: 'Go to Spotify Song...' }
+  { action: () => {}, label: 'Go to Spotify Song...', disabled: true }
 ]
 
 mountWithInterval(getQueue, 5000)
@@ -72,9 +68,10 @@ mountWithInterval(getQueue, 5000)
       </div>
     </header>
     <ListItem v-for="item in state.queue.items">
-      <div class="track-info" @contextmenu="openActions">
+      <div class="track-info">
         <strong>{{ item.track.title }}</strong>
-        <br /><span class="track-artist" v-for="artist in item.track.artists">
+        <br />
+        <span class="track-artist" v-for="artist in item.track.artists">
           {{ artist }}
         </span>
       </div>

@@ -1,27 +1,27 @@
 <script setup lang="ts">
 import axios from 'axios'
-import type { AppState, Playlist } from 'Viz'
+import type { AppState, Track } from 'Viz'
 import ListItem from './ListItem.vue'
+import ActionsMenu from './ActionsMenu.vue'
 
 const props = defineProps<{ state: AppState }>()
 
-const addToQueue = (playlist: Playlist) => {
-  const { tracks } = playlist
+const addToQueue = (tracks: Track[]) => {
   axios.post('/api/queue', {
     items: tracks.map(track => {
-      return { track: track, videoId: null }
+      return { track, videoId: null }
     })
   })
   // TODO make browser get current queue
 }
 
-const playPlaylist = () => {
-  axios.post('/api/play/')
-}
-
 const unselectPlaylist = () => {
   props.state.selectedPlaylist = null
 }
+
+const actionsMenuOptions = (track: Track) => [
+  { action: () => addToQueue([track]), label: 'Add to Queue' }
+]
 </script>
 
 <template>
@@ -32,8 +32,9 @@ const unselectPlaylist = () => {
         {{ state.selectedPlaylist.name }}
       </h2>
       <div>
-        <button @click="() => addToQueue(state.selectedPlaylist)">+</button>
-        <button @click="playPlaylist">▶</button>
+        <button @click="() => addToQueue(state.selectedPlaylist.tracks)">
+          +
+        </button>
       </div>
     </header>
     <ListItem v-for="track in state.selectedPlaylist.tracks">
@@ -44,7 +45,7 @@ const unselectPlaylist = () => {
         </span>
       </div>
       <div class="track-actions">
-        <!-- <ActionsMenu></ActionsMenu> -->
+        <ActionsMenu :options="actionsMenuOptions(track)" />
       </div>
     </ListItem>
   </div>
