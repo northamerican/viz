@@ -34,8 +34,9 @@ const state = reactive<AppState>({
         <Playlists :state="state" v-if="state.selectedPlaylist === null" />
         <Playlist :state="state" v-else />
       </div>
-      <div v-else>Log in to see your playlists</div>
-
+      <div v-else>
+        <p>Log in to see your playlists.</p>
+      </div>
       <div>
         <Queue :state="state" />
       </div>

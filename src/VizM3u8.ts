@@ -1,12 +1,20 @@
-import { VideosDb } from "./VideosDb";
+import { QueuesDb } from "./QueuesDb";
 import { join } from "path";
 
-const m3u8Template = ({ mediaSequence = 0 }) => `#EXTM3U
+type M3u8Template = (args: { now: number; mediaSequence?: number; }) => string
+const m3u8Template: M3u8Template = ({ now, mediaSequence = 0 }) => `#EXTM3U
 #EXT-X-VERSION:3
 #EXT-X-TARGETDURATION:10
 #EXT-X-MEDIA-SEQUENCE:${mediaSequence}
-#EXT-X-START:TIME-OFFSET=0`
-// #EXT-X-START:TIME-OFFSET=${(now - VideosDb.getStartTime()) / 1000}`
+#EXT-X-START:TIME-OFFSET=${(now - QueuesDb.startTime) / 1000}`
+
+// way with more flexibility (as is) which is simpler and may allow seeking to any point:
+// setting time offset and not having earliestSegmentTime
+// so all segments just accumulate in the m3u8 and never clear.
+// TODO check performance of this fn and see if caching is needed when there's lots of clips
+
+// previous way that works but would complicate seeking:
+// set #EXT-X-START:TIME-OFFSET=0 and 
 
 const streamWindowTimeBefore = 0
 const streamWindowTimeAfter = 45000
@@ -16,17 +24,18 @@ export const VizM3u8 = () => {
   let mediaSequence = Infinity
 
   const now = Date.now()
-  const tsSegments = VideosDb.getVideoSegmentInfo().map(({
+  const tsSegments = QueuesDb.currentQueueSegmentInfo.map(({
     videoId,
     duration,
     segmentIndex
   }, playlistSegmentIndex) => {
-    const timeOffset = VideosDb.getStartTime() + (1000 * totalDuration);
+    const timeOffset = QueuesDb.state.startTime + (1000 * totalDuration);
     totalDuration += duration
 
     const earliestSegmentTime = now - streamWindowTimeBefore
     const latestSegmentTime = now + streamWindowTimeAfter
-    const excludeSegment = earliestSegmentTime > timeOffset || latestSegmentTime < timeOffset
+    const excludeSegment = latestSegmentTime < timeOffset
+    // const excludeSegment = earliestSegmentTime > timeOffset || latestSegmentTime < timeOffset
 
     if (excludeSegment) return ''
 
@@ -44,5 +53,5 @@ export const VizM3u8 = () => {
 
   // TODO append endless stream of Viz logo at the end until something new is queued
 
-  return [m3u8Template({ mediaSequence }), tsSegments].join('\n');
+  return [m3u8Template({ now, mediaSequence }), tsSegments].join('\n');
 }

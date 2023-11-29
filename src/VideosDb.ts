@@ -1,42 +1,20 @@
 import { JSONPreset } from "lowdb/node";
-import { join } from "path";
-import { dbDir } from "./consts";
+import { videosDbPath } from "./consts";
 import type { Video, VideosDbType } from "Viz";
 
-const videosDb = await JSONPreset<VideosDbType>(join(dbDir, 'videos.json'), {
-  startTime: 0,
+const videosDbDefault = {
   videos: {}
-})
-
+}
+const videosDb = await JSONPreset<VideosDbType>(videosDbPath, videosDbDefault)
 const { videos } = videosDb.data
 
 export const VideosDb = {
-  setStartTime() {
-    videosDb.data.startTime = Date.now()
-    videosDb.write()
-  },
-
-  getStartTime() {
-    return videosDb.data.startTime
-  },
-
   getVideos() {
     return videos
   },
 
   getVideo(videoId: string) {
     return videos[videoId]
-  },
-
-  // TODO cache this? may need to give each segment an id
-  getVideoSegmentInfo() {
-    return Object.values(videos).flatMap(({ segmentDurations, id }) => {
-      return segmentDurations.map((duration, segmentIndex) => ({
-        segmentIndex,
-        videoId: id,
-        duration,
-      }))
-    })
   },
 
   addVideo(props: Video) {

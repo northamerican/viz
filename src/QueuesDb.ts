@@ -1,35 +1,32 @@
 import { JSONPreset } from "lowdb/node";
-import { join } from "path";
-import { dbDir } from "./consts";
-import type { Queue, QueueDbType, QueueItem } from "Viz";
+import { queuesDbPath } from "./consts";
+import type { Queue, QueuesDbType, QueueItem, SegmentInfo, Video } from "Viz";
 import { v4 as uuidv4 } from 'uuid';
 import { VideosDb } from "./VideosDb";
 
 const defaultUuid = uuidv4()
-// TODO queue.json and other db filenames into consts
-const queueDb = await JSONPreset<QueueDbType>(join(dbDir, 'queue.json'), {
-  startTime: 0,
-  seekOffsetTime: 0,
+const queuesDbDefault: QueuesDbType = {
+  state: {
+    isPlaying: true,
+    startTime: Date.now(),
+    seekOffsetTime: 0,
+  },
   currentQueueId: defaultUuid,
   queues: [{
     id: defaultUuid,
     items: []
   }]
-})
+}
+const queuesDb = await JSONPreset<QueuesDbType>(queuesDbPath, queuesDbDefault)
+const { state, currentQueueId, queues } = queuesDb.data
 
-const { currentQueueId, queues, startTime } = queueDb.data
-
-export const QueueDb = {
+export const QueuesDb = {
   get queues() {
     return queues
   },
 
-  get data() {
-    return queueDb.data
-  },
-
-  get startTime() {
-    return startTime
+  get state() {
+    return state
   },
 
   get currentQueue(): Queue {
@@ -41,6 +38,21 @@ export const QueueDb = {
       ...this.currentQueue,
       items: this.currentQueue.items.map(this.getItemWithVideo)
     }
+  },
+
+  get currentQueueVideos(): Video[] {
+    return this.currentQueueWithVideos.items.flatMap(item => item.video ?? [])
+  },
+
+  // TODO cache this? may need to give each segment an id
+  get currentQueueSegmentInfo(): SegmentInfo[] {
+    return this.currentQueueVideos.flatMap(({ segmentDurations, id }) => {
+      return segmentDurations.map((duration, segmentIndex) => ({
+        segmentIndex,
+        videoId: id,
+        duration,
+      }))
+    })
   },
 
   getQueue(queueId: string): Queue {
@@ -66,14 +78,18 @@ export const QueueDb = {
     }
   },
 
-  setStartTime() {
-    queueDb.data.startTime = Date.now()
-    queueDb.write()
+  set startTime(timestamp: number) {
+    queuesDb.data.state.startTime = timestamp
+    queuesDb.write()
+  },
+
+  get startTime() {
+    return queuesDb.data.state.startTime
   },
 
   addItem(props: QueueItem) {
     this.addItems([props])
-    queueDb.write()
+    queuesDb.write()
   },
 
   addItems(items: Omit<QueueItem, 'id'>[]) {
@@ -81,12 +97,12 @@ export const QueueDb = {
       ...props,
       id: uuidv4()
     })))
-    queueDb.write()
+    queuesDb.write()
   },
 
   editItem(queueId: string, queueItemId: string, props: Partial<QueueItem>) {
     const queueItem = this.getItem(queueId, queueItemId)
     Object.assign(queueItem, props)
-    queueDb.write()
+    queuesDb.write()
   }
 }

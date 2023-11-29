@@ -1,6 +1,9 @@
 {
-  "startTime": 0,
-  "seekOffsetTime": 0,
+  "state": {
+    "isPlaying": true,
+    "startTime": 1701220032763,
+    "seekOffsetTime": 0
+  },
   "currentQueueId": "ad54a584-0028-45c4-9dca-794d586e5a5f",
   "queues": [
     {
@@ -137,6 +140,42 @@
           },
           "videoId": "CxfRmNcBe6M",
           "id": "2a5a30ad-be4a-4452-8cdd-8a7ab36271dc"
+        },
+        {
+          "track": {
+            "id": "30XzPuJXYZrPF2jx89SQG1",
+            "player": "spotify",
+            "artists": [
+              "Chicha Libre"
+            ],
+            "title": "Sonido Amazonico"
+          },
+          "videoId": "V9sIVi_zg5E",
+          "id": "ac5b01f8-da53-400f-8cb4-c53a9e8fc2a1"
+        },
+        {
+          "track": {
+            "id": "0o5pPjzvYP8hsA2aPq7w06",
+            "player": "spotify",
+            "artists": [
+              "Sufyvn"
+            ],
+            "title": "Color Red"
+          },
+          "videoId": "OPYPFqKjtqg",
+          "id": "b26e1ce5-2c85-440f-81f8-8809803e11f6"
+        },
+        {
+          "track": {
+            "id": "0Fj3mbyJXVXWGpi8bo2A2O",
+            "player": "spotify",
+            "artists": [
+              "George Clanton"
+            ],
+            "title": "Tie Me Down"
+          },
+          "videoId": "Ijz67vGJubs",
+          "id": "74685ed9-6252-4b67-8462-d8b18aa5fa11"
         }
       ]
     }

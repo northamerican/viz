@@ -1,7 +1,6 @@
 import express from "express";
 import compression from "compression";
 import { createReadStream } from "fs";
-import { stat } from "fs/promises";
 import ViteExpress from "vite-express";
 import { join } from "path"
 import sources from "./sources";
@@ -19,7 +18,7 @@ import { isAxiosError } from "axios";
 import { JSONPreset } from 'lowdb/node'
 import { VizM3u8 } from "./VizM3u8.ts";
 import type { VizPrefsDbType } from "Viz";
-import { QueueDb } from "./QueueDb.ts";
+import { QueuesDb } from "./QueuesDb.ts";
 
 // move to a PrefsDb
 const prefs = await JSONPreset<VizPrefsDbType>(join(dbDir, 'prefs.json'), {
@@ -101,16 +100,6 @@ app.get("/api/playlist/:playlistId", async (req, res) => {
   }
 });
 
-app.post("/api/play", async (_, res) => {
-  const { player } = prefs.data;
-  // const { playlistId } = req.params;
-  try {
-    await players[player].playPlaylist();
-    res.sendStatus(200)
-  } catch (error) {
-  }
-});
-
 // Video streaming
 
 app.post("/api/video", async (req, res) => {
@@ -121,7 +110,7 @@ app.post("/api/video", async (req, res) => {
   const searchQuery = sources[source].createSearchQuery({ artist, title });
   const { video, videoId } = await sources[source].getVideo(searchQuery);
 
-  QueueDb.editItem(queueId, queueItemId, { videoId })
+  QueuesDb.editItem(queueId, queueItemId, { videoId })
 
   await sources[source].writeVideoStream(video, videoId);
 
@@ -156,29 +145,33 @@ app.get("/api/hls/:dir/:filename.ts", async (req, res) => {
   }
 });
 
-// TODO might not need this at all?
-// TODO simpler endpoint with less info (might not need each segment length)
-app.get("/db/videos.json", async (_, res) => {
+// Queue
+
+app.post("/api/play", async (_, res) => {
   try {
-    // TODO get db straight from VideosDb.ts
-    const videosDbFile = join(dbDir, 'videos.json')
+    QueuesDb.startTime = Date.now()
+    res.sendStatus(200)
+  } catch (error) {
+  }
+});
 
-    const videosDbExists = (await stat(videosDbFile)).isFile();
-    if (!videosDbExists) return res.json({})
-
-    const stream = createReadStream(videosDbFile);
-    res.type('json')
-    return stream.pipe(res);
+app.get("/api/queue/current", async (_, res) => {
+  try {
+    return res.json(QueuesDb.currentQueueWithVideos);
   } catch (error) {
     return res.sendStatus(500);
   }
 });
 
-// Queue
+app.get("/api/queue/current/videos", async (_, res) => {
+  // TODO long polling
+  // const watcher = fs.watch(queuesDbPath, { signal });
+  // for await (const event of watcher) {
+  //   res...
+  // }
 
-app.get("/api/queue/current", async (_, res) => {
   try {
-    return res.json(QueueDb.currentQueueWithVideos);
+    return res.json(QueuesDb.currentQueueVideos);
   } catch (error) {
     return res.sendStatus(500);
   }
@@ -187,7 +180,7 @@ app.get("/api/queue/current", async (_, res) => {
 app.post("/api/queue/", async (req, res) => {
   try {
     const { items } = req.body
-    QueueDb.addItems(items)
+    QueuesDb.addItems(items)
 
     // return stream.pipe(res);
     return res.sendStatus(200);
@@ -199,7 +192,7 @@ app.post("/api/queue/", async (req, res) => {
 app.put("/api/queue/:id", async (req, res) => {
   try {
     // const { id } = req.params;
-    // QueueDb.addItems(items)
+    // QueuesDb.addItems(items)
 
     // return stream.pipe(res);
     return res.sendStatus(200);

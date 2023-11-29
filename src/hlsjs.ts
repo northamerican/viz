@@ -8,7 +8,6 @@ window.addEventListener("load", () => {
     debug: true,
   });
 
-  // chrome?
   const video = document.getElementById("video");
   //@ts-ignore
   hls.attachMedia(video);

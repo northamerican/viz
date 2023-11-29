@@ -1,27 +1,18 @@
 import axios from "axios";
 import querystring from "node:querystring";
-import { join } from "path";
-import { appUrl, dbDir, redirectEndpoint } from "../consts";
-import { JSONPreset } from "lowdb/node";
-import type { AuthStateDbType } from "Viz";
+import { appUrl, redirectEndpoint } from "../consts";
 import type { GetToken, GetPlaylist, GetPlaylists } from "VizPlayer";
-import { VideosDb } from "../VideosDb";
+import { AuthDb } from "../AuthDb";
 
 const clientId = process.env.SPOTIFY_CLIENT_ID
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
-
-// TODO make spotify-specific?
-const auth = await JSONPreset<AuthStateDbType>(join(dbDir, 'auth.json'), {
-  token: null,
-  refreshToken: null
-})
 
 const spotifyAxios = axios.create();
 
 // Request interceptor for API calls
 spotifyAxios.interceptors.request.use(
   async config => {
-    config.headers.Authorization = config.headers.Authorization || `Bearer ${auth.data.token}`
+    config.headers.Authorization = config.headers.Authorization || `Bearer ${AuthDb.player('spotify').token}`
     return config;
   },
   error => {
@@ -49,7 +40,7 @@ const getToken: GetToken = async (req, refresh) => {
       refresh ?
         {
           grant_type: "refresh_token",
-          refresh_token: auth.data.refreshToken,
+          refresh_token: AuthDb.player('spotify').refreshToken,
           client_id: clientId
         }
         : {
@@ -66,11 +57,10 @@ const getToken: GetToken = async (req, refresh) => {
       }
     );
 
-    auth.data = {
+    AuthDb.editAuth('spotify', {
       token: data.access_token,
-      refreshToken: data.refresh_token || auth.data.refreshToken,
-    }
-    auth.write()
+      refreshToken: data.refresh_token || AuthDb.player('spotify').refreshToken,
+    })
 
     return data;
   } catch (error) {
@@ -94,11 +84,7 @@ const authorize = () => {
 }
 
 const logout = async () => {
-  auth.data = {
-    token: null,
-    refreshToken: null
-  }
-  auth.write()
+  AuthDb.clearAuth('spotify')
 }
 
 // TODO pagination
@@ -130,8 +116,6 @@ const getPlaylist: GetPlaylist = async (playlistId, total) => {
   const callsCount = Math.ceil(total / itemsMaxLimit)
   const offsets = [...Array(callsCount).keys()]
 
-  // console.log({ offsets })
-
   try {
     const [playlistObjectFullResponse, ...playlistTrackResponses] = await Promise.all([
       // This call returns the playlist name
@@ -142,11 +126,12 @@ const getPlaylist: GetPlaylist = async (playlistId, total) => {
       ...offsets.map(offset => spotifyAxios.get<SpotifyApi.PlaylistTrackResponse>(
         `https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
         params: {
-          offset,
+          offset: offset * itemsMaxLimit,
           limit: itemsMaxLimit,
           fields: 'offset,total,items(track(id,name,artists))'
         }
-      }))])
+      }))
+    ])
 
     const allTracks = playlistTrackResponses.flatMap(({ data }) => {
       return data.items.map(item => ({
@@ -167,15 +152,10 @@ const getPlaylist: GetPlaylist = async (playlistId, total) => {
   }
 }
 
-const playPlaylist = async () => {
-  VideosDb.setStartTime();
-}
-
 export const spotify = {
   getToken,
   authorize,
   logout,
   getPlaylists,
-  getPlaylist,
-  playPlaylist
+  getPlaylist
 };
