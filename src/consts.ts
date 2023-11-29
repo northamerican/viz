@@ -6,7 +6,7 @@ const projectRoot = new URL(import.meta.url + "/../..").pathname;
 export const mp4Dir = `${projectRoot}public/mp4/`;
 export const hlsDir = `${projectRoot}public/hls/`;
 
-export const dbDir = `${projectRoot}src/db/`;
+const dbDir = `${projectRoot}src/db/`;
 export const authDbPath = `${dbDir}auth.json`;
 export const prefsDbPath = `${dbDir}prefs.json`;
 export const queuesDbPath = `${dbDir}queues.json`;

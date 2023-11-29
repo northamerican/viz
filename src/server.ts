@@ -3,28 +3,18 @@ import compression from "compression";
 import { createReadStream } from "fs";
 import ViteExpress from "vite-express";
 import { join } from "path"
-import sources from "./sources";
-import players from "./players";
 import {
   redirectEndpoint,
   hlsDir,
   appUrl,
   appPort,
   vizM3u8,
-  dbDir,
   appIp,
 } from "./consts.ts";
 import { isAxiosError } from "axios";
-import { JSONPreset } from 'lowdb/node'
 import { VizM3u8 } from "./VizM3u8.ts";
-import type { VizPrefsDbType } from "Viz";
 import { QueuesDb } from "./QueuesDb.ts";
-
-// move to a PrefsDb
-const prefs = await JSONPreset<VizPrefsDbType>(join(dbDir, 'prefs.json'), {
-  "player": "spotify",
-  "source": "youtube",
-})
+import { PrefsDb } from "./PrefsDb.ts";
 
 const app = express();
 app.use(compression());
@@ -33,9 +23,8 @@ app.use(express.json());
 // Player
 
 app.get("/authorize", (_, res) => {
-  const { player } = prefs.data;
   try {
-    const redirectUrl = players[player].authorize();
+    const redirectUrl = PrefsDb.player.authorize();
 
     res.redirect(redirectUrl);
   } catch (e) {
@@ -44,10 +33,8 @@ app.get("/authorize", (_, res) => {
 });
 
 app.get(redirectEndpoint, async (req, res) => {
-  const { player } = prefs.data;
-
   try {
-    await players[player].getToken(req);
+    await PrefsDb.player.getToken(req);
 
     res.cookie("isLoggedIn", true);
     res.redirect(appUrl);
@@ -57,10 +44,9 @@ app.get(redirectEndpoint, async (req, res) => {
 });
 
 app.get("/logout", async (_, res) => {
-  const { player } = prefs.data;
 
   try {
-    await players[player].logout();
+    await PrefsDb.player.logout();
 
     res.sendStatus(204)
   } catch (error) {
@@ -71,10 +57,8 @@ app.get("/logout", async (_, res) => {
 });
 
 app.get("/api/playlists", async (_, res) => {
-  const { player } = prefs.data;
-
   try {
-    const playlists = await players[player].getPlaylists();
+    const playlists = await PrefsDb.player.getPlaylists();
 
     res.json(playlists);
   } catch (error) {
@@ -85,12 +69,11 @@ app.get("/api/playlists", async (_, res) => {
 });
 
 app.get("/api/playlist/:playlistId", async (req, res) => {
-  const { player } = prefs.data;
   const { playlistId } = req.params;
   const { total } = req.query;
 
   try {
-    const playlist = await players[player].getPlaylist(playlistId, Number(total));
+    const playlist = await PrefsDb.player.getPlaylist(playlistId, Number(total));
 
     res.json(playlist);
   } catch (error) {
@@ -104,15 +87,14 @@ app.get("/api/playlist/:playlistId", async (req, res) => {
 
 app.post("/api/video", async (req, res) => {
   const { artist, title, queueId, queueItemId } = req.body;
-  const { source } = prefs.data;
 
   console.log(`Getting video for ${title} - ${artist}`)
-  const searchQuery = sources[source].createSearchQuery({ artist, title });
-  const { video, videoId } = await sources[source].getVideo(searchQuery);
+  const searchQuery = PrefsDb.source.createSearchQuery({ artist, title });
+  const { video, videoId } = await PrefsDb.source.getVideo(searchQuery);
 
   QueuesDb.editItem(queueId, queueItemId, { videoId })
 
-  await sources[source].writeVideoStream(video, videoId);
+  await PrefsDb.source.writeVideoStream(video, videoId);
 
   res.status(201).json({ videoId });
 });
