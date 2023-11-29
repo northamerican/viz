@@ -3,7 +3,7 @@ import compression from "compression";
 import { createReadStream } from "fs";
 import ViteExpress from "vite-express";
 import {
-  endpoints,
+  url,
   appUrl,
   appPort,
   appIp,
@@ -20,7 +20,7 @@ app.use(express.json());
 
 // Player
 
-app.get(endpoints.authorize, (_, res) => {
+app.get(url.authorize, (_, res) => {
   try {
     const redirectUrl = PrefsDb.player.authorize();
 
@@ -30,18 +30,18 @@ app.get(endpoints.authorize, (_, res) => {
   }
 });
 
-app.get(endpoints.token, async (req, res) => {
+app.get(url.token, async (req, res) => {
   try {
     await PrefsDb.player.getToken(req);
 
     res.cookie("isLoggedIn", true);
     res.redirect(appUrl);
   } catch (e) {
-    console.log(`${endpoints.token} failed.`)
+    console.log(`${url.token} failed.`)
   }
 });
 
-app.get(endpoints.api.logout, async (_, res) => {
+app.get(url.api.logout, async (_, res) => {
   try {
     await PrefsDb.player.logout();
 
@@ -53,7 +53,7 @@ app.get(endpoints.api.logout, async (_, res) => {
   }
 });
 
-app.get(endpoints.api.playlists, async (_, res) => {
+app.get(url.api.playlists, async (_, res) => {
   try {
     const playlists = await PrefsDb.player.getPlaylists();
 
@@ -65,7 +65,7 @@ app.get(endpoints.api.playlists, async (_, res) => {
   }
 });
 
-app.get(endpoints.api.playlist(':playlistId'), async (req, res) => {
+app.get(url.api.playlist(':playlistId'), async (req, res) => {
   const { playlistId } = req.params;
   const { total } = req.query;
 
@@ -82,7 +82,7 @@ app.get(endpoints.api.playlist(':playlistId'), async (req, res) => {
 
 // Video streaming
 
-app.post(endpoints.api.video, async (req, res) => {
+app.post(url.api.video, async (req, res) => {
   const { artist, title, queueId, queueItemId } = req.body;
 
   console.log(`Getting video for ${title} - ${artist}`)
@@ -98,7 +98,7 @@ app.post(endpoints.api.video, async (req, res) => {
 });
 
 // TODO rename join('api', 'video-stream')
-app.get(endpoints.api.m3u, async (_, res) => {
+app.get(url.api.m3u, async (_, res) => {
   // TODO confirm sending as gzip ?
   try {
     const m3u8 = VizM3u8()
@@ -111,7 +111,7 @@ app.get(endpoints.api.m3u, async (_, res) => {
   }
 });
 
-app.get(endpoints.api.ts(':videoId', ':segmentIndex'), async (req, res) => {
+app.get(url.api.ts(':videoId', ':segmentIndex'), async (req, res) => {
   const { videoId, segmentIndex } = req.params;
   try {
     const stream = createReadStream(tsPath(videoId, segmentIndex), {
@@ -126,7 +126,7 @@ app.get(endpoints.api.ts(':videoId', ':segmentIndex'), async (req, res) => {
 
 // Queue
 
-app.post(endpoints.api.play, async (_, res) => {
+app.post(url.api.play, async (_, res) => {
   try {
     QueuesDb.startTime = Date.now()
     res.sendStatus(200)
@@ -134,7 +134,7 @@ app.post(endpoints.api.play, async (_, res) => {
   }
 });
 
-app.get(endpoints.api.current, async (_, res) => {
+app.get(url.api.current, async (_, res) => {
   // long polling
   // const watcher = fs.watch(queuesDbPath, { signal });
   // for await (const event of watcher) {
@@ -148,7 +148,7 @@ app.get(endpoints.api.current, async (_, res) => {
   }
 });
 
-app.post(endpoints.api.queue, async (req, res) => {
+app.post(url.api.queue, async (req, res) => {
   try {
     const { items } = req.body
     QueuesDb.addItems(items)
@@ -160,7 +160,7 @@ app.post(endpoints.api.queue, async (req, res) => {
   }
 });
 
-app.put(endpoints.api.queueId(':id'), async (req, res) => {
+app.put(url.api.queueId(':id'), async (req, res) => {
   try {
     // const { id } = req.params;
     // QueuesDb.addItems(items)

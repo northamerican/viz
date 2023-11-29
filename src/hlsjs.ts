@@ -1,5 +1,5 @@
 import Hls from "hls.js";
-import { endpoints } from "./consts";
+import { url } from "./consts";
 
 window.addEventListener("load", () => {
   if (!Hls.isSupported()) return;
@@ -12,7 +12,7 @@ window.addEventListener("load", () => {
   //@ts-ignore
   hls.attachMedia(video);
 
-  hls.loadSource(endpoints.api.m3u);
+  hls.loadSource(url.api.m3u);
 
   hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
     console.log(data);

@@ -5,14 +5,14 @@ import ListItem from './ListItem.vue'
 import ActionsMenu from './ActionsMenu.vue'
 import { Queue } from 'Viz'
 import { mountWithInterval } from '../helpers'
-import { endpoints } from '../consts'
+import { url } from '../consts'
 
 const props = defineProps<{ state: AppState }>()
 
 const getVideo = async (item: QueueItem) => {
   const { track, id: queueItemId } = item
   const { artists, title } = track
-  await axios.post(endpoints.api.video, {
+  await axios.post(url.api.video, {
     queueId: props.state.queue.id,
     queueItemId,
     artist: artists[0],
@@ -22,12 +22,12 @@ const getVideo = async (item: QueueItem) => {
 }
 
 const getQueue = async () => {
-  const { data } = await axios.get<Queue>(endpoints.api.current)
+  const { data } = await axios.get<Queue>(url.api.current)
   props.state.queue = data
 }
 
 const playQueue = () => {
-  axios.post(endpoints.api.play)
+  axios.post(url.api.play)
   // TODO fastSeek video el to 0
 }
 

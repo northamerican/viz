@@ -1,4 +1,4 @@
-import { endpoints } from "./consts";
+import { url } from "./consts";
 import { QueuesDb } from "./db/QueuesDb";
 
 type M3u8Template = (args: { now: number; mediaSequence?: number; }) => string
@@ -45,10 +45,10 @@ export const VizM3u8 = () => {
     const discontinuity = segmentIndex === 0 ? '\n#EXT-X-DISCONTINUITY' : ''
     // const programDateTime = `#EXT-X-PROGRAM-DATE-TIME:${new Date(timeOffset).toISOString()}`;
     const infDuration = `#EXTINF:${duration.toFixed(6)}`;
-    const url = endpoints.api.ts(videoId, segmentIndex);
+    const tsUrl = url.api.ts(videoId, segmentIndex);
 
     // return [discontinuity, programDateTime, infDuration, url].join('\n');
-    return [discontinuity, infDuration, url].join('\n');
+    return [discontinuity, infDuration, tsUrl].join('\n');
   }).join('')
 
   // TODO append endless stream of Viz logo at the end until something new is queued

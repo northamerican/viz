@@ -2,16 +2,16 @@
 import axios from 'axios'
 import { removeCookie } from 'typescript-cookie'
 import type { AppState } from 'Viz'
-import { endpoints } from '../consts'
+import { url } from '../consts'
 
 const props = defineProps<{ state: AppState }>()
 
 const handleLogin = () => {
-  window.location.assign(endpoints.authorize)
+  window.location.assign(url.authorize)
 }
 
 const handleLogout = async () => {
-  await axios.get(endpoints.api.logout)
+  await axios.get(url.api.logout)
   removeCookie('isLoggedIn')
   props.state.isLoggedIn = false
 }

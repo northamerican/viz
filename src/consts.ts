@@ -14,7 +14,7 @@ export const prefsDbPath = `${dbDir}prefs.json`;
 export const queuesDbPath = `${dbDir}queues.json`;
 export const videosDbPath = `${dbDir}videos.json`;
 
-export const endpoints = {
+export const url = {
   authorize: '/authorize',
   token: '/token',
   api: {
