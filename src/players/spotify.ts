@@ -1,6 +1,6 @@
 import axios from "axios";
 import querystring from "node:querystring";
-import { appUrl, redirectEndpoint } from "../consts";
+import { appUrl, endpoints } from "../consts";
 import type { GetToken, GetPlaylist, GetPlaylists } from "VizPlayer";
 import { AuthDb } from "../db/AuthDb";
 
@@ -46,7 +46,7 @@ const getToken: GetToken = async (req, refresh) => {
         : {
           grant_type: "authorization_code",
           code: req.query.code,
-          redirect_uri: new URL(redirectEndpoint, appUrl).href,
+          redirect_uri: new URL(endpoints.token, appUrl).href,
         },
       {
         headers: {
@@ -79,7 +79,7 @@ const authorize = () => {
       response_type: "code",
       client_id: clientId,
       scope: scope,
-      redirect_uri: new URL(redirectEndpoint, appUrl).href
+      redirect_uri: new URL(endpoints.token, appUrl).href
     })
 }
 

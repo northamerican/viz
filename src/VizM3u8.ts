@@ -1,5 +1,5 @@
+import { endpoints } from "./consts";
 import { QueuesDb } from "./db/QueuesDb";
-import { join } from "path";
 
 type M3u8Template = (args: { now: number; mediaSequence?: number; }) => string
 const m3u8Template: M3u8Template = ({ now, mediaSequence = 0 }) => `#EXTM3U
@@ -45,7 +45,7 @@ export const VizM3u8 = () => {
     const discontinuity = segmentIndex === 0 ? '\n#EXT-X-DISCONTINUITY' : ''
     // const programDateTime = `#EXT-X-PROGRAM-DATE-TIME:${new Date(timeOffset).toISOString()}`;
     const infDuration = `#EXTINF:${duration.toFixed(6)}`;
-    const url = join('/api', 'hls', videoId, `${videoId}${segmentIndex}.ts`);
+    const url = endpoints.api.ts(videoId, segmentIndex);
 
     // return [discontinuity, programDateTime, infDuration, url].join('\n');
     return [discontinuity, infDuration, url].join('\n');

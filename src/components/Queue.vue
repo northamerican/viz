@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import axios from 'axios'
-import type { AppState, QueueItem, SegmentInfo } from 'Viz'
+import type { AppState, QueueItem } from 'Viz'
 import ListItem from './ListItem.vue'
 import ActionsMenu from './ActionsMenu.vue'
 import { Queue } from 'Viz'
 import { mountWithInterval } from '../helpers'
-import { onMounted } from 'vue'
+import { endpoints } from '../consts'
 
 const props = defineProps<{ state: AppState }>()
 
 const getVideo = async (item: QueueItem) => {
   const { track, id: queueItemId } = item
   const { artists, title } = track
-  await axios.post('/api/video', {
+  await axios.post(endpoints.api.video, {
     queueId: props.state.queue.id,
     queueItemId,
     artist: artists[0],
@@ -22,17 +22,12 @@ const getVideo = async (item: QueueItem) => {
 }
 
 const getQueue = async () => {
-  const { data } = await axios.get<Queue>('/api/queue/current')
+  const { data } = await axios.get<Queue>(endpoints.api.current)
   props.state.queue = data
 }
 
-const getQueueSegmentInfo = async () => {
-  const { data } = await axios.get<SegmentInfo[]>('/api/queue/current/videos')
-  // console.log(data)
-}
-
 const playQueue = () => {
-  axios.post('/api/play/')
+  axios.post(endpoints.api.play)
   // TODO fastSeek video el to 0
 }
 
@@ -55,8 +50,6 @@ const actionsMenuOptions = (item: QueueItem) => [
   },
   { action: () => {}, label: 'Go to Spotify Song...', disabled: true }
 ]
-
-onMounted(getQueueSegmentInfo)
 
 mountWithInterval(getQueue, 5000)
 </script>

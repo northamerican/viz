@@ -1,5 +1,5 @@
 import Hls from "hls.js";
-import { vizM3u8 } from "./consts";
+import { endpoints } from "./consts";
 
 window.addEventListener("load", () => {
   if (!Hls.isSupported()) return;
@@ -12,7 +12,7 @@ window.addEventListener("load", () => {
   //@ts-ignore
   hls.attachMedia(video);
 
-  hls.loadSource(`/api/hls/${vizM3u8}`);
+  hls.loadSource(endpoints.api.m3u);
 
   hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
     console.log(data);

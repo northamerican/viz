@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { vizM3u8 } from '../consts'
+import { endpoints } from '../consts'
 // import '../hlsjs.ts'
 
 const videoEl = ref(null)
@@ -11,7 +11,7 @@ const videoEl = ref(null)
     <video
       id="video"
       ref="videoEl"
-      :src="`/api/hls/${vizM3u8}`"
+      :src="endpoints.api.m3u"
       controls
       muted
       autoplay

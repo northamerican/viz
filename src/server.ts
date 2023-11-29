@@ -2,14 +2,12 @@ import express from "express";
 import compression from "compression";
 import { createReadStream } from "fs";
 import ViteExpress from "vite-express";
-import { join } from "path"
 import {
-  redirectEndpoint,
-  hlsDir,
+  endpoints,
   appUrl,
   appPort,
-  vizM3u8,
   appIp,
+  tsPath,
 } from "./consts.ts";
 import { isAxiosError } from "axios";
 import { VizM3u8 } from "./VizM3u8.ts";
@@ -22,7 +20,7 @@ app.use(express.json());
 
 // Player
 
-app.get("/authorize", (_, res) => {
+app.get(endpoints.authorize, (_, res) => {
   try {
     const redirectUrl = PrefsDb.player.authorize();
 
@@ -32,19 +30,18 @@ app.get("/authorize", (_, res) => {
   }
 });
 
-app.get(redirectEndpoint, async (req, res) => {
+app.get(endpoints.token, async (req, res) => {
   try {
     await PrefsDb.player.getToken(req);
 
     res.cookie("isLoggedIn", true);
     res.redirect(appUrl);
   } catch (e) {
-    console.log(`${redirectEndpoint} failed.`)
+    console.log(`${endpoints.token} failed.`)
   }
 });
 
-app.get("/logout", async (_, res) => {
-
+app.get(endpoints.api.logout, async (_, res) => {
   try {
     await PrefsDb.player.logout();
 
@@ -56,7 +53,7 @@ app.get("/logout", async (_, res) => {
   }
 });
 
-app.get("/api/playlists", async (_, res) => {
+app.get(endpoints.api.playlists, async (_, res) => {
   try {
     const playlists = await PrefsDb.player.getPlaylists();
 
@@ -68,7 +65,7 @@ app.get("/api/playlists", async (_, res) => {
   }
 });
 
-app.get("/api/playlist/:playlistId", async (req, res) => {
+app.get(endpoints.api.playlist(':playlistId'), async (req, res) => {
   const { playlistId } = req.params;
   const { total } = req.query;
 
@@ -85,13 +82,14 @@ app.get("/api/playlist/:playlistId", async (req, res) => {
 
 // Video streaming
 
-app.post("/api/video", async (req, res) => {
+app.post(endpoints.api.video, async (req, res) => {
   const { artist, title, queueId, queueItemId } = req.body;
 
   console.log(`Getting video for ${title} - ${artist}`)
   const searchQuery = PrefsDb.source.createSearchQuery({ artist, title });
   const { video, videoId } = await PrefsDb.source.getVideo(searchQuery);
 
+  // TODO Probably move this?
   QueuesDb.editItem(queueId, queueItemId, { videoId })
 
   await PrefsDb.source.writeVideoStream(video, videoId);
@@ -100,7 +98,7 @@ app.post("/api/video", async (req, res) => {
 });
 
 // TODO rename join('api', 'video-stream')
-app.get(`/api/hls/${vizM3u8}`, async (_, res) => {
+app.get(endpoints.api.m3u, async (_, res) => {
   // TODO confirm sending as gzip ?
   try {
     const m3u8 = VizM3u8()
@@ -113,11 +111,10 @@ app.get(`/api/hls/${vizM3u8}`, async (_, res) => {
   }
 });
 
-// TODO rename join('api', 'ts', ':filename')
-app.get("/api/hls/:dir/:filename.ts", async (req, res) => {
-  const { dir, filename } = req.params;
+app.get(endpoints.api.ts(':videoId', ':segmentIndex'), async (req, res) => {
+  const { videoId, segmentIndex } = req.params;
   try {
-    const stream = createReadStream(join(hlsDir, dir, `${filename}.ts`), {
+    const stream = createReadStream(tsPath(videoId, segmentIndex), {
       highWaterMark: 64 * 1024, // TODO adjust?
     });
     res.setHeader('Content-Type', 'video/mp2t');
@@ -129,7 +126,7 @@ app.get("/api/hls/:dir/:filename.ts", async (req, res) => {
 
 // Queue
 
-app.post("/api/play", async (_, res) => {
+app.post(endpoints.api.play, async (_, res) => {
   try {
     QueuesDb.startTime = Date.now()
     res.sendStatus(200)
@@ -137,7 +134,13 @@ app.post("/api/play", async (_, res) => {
   }
 });
 
-app.get("/api/queue/current", async (_, res) => {
+app.get(endpoints.api.current, async (_, res) => {
+  // long polling
+  // const watcher = fs.watch(queuesDbPath, { signal });
+  // for await (const event of watcher) {
+  //   res...
+  // }
+
   try {
     return res.json(QueuesDb.currentQueueWithVideos);
   } catch (error) {
@@ -145,21 +148,7 @@ app.get("/api/queue/current", async (_, res) => {
   }
 });
 
-app.get("/api/queue/current/videos", async (_, res) => {
-  // TODO long polling
-  // const watcher = fs.watch(queuesDbPath, { signal });
-  // for await (const event of watcher) {
-  //   res...
-  // }
-
-  try {
-    return res.json(QueuesDb.currentQueueVideos);
-  } catch (error) {
-    return res.sendStatus(500);
-  }
-});
-
-app.post("/api/queue/", async (req, res) => {
+app.post(endpoints.api.queue, async (req, res) => {
   try {
     const { items } = req.body
     QueuesDb.addItems(items)
@@ -171,7 +160,7 @@ app.post("/api/queue/", async (req, res) => {
   }
 });
 
-app.put("/api/queue/:id", async (req, res) => {
+app.put(endpoints.api.queueId(':id'), async (req, res) => {
   try {
     // const { id } = req.params;
     // QueuesDb.addItems(items)

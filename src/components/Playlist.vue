@@ -3,11 +3,12 @@ import axios from 'axios'
 import type { AppState, Track } from 'Viz'
 import ListItem from './ListItem.vue'
 import ActionsMenu from './ActionsMenu.vue'
+import { endpoints } from '../consts'
 
 const props = defineProps<{ state: AppState }>()
 
 const addToQueue = (tracks: Track[]) => {
-  axios.post('/api/queue', {
+  axios.post(endpoints.api.queue, {
     items: tracks.map(track => {
       return { track, videoId: null }
     })
