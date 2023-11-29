@@ -1,4 +1,4 @@
-import { QueuesDb } from "./QueuesDb";
+import { QueuesDb } from "./db/QueuesDb";
 import { join } from "path";
 
 type M3u8Template = (args: { now: number; mediaSequence?: number; }) => string

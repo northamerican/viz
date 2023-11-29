@@ -2,7 +2,7 @@ import axios from "axios";
 import querystring from "node:querystring";
 import { appUrl, redirectEndpoint } from "../consts";
 import type { GetToken, GetPlaylist, GetPlaylists } from "VizPlayer";
-import { AuthDb } from "../AuthDb";
+import { AuthDb } from "../db/AuthDb";
 
 const clientId = process.env.SPOTIFY_CLIENT_ID
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET

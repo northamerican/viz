@@ -1,5 +1,5 @@
 import { JSONPreset } from "lowdb/node";
-import { queuesDbPath } from "./consts";
+import { queuesDbPath } from "../consts";
 import type { Queue, QueuesDbType, QueueItem, SegmentInfo, Video } from "Viz";
 import { v4 as uuidv4 } from 'uuid';
 import { VideosDb } from "./VideosDb";
@@ -55,6 +55,15 @@ export const QueuesDb = {
     })
   },
 
+  set startTime(timestamp: number) {
+    queuesDb.data.state.startTime = timestamp
+    queuesDb.write()
+  },
+
+  get startTime() {
+    return queuesDb.data.state.startTime
+  },
+
   getQueue(queueId: string): Queue {
     return this.queues.find(({ id }) => id === queueId)
   },
@@ -76,15 +85,6 @@ export const QueuesDb = {
       ...item,
       video: VideosDb.getVideo(item.videoId) || null
     }
-  },
-
-  set startTime(timestamp: number) {
-    queuesDb.data.state.startTime = timestamp
-    queuesDb.write()
-  },
-
-  get startTime() {
-    return queuesDb.data.state.startTime
   },
 
   addItem(props: QueueItem) {

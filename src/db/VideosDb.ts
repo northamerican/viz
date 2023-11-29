@@ -1,5 +1,5 @@
 import { JSONPreset } from "lowdb/node";
-import { videosDbPath } from "./consts";
+import { videosDbPath } from "../consts";
 import type { Video, VideosDbType } from "Viz";
 
 const videosDbDefault = {

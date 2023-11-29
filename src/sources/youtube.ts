@@ -6,7 +6,7 @@ import {
   mp4Dir
 } from "../consts.ts";
 import toHls from "../toHls.ts";
-import { VideosDb } from "../VideosDb.ts";
+import { VideosDb } from "../db/VideosDb.ts";
 import type {
   CreateSearchQuery,
   GetVideo,

@@ -3,7 +3,7 @@ import fs from "fs";
 import ffmpegPath from "ffmpeg-static";
 import { join } from "path";
 import { hlsDir, mp4Dir } from "./consts";
-import { VideosDb } from "./VideosDb";
+import { VideosDb } from "./db/VideosDb";
 
 function getSegmentDurations(filePath: fs.PathOrFileDescriptor) {
   return fs.readFileSync(filePath)

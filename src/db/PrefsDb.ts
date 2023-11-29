@@ -1,8 +1,8 @@
 import { JSONPreset } from "lowdb/node";
-import { prefsDbPath } from "./consts";
+import { prefsDbPath } from "../consts";
 import { VizPrefsDbType } from "Viz";
-import players from "./players";
-import sources from "./sources";
+import players from "../players";
+import sources from "../sources";
 
 const prefsDbDefault = {
   player: "spotify",

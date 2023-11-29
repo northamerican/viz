@@ -13,8 +13,8 @@ import {
 } from "./consts.ts";
 import { isAxiosError } from "axios";
 import { VizM3u8 } from "./VizM3u8.ts";
-import { QueuesDb } from "./QueuesDb.ts";
-import { PrefsDb } from "./PrefsDb.ts";
+import { QueuesDb } from "./db/QueuesDb.ts";
+import { PrefsDb } from "./db/PrefsDb.ts";
 
 const app = express();
 app.use(compression());
