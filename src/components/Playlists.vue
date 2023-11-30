@@ -33,10 +33,10 @@ onMounted(() => getPlaylists())
     <h1>Playlists [Spotify]</h1>
     <div v-for="playlist in state.playlists.items">
       <ListItem>
-        <strong class="playlist-title" @click="getPlaylist(playlist)">{{
+        <strong class="name" @click="getPlaylist(playlist)">{{
           playlist.name
         }}</strong>
-        <div class="playlist-actions">
+        <div class="actions">
           <!-- <ActionsMenu></ActionsMenu> -->
         </div>
       </ListItem>
@@ -46,7 +46,7 @@ onMounted(() => getPlaylists())
 </template>
 
 <style>
-.playlist-title {
+.name {
   cursor: pointer;
 
   &:hover {
@@ -54,7 +54,7 @@ onMounted(() => getPlaylists())
   }
 }
 
-.playlist-actions {
+.actions {
   margin-left: auto;
 }
 </style>

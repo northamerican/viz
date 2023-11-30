@@ -11,6 +11,7 @@ import Queue from './components/Queue.vue'
 import type { AppState } from 'Viz'
 
 const state = reactive<AppState>({
+  videoEl: null,
   isLoggedIn: !!getCookie('isLoggedIn'),
   playlists: {
     items: []

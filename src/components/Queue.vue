@@ -10,13 +10,13 @@ const props = defineProps<{ state: AppState }>()
 
 const getVideo = async (item: QueueItem) => {
   const { track, id: queueItemId } = item
-  const { artists, title } = track
+  const { artists, name } = track
 
   await axios.post(url.api.video, {
     queueId: props.state.queue.id,
     queueItemId,
     artist: artists[0],
-    title
+    name
   })
 }
 
@@ -34,8 +34,10 @@ const getQueue = async () => {
 
 const playQueue = () => {
   axios.post(url.api.play)
-  document.querySelector('video').fastSeek(0)
-  document.querySelector('video').play()
+  const { videoEl } = props.state
+  videoEl.src = videoEl.src
+  videoEl.fastSeek(0)
+  videoEl.play()
 }
 
 const downloadQueue = () => {
@@ -75,10 +77,7 @@ onMounted(() => {
 <template>
   <div v-if="state.queue?.items.length">
     <header>
-      <h2 class="title">
-        <!-- <button @click="">⇦</button> -->
-        Queue
-      </h2>
+      <h2>Queue</h2>
       <div>
         <button @click="deleteQueueAndVideos">X</button>
         <button @click="downloadQueue">⬇</button>
@@ -87,13 +86,13 @@ onMounted(() => {
     </header>
     <ListItem v-for="item in state.queue.items">
       <div class="track-info">
-        <strong>{{ item.track.title }}</strong>
+        <strong>{{ item.track.name }}</strong>
         <br />
         <span class="track-artist" v-for="artist in item.track.artists">
           {{ artist }}
         </span>
       </div>
-      <div class="track-actions">
+      <div class="actions">
         {{ item.video?.downloading ? '⌛︎' : '' }}
         {{ item.video?.downloaded ? '✔' : '' }}
         <ActionsMenu :options="actionsMenuOptions(item)" />
@@ -117,7 +116,7 @@ header {
   }
 }
 
-.track-actions {
+.actions {
   margin-left: auto;
 }
 </style>

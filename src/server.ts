@@ -97,14 +97,14 @@ app.delete(url.api.videos, async (_, res) => {
   }
 });
 
-const postVideo = async ({ artist, title, queueId, queueItemId }: {
+const postVideo = async ({ artist, name, queueId, queueItemId }: {
   artist: string;
-  title: string;
+  name: string;
   queueId: string;
   queueItemId: string;
 }) => {
-  console.log(`Getting video for ${title} - ${artist}`)
-  const searchQuery = PrefsDb.source.createSearchQuery({ artist, title });
+  console.log(`Getting video for ${name} - ${artist}`)
+  const searchQuery = PrefsDb.source.createSearchQuery({ artist, name });
   const { video, videoId } = await PrefsDb.source.getVideo(searchQuery);
 
   // TODO Probably move this?
@@ -116,9 +116,9 @@ const postVideo = async ({ artist, title, queueId, queueItemId }: {
 }
 
 app.post(url.api.video, async (req, res) => {
-  const { artist, title, queueId, queueItemId } = req.body;
+  const { artist, name, queueId, queueItemId } = req.body;
 
-  res.status(201).json(postVideo({ artist, title, queueId, queueItemId }));
+  res.status(201).json(postVideo({ artist, name, queueId, queueItemId }));
 });
 
 app.get(url.api.m3u, async (_, res) => {
@@ -205,11 +205,11 @@ app.post(url.api.queue, async (req, res) => {
 const queueDownload = () => {
   QueuesDb.downloadableQueue(1).forEach((item) => {
     const artist = item.track.artists[0]
-    const title = item.track.title
+    const name = item.track.name
     const queueId = QueuesDb.currentQueue.id
     const queueItemId = item.id
 
-    postVideo({ artist, title, queueId, queueItemId })
+    postVideo({ artist, name, queueId, queueItemId })
   })
 }
 

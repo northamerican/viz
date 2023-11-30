@@ -138,7 +138,7 @@ const getPlaylist: GetPlaylist = async (playlistId, total) => {
         id: item.track.id,
         player: 'spotify' as const,
         artists: item.track.artists.map(artist => artist.name),
-        title: item.track.name
+        name: item.track.name
       }))
     })
 

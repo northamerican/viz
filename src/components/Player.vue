@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { url } from '../consts'
 // import '../hlsjs.ts'
+import type { AppState } from 'Viz'
 
-const videoEl = ref(null)
+const props = defineProps<{ state: AppState }>()
 </script>
 
 <template>
   <section class="player">
     <video
       id="video"
-      ref="videoEl"
+      :ref="el => (props.state.videoEl = el)"
       :src="url.api.m3u"
       controls
       playsinline

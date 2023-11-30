@@ -1,5 +1,6 @@
 declare module "Viz" {
   export type AppState = {
+    videoEl: any
     isLoggedIn: boolean
     playlists: PlaylistList
     selectedPlaylist: Playlist
@@ -19,7 +20,7 @@ declare module "Viz" {
   export type Track = {
     id: string
     artists: string[]
-    title: string // TODO change to name
+    name: string
     player: PlayerNames
   }
 

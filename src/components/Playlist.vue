@@ -28,7 +28,7 @@ const actionsMenuOptions = (track: Track) => [
 <template>
   <div v-if="state.selectedPlaylist">
     <header>
-      <h2 class="title">
+      <h2>
         <button @click="unselectPlaylist">⇦</button>
         {{ state.selectedPlaylist.name }}
       </h2>
@@ -39,13 +39,13 @@ const actionsMenuOptions = (track: Track) => [
       </div>
     </header>
     <ListItem v-for="track in state.selectedPlaylist.tracks">
-      <div class="track-info">
-        <strong>{{ track.title }}</strong>
+      <div class="info">
+        <strong>{{ track.name }}</strong>
         <br /><span class="track-artist" v-for="artist in track.artists">
           {{ artist }}
         </span>
       </div>
-      <div class="track-actions">
+      <div class="actions">
         <ActionsMenu :options="actionsMenuOptions(track)" />
       </div>
     </ListItem>
@@ -60,13 +60,13 @@ header {
   margin-inline: 0.5rem;
 }
 
-.track-info {
+.info {
   .track-artist + .track-artist::before {
     content: ', ';
   }
 }
 
-.track-actions {
+.actions {
   margin-left: auto;
 }
 </style>
