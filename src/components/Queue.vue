@@ -3,27 +3,33 @@ import axios from 'axios'
 import type { AppState, QueueItem } from 'Viz'
 import ListItem from './ListItem.vue'
 import ActionsMenu from './ActionsMenu.vue'
-import { Queue } from 'Viz'
-import { mountWithInterval } from '../helpers'
 import { url } from '../consts'
+import { onBeforeUnmount, onMounted } from 'vue'
 
 const props = defineProps<{ state: AppState }>()
 
 const getVideo = async (item: QueueItem) => {
   const { track, id: queueItemId } = item
   const { artists, title } = track
+
   await axios.post(url.api.video, {
     queueId: props.state.queue.id,
     queueItemId,
     artist: artists[0],
     title
   })
-  getQueue()
 }
 
 const getQueue = async () => {
-  const { data } = await axios.get<Queue>(url.api.current)
-  props.state.queue = data
+  const currentQueueSource = new EventSource(url.api.current)
+
+  currentQueueSource.addEventListener('update', ({ data }) => {
+    props.state.queue = JSON.parse(data)
+  })
+
+  onBeforeUnmount(() => {
+    currentQueueSource.close()
+  })
 }
 
 const playQueue = () => {
@@ -51,7 +57,7 @@ const actionsMenuOptions = (item: QueueItem) => [
   { action: () => {}, label: 'Go to Spotify Song...', disabled: true }
 ]
 
-mountWithInterval(getQueue, 5000)
+onMounted(getQueue)
 </script>
 
 <template>

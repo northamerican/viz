@@ -1,6 +1,6 @@
 import express from "express";
 import compression from "compression";
-import { createReadStream } from "fs";
+import { createReadStream, readdirSync, rmSync } from "fs";
 import ViteExpress from "vite-express";
 import {
   url,
@@ -8,15 +8,18 @@ import {
   appPort,
   appIp,
   tsPath,
+  hlsDir,
+  mp4Dir,
 } from "./consts.ts";
 import { isAxiosError } from "axios";
 import { VizM3u8 } from "./VizM3u8.ts";
-import { QueuesDb } from "./db/QueuesDb.ts";
+import { QueuesDb, queuesDbEvents } from "./db/QueuesDb.ts";
+import { VideosDb } from "./db/VideosDb.ts";
 import { PrefsDb } from "./db/PrefsDb.ts";
 
 const app = express();
-app.use(compression());
 app.use(express.json());
+app.use(compression());
 
 // Player
 
@@ -82,6 +85,18 @@ app.get(url.api.playlist(':playlistId'), async (req, res) => {
 
 // Video streaming
 
+app.delete(url.api.videos, async (_, res) => {
+  try {
+    VideosDb.delete()
+    readdirSync(hlsDir).forEach(f => rmSync(`${hlsDir}/${f}`, { recursive: true }));
+    readdirSync(mp4Dir).forEach(f => rmSync(`${mp4Dir}/${f}`));
+
+    return res.sendStatus(200);
+  } catch (error) {
+    return res.sendStatus(500);
+  }
+});
+
 app.post(url.api.video, async (req, res) => {
   const { artist, title, queueId, queueItemId } = req.body;
 
@@ -97,7 +112,6 @@ app.post(url.api.video, async (req, res) => {
   res.status(201).json({ videoId });
 });
 
-// TODO rename join('api', 'video-stream')
 app.get(url.api.m3u, async (_, res) => {
   // TODO confirm sending as gzip ?
   try {
@@ -134,15 +148,35 @@ app.post(url.api.play, async (_, res) => {
   }
 });
 
-app.get(url.api.current, async (_, res) => {
-  // long polling
-  // const watcher = fs.watch(queuesDbPath, { signal });
-  // for await (const event of watcher) {
-  //   res...
-  // }
+// app.get(url.api.update, async (req, res) => {
 
+// });
+
+app.get(url.api.current, async (req, res) => {
+  const sendCurrentQueueWithVideos = () => {
+    res.write('event: update\n');
+    res.write(`data: ${JSON.stringify(QueuesDb.currentQueueWithVideos)}\n`);
+    res.write(`id: ${Date.now()}\n\n`);
+  }
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Content-Encoding': 'none',
+    'Connection': 'keep-alive'
+  });
+
+  sendCurrentQueueWithVideos()
+  queuesDbEvents.on('update', sendCurrentQueueWithVideos);
+
+  req.on('close', () => res.end('OK'))
+});
+
+app.delete(url.api.queues, async (_, res) => {
   try {
-    return res.json(QueuesDb.currentQueueWithVideos);
+    QueuesDb.delete()
+
+    return res.sendStatus(200);
   } catch (error) {
     return res.sendStatus(500);
   }
@@ -153,25 +187,11 @@ app.post(url.api.queue, async (req, res) => {
     const { items } = req.body
     QueuesDb.addItems(items)
 
-    // return stream.pipe(res);
     return res.sendStatus(200);
   } catch (error) {
     return res.sendStatus(500);
   }
 });
-
-app.put(url.api.queueId(':id'), async (req, res) => {
-  try {
-    // const { id } = req.params;
-    // QueuesDb.addItems(items)
-
-    // return stream.pipe(res);
-    return res.sendStatus(200);
-  } catch (error) {
-    return res.sendStatus(500);
-  }
-});
-
 
 const server = app.listen(appPort, appIp, () =>
   console.log(`viz running at ${appUrl}`)

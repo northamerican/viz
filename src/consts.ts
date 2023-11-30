@@ -21,12 +21,15 @@ export const url = {
     logout: '/api/logout',
     playlists: '/api/playlists',
     playlist: (playlistId: string) => `/api/playlists/${playlistId}`,
+    videos: '/api/videos',
     video: '/api/video',
     m3u: '/api/m3u',
     ts: (videoId: string, segmentIndex: string | number) => `/api/ts/${videoId}/${segmentIndex}`,
     play: '/api/play',
+    queues: '/api/queues',
     queue: '/api/queue',
     queueId: (queueId: string) => `/api/queue/${queueId}`,
-    current: '/api/queue/current'
+    current: '/api/queue/current',
+    update: '/api/queue/update'
   }
 }

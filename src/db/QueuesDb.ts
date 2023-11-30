@@ -1,4 +1,5 @@
 import { JSONPreset } from "lowdb/node";
+import EventEmitter from 'node:events';
 import { queuesDbPath } from "../consts";
 import type { Queue, QueuesDbType, QueueItem, SegmentInfo, Video } from "Viz";
 import { v4 as uuidv4 } from 'uuid';
@@ -18,19 +19,18 @@ const queuesDbDefault: QueuesDbType = {
   }]
 }
 const queuesDb = await JSONPreset<QueuesDbType>(queuesDbPath, queuesDbDefault)
-const { state, currentQueueId, queues } = queuesDb.data
 
 export const QueuesDb = {
   get queues() {
-    return queues
+    return queuesDb.data.queues
   },
 
   get state() {
-    return state
+    return queuesDb.data.state
   },
 
   get currentQueue(): Queue {
-    return this.queues.find(queue => queue.id === currentQueueId)
+    return this.queues.find(queue => queue.id === queuesDb.data.currentQueueId)
   },
 
   get currentQueueWithVideos(): Queue {
@@ -55,13 +55,13 @@ export const QueuesDb = {
     })
   },
 
-  set startTime(timestamp: number) {
-    queuesDb.data.state.startTime = timestamp
-    queuesDb.write()
-  },
-
   get startTime() {
     return queuesDb.data.state.startTime
+  },
+
+  set startTime(timestamp: number) {
+    queuesDb.data.state.startTime = timestamp
+    this.write()
   },
 
   getQueue(queueId: string): Queue {
@@ -89,7 +89,7 @@ export const QueuesDb = {
 
   addItem(props: QueueItem) {
     this.addItems([props])
-    queuesDb.write()
+    this.write()
   },
 
   addItems(items: Omit<QueueItem, 'id'>[]) {
@@ -97,12 +97,24 @@ export const QueuesDb = {
       ...props,
       id: uuidv4()
     })))
-    queuesDb.write()
+    this.write()
   },
 
   editItem(queueId: string, queueItemId: string, props: Partial<QueueItem>) {
     const queueItem = this.getItem(queueId, queueItemId)
     Object.assign(queueItem, props)
-    queuesDb.write()
-  }
+    this.write()
+  },
+
+  delete() {
+    queuesDb.data = queuesDbDefault;
+    this.write()
+  },
+
+  async write() {
+    await queuesDb.write()
+    queuesDbEvents.emit('update');
+  },
 }
+
+export const queuesDbEvents = new EventEmitter();
