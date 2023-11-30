@@ -97,9 +97,12 @@ app.delete(url.api.videos, async (_, res) => {
   }
 });
 
-app.post(url.api.video, async (req, res) => {
-  const { artist, title, queueId, queueItemId } = req.body;
-
+const postVideo = async ({ artist, title, queueId, queueItemId }: {
+  artist: string;
+  title: string;
+  queueId: string;
+  queueItemId: string;
+}) => {
   console.log(`Getting video for ${title} - ${artist}`)
   const searchQuery = PrefsDb.source.createSearchQuery({ artist, title });
   const { video, videoId } = await PrefsDb.source.getVideo(searchQuery);
@@ -109,7 +112,13 @@ app.post(url.api.video, async (req, res) => {
 
   await PrefsDb.source.writeVideoStream(video, videoId);
 
-  res.status(201).json({ videoId });
+  return { videoId }
+}
+
+app.post(url.api.video, async (req, res) => {
+  const { artist, title, queueId, queueItemId } = req.body;
+
+  res.status(201).json(postVideo({ artist, title, queueId, queueItemId }));
 });
 
 app.get(url.api.m3u, async (_, res) => {
@@ -192,6 +201,33 @@ app.post(url.api.queue, async (req, res) => {
     return res.sendStatus(500);
   }
 });
+
+const queueDownload = () => {
+  setInterval(() => {
+    QueuesDb.downloadableQueue(1).forEach((item) => {
+      const artist = item.track.artists[0]
+      const title = item.track.title
+      const queueId = QueuesDb.currentQueue.id
+      const queueItemId = item.id
+
+      postVideo({ artist, title, queueId, queueItemId })
+    })
+  }, 10_000)
+}
+
+app.post(url.api.queueDownload, async (_, res) => {
+  try {
+    queueDownload()
+    // TODO instead 
+    // queuesDbEvents.on('downloadComplete', queueDownload);
+    // from QueuesDb: queuesDbEvents.emit('downloadComplete');
+    setInterval(queueDownload, 10_000)
+    return res.sendStatus(200);
+  } catch (error) {
+    return res.sendStatus(500);
+  }
+});
+
 
 const server = app.listen(appPort, appIp, () =>
   console.log(`viz running at ${appUrl}`)

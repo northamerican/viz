@@ -13,7 +13,7 @@ function getSegmentDurations(filePath: fs.PathOrFileDescriptor) {
     .map(extInfDuration => +extInfDuration.match(/\#EXTINF:([\d\.]+),/)[1])
 }
 
-async function toHls(videoId: string) {
+export default async function toHls(videoId: string) {
   const hlsVideoDir = join(hlsDir, videoId)
   const m3u8FilePath = join(hlsVideoDir, `${videoId}.m3u8`);
   const mp4FilePath = join(mp4Dir, `${videoId}.mp4`);
@@ -82,11 +82,3 @@ async function toHls(videoId: string) {
 
   return process
 };
-
-export default toHls
-
-// Run from node script
-const [, path, videoId] = process.argv
-if (!path.includes('server.ts') && videoId) {
-  toHls(videoId)
-}

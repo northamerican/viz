@@ -8,19 +8,18 @@ const videosDbDefault = {
   videos: {}
 }
 const videosDb = await JSONPreset<VideosDbType>(videosDbPath, videosDbDefault)
-const { videos } = videosDb.data
 
 export const VideosDb = {
-  getVideos() {
-    return videos
+  get videos() {
+    return videosDb.data.videos
   },
 
   getVideo(videoId: string) {
-    return videos[videoId]
+    return this.videos[videoId]
   },
 
   addVideo(props: Video) {
-    videos[props.id] = props
+    this.videos[props.id] = props
     this.write()
   },
 

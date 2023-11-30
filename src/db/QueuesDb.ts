@@ -44,6 +44,15 @@ export const QueuesDb = {
     return this.currentQueueWithVideos.items.flatMap(item => item.video ?? [])
   },
 
+  get currentQueueNotDownloaded() {
+    return this.currentQueueWithVideos.items.filter(item => !item.video?.downloaded)
+  },
+
+  // Get next items for download
+  downloadableQueue(max = 1): QueueItem[] {
+    return this.currentQueueNotDownloaded.slice(0, max).filter(item => !item.video?.downloading)
+  },
+
   // TODO cache this? may need to give each segment an id
   get currentQueueSegmentInfo(): SegmentInfo[] {
     return this.currentQueueVideos.flatMap(({ segmentDurations, id }) => {

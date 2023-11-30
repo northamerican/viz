@@ -37,6 +37,15 @@ const playQueue = () => {
   // TODO fastSeek video el to 0
 }
 
+const downloadQueue = () => {
+  axios.post(url.api.queueDownload)
+}
+
+const deleteQueueAndVideos = () => {
+  axios.delete(url.api.videos)
+  axios.delete(url.api.queues)
+}
+
 const actionsMenuOptions = (item: QueueItem) => [
   {
     action: () => getVideo(item),
@@ -57,7 +66,9 @@ const actionsMenuOptions = (item: QueueItem) => [
   { action: () => {}, label: 'Go to Spotify Song...', disabled: true }
 ]
 
-onMounted(getQueue)
+onMounted(() => {
+  getQueue()
+})
 </script>
 
 <template>
@@ -68,6 +79,8 @@ onMounted(getQueue)
         Queue
       </h2>
       <div>
+        <button @click="deleteQueueAndVideos">X</button>
+        <button @click="downloadQueue">⬇</button>
         <button @click="playQueue">▶</button>
       </div>
     </header>
