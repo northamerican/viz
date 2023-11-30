@@ -34,7 +34,8 @@ const getQueue = async () => {
 
 const playQueue = () => {
   axios.post(url.api.play)
-  // TODO fastSeek video el to 0
+  document.querySelector('video').fastSeek(0)
+  document.querySelector('video').play()
 }
 
 const downloadQueue = () => {

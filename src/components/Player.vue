@@ -8,7 +8,14 @@ const videoEl = ref(null)
 
 <template>
   <section class="player">
-    <video id="video" ref="videoEl" :src="url.api.m3u" controls autoplay />
+    <video
+      id="video"
+      ref="videoEl"
+      :src="url.api.m3u"
+      controls
+      playsinline
+      autoplay
+    />
   </section>
 </template>
 

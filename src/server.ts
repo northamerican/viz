@@ -203,16 +203,14 @@ app.post(url.api.queue, async (req, res) => {
 });
 
 const queueDownload = () => {
-  setInterval(() => {
-    QueuesDb.downloadableQueue(1).forEach((item) => {
-      const artist = item.track.artists[0]
-      const title = item.track.title
-      const queueId = QueuesDb.currentQueue.id
-      const queueItemId = item.id
+  QueuesDb.downloadableQueue(1).forEach((item) => {
+    const artist = item.track.artists[0]
+    const title = item.track.title
+    const queueId = QueuesDb.currentQueue.id
+    const queueItemId = item.id
 
-      postVideo({ artist, title, queueId, queueItemId })
-    })
-  }, 10_000)
+    postVideo({ artist, title, queueId, queueItemId })
+  })
 }
 
 app.post(url.api.queueDownload, async (_, res) => {
@@ -221,6 +219,7 @@ app.post(url.api.queueDownload, async (_, res) => {
     // TODO instead 
     // queuesDbEvents.on('downloadComplete', queueDownload);
     // from QueuesDb: queuesDbEvents.emit('downloadComplete');
+    // or cancellable fn/endpoint
     setInterval(queueDownload, 10_000)
     return res.sendStatus(200);
   } catch (error) {
