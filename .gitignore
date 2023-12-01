@@ -26,3 +26,4 @@ dist-ssr
 public/hls/*
 public/mp4/*
 .env
+src/db/*.json
