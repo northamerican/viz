@@ -219,7 +219,8 @@ app.post(url.api.queueDownload, async (_, res) => {
     // TODO instead 
     // queuesDbEvents.on('downloadComplete', queueDownload);
     // from QueuesDb: queuesDbEvents.emit('downloadComplete');
-    // or cancellable fn/endpoint
+    // or based on current play position
+    // + cancellable fn/endpoint
     setInterval(queueDownload, 10_000)
     return res.sendStatus(200);
   } catch (error) {
