@@ -13,7 +13,6 @@ const addToQueue = (tracks: Track[]) => {
       return { track, videoId: null }
     })
   })
-  // TODO make browser get current queue
 }
 
 const unselectPlaylist = () => {
