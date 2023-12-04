@@ -115,6 +115,16 @@ export const QueuesDb = {
     this.write()
   },
 
+  removeItem(queueItemId: string) {
+    this.removeItems([queueItemId])
+    this.write()
+  },
+
+  removeItems(queueItemIds: string[]) {
+    this.currentQueue.items = this.currentQueue.items.filter(queueItem => !queueItemIds.includes(queueItem.id))
+    this.write()
+  },
+
   editItem(queueId: string, queueItemId: string, props: Partial<QueueItem>) {
     const queueItem = this.getItem(queueId, queueItemId)
     Object.assign(queueItem, props)

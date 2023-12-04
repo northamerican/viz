@@ -10,7 +10,7 @@ import {
   tsPath,
   hlsDir,
 } from "./consts.ts";
-import { isAxiosError } from "axios";
+import { HttpStatusCode, isAxiosError } from "axios";
 import { VizM3u8 } from "./VizM3u8.ts";
 import { QueuesDb, queuesDbEvents } from "./db/QueuesDb.ts";
 import { VideosDb } from "./db/VideosDb.ts";
@@ -47,7 +47,7 @@ app.get(url.api.logout, async (_, res) => {
   try {
     await PrefsDb.player.logout();
 
-    res.sendStatus(204)
+    res.sendStatus(HttpStatusCode.NoContent)
   } catch (error) {
     if (isAxiosError(error)) {
       res.sendStatus(error.response.status);
@@ -89,9 +89,9 @@ app.delete(url.api.videos, async (_, res) => {
     VideosDb.delete()
     readdirSync(hlsDir).forEach(f => rmSync(`${hlsDir}/${f}`, { recursive: true }));
 
-    return res.sendStatus(200);
+    return res.sendStatus(HttpStatusCode.NoContent);
   } catch (error) {
-    return res.sendStatus(500);
+    return res.sendStatus(HttpStatusCode.InternalServerError);
   }
 });
 
@@ -114,12 +114,12 @@ const postVideo = async ({ artist, name, queueId, queueItemId }: {
 // get video info endpoint
 // get actual video endpoint
 
-
-
 app.post(url.api.video, async (req, res) => {
   const { artist, name, queueId, queueItemId } = req.body;
 
-  res.status(201).json(postVideo({ artist, name, queueId, queueItemId }));
+  res
+    .status(HttpStatusCode.Created)
+    .json(postVideo({ artist, name, queueId, queueItemId }));
 });
 
 app.get(url.api.m3u, async (_, res) => {
@@ -131,7 +131,7 @@ app.get(url.api.m3u, async (_, res) => {
       .type("application/vnd.apple.mpegurl")
       .send(m3u8);
   } catch (error) {
-    return res.sendStatus(500);
+    return res.sendStatus(HttpStatusCode.InternalServerError);
   }
 });
 
@@ -144,7 +144,7 @@ app.get(url.api.ts(':videoId', ':segmentIndex'), async (req, res) => {
     res.setHeader('Content-Type', 'video/mp2t');
     return stream.pipe(res);
   } catch (error) {
-    return res.sendStatus(500);
+    return res.sendStatus(HttpStatusCode.InternalServerError);
   }
 });
 
@@ -153,7 +153,7 @@ app.get(url.api.ts(':videoId', ':segmentIndex'), async (req, res) => {
 app.post(url.api.play, async (_, res) => {
   try {
     QueuesDb.startTime = Date.now()
-    res.sendStatus(200)
+    res.sendStatus(HttpStatusCode.Ok)
   } catch (error) {
   }
 });
@@ -169,7 +169,7 @@ app.get(url.api.current, async (req, res) => {
     res.write(`id: ${Date.now()}\n\n`);
   }
 
-  res.writeHead(200, {
+  res.writeHead(HttpStatusCode.Ok, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Content-Encoding': 'none',
@@ -186,9 +186,9 @@ app.delete(url.api.queues, async (_, res) => {
   try {
     QueuesDb.delete()
 
-    return res.sendStatus(200);
+    return res.sendStatus(HttpStatusCode.Ok);
   } catch (error) {
-    return res.sendStatus(500);
+    return res.sendStatus(HttpStatusCode.InternalServerError);
   }
 });
 
@@ -197,9 +197,9 @@ app.post(url.api.queue, async (req, res) => {
     const { items } = req.body
     QueuesDb.addItems(items)
 
-    return res.sendStatus(200);
+    return res.sendStatus(HttpStatusCode.Ok);
   } catch (error) {
-    return res.sendStatus(500);
+    return res.sendStatus(HttpStatusCode.InternalServerError);
   }
 });
 
@@ -223,11 +223,18 @@ app.post(url.api.queueDownload, async (_, res) => {
     // or based on current play position
     // + cancellable fn/endpoint
     setInterval(queueDownload, 10_000)
-    return res.sendStatus(200);
+    return res.sendStatus(HttpStatusCode.Ok); // TODO NoContent?
   } catch (error) {
-    return res.sendStatus(500);
+    return res.sendStatus(HttpStatusCode.InternalServerError);
   }
 });
+
+app.delete(url.api.queueItem(':queueItemId'), (req, res) => {
+  const { queueItemId } = req.params;
+  QueuesDb.removeItem(queueItemId)
+
+  return res.sendStatus(HttpStatusCode.NoContent);
+})
 
 
 const server = app.listen(appPort, appIp, () =>

@@ -29,6 +29,7 @@ export const url = {
     queues: '/api/queues',
     queue: '/api/queue',
     queueId: (queueId: string) => `/api/queue/${queueId}`,
+    queueItem: (queueItemId: string) => `/api/queue/item${queueItemId}`,
     queueDownload: '/api/queue/download',
     current: '/api/queue/current',
     update: '/api/queue/update'
