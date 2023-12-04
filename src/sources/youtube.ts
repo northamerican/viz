@@ -1,16 +1,9 @@
-import fs from "fs";
 import ytsr from "ytsr";
-import { join } from "path";
-import ytdlMuxer from "../ytdlMuxer.ts";
-import {
-  mp4Dir
-} from "../consts.ts";
-import toHls from "../toHls.ts";
+import youtubeToHls from "../youtubeToHls.ts";
 import { VideosDb } from "../db/VideosDb.ts";
 import type {
   CreateSearchQuery,
   GetVideo,
-  WriteVideoStream
 } from "VizSource";
 
 const maxVideoDuration = 12 * 60;
@@ -27,7 +20,7 @@ const createSearchQuery: CreateSearchQuery = (track) => {
   return `${artist} ${name} music video`;
 }
 
-const pickVideo = (items: ytsr.Item[]): ytsr.Video | null => {
+const filterVideo = (items: ytsr.Item[]): ytsr.Video | null => {
   const filterItems = items.filter(
     // @ts-ignore
     ({ duration }) => {
@@ -47,8 +40,9 @@ const getVideo: GetVideo = async (query: string) => {
     limit: 20,
   });
 
-  const { id: videoId, url } = pickVideo(items);
-  const video = ytdlMuxer(url);
+  const { id: videoId, url } = filterVideo(items);
+
+  // TODO handle no video found 
 
   VideosDb.addVideo({
     id: videoId,
@@ -60,24 +54,11 @@ const getVideo: GetVideo = async (query: string) => {
     segmentDurations: []
   })
 
-  return { video, videoId };
-}
-
-const writeVideoStream: WriteVideoStream = (video, videoId) => {
-  const videoPath = join(mp4Dir, `${videoId}.mp4`);
-
-  video.pipe(fs.createWriteStream(videoPath));
-  video.on("finish", () => {
-    console.log(`Got video ${videoId}`)
-
-    toHls(videoId)
-  });
-
-  return video;
+  youtubeToHls({ videoId, url });
+  return { videoId };
 }
 
 export const youtube = {
-  writeVideoStream,
   createSearchQuery,
   getVideo,
 }

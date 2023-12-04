@@ -1,10 +1,10 @@
 import { url } from "./consts";
 import { QueuesDb } from "./db/QueuesDb";
 
-type M3u8Template = (args: { now: number; mediaSequence?: number; }) => string
-const m3u8Template: M3u8Template = ({ now, mediaSequence = 0 }) => `#EXTM3U
+type M3u8Template = (args: { now: number; longestSegmentDuration: number, mediaSequence?: number; }) => string
+const m3u8Template: M3u8Template = ({ now, longestSegmentDuration, mediaSequence = 0 }) => `#EXTM3U
 #EXT-X-VERSION:3
-#EXT-X-TARGETDURATION:10
+#EXT-X-TARGETDURATION:${longestSegmentDuration}
 #EXT-X-MEDIA-SEQUENCE:${mediaSequence}
 #EXT-X-START:TIME-OFFSET=${(now - QueuesDb.startTime) / 1000}`
 
@@ -24,7 +24,9 @@ export const VizM3u8 = () => {
   let mediaSequence = Infinity
 
   const now = Date.now()
-  const tsSegments = QueuesDb.currentQueueSegmentInfo.map(({
+  const { currentQueueSegmentInfo } = QueuesDb
+  const longestSegmentDuration = Math.ceil(Math.max(...currentQueueSegmentInfo.map(({ duration }) => duration)))
+  const tsSegments = currentQueueSegmentInfo.map(({
     videoId,
     duration,
     segmentIndex
@@ -53,5 +55,5 @@ export const VizM3u8 = () => {
 
   // TODO append endless stream of Viz logo at the end until something new is queued
 
-  return [m3u8Template({ now, mediaSequence }), tsSegments].join('\n');
+  return [m3u8Template({ now, longestSegmentDuration, mediaSequence }), tsSegments].join('\n');
 }

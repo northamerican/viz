@@ -9,7 +9,6 @@ import {
   appIp,
   tsPath,
   hlsDir,
-  mp4Dir,
 } from "./consts.ts";
 import { isAxiosError } from "axios";
 import { VizM3u8 } from "./VizM3u8.ts";
@@ -89,7 +88,6 @@ app.delete(url.api.videos, async (_, res) => {
   try {
     VideosDb.delete()
     readdirSync(hlsDir).forEach(f => rmSync(`${hlsDir}/${f}`, { recursive: true }));
-    readdirSync(mp4Dir).forEach(f => rmSync(`${mp4Dir}/${f}`));
 
     return res.sendStatus(200);
   } catch (error) {
@@ -105,15 +103,18 @@ const postVideo = async ({ artist, name, queueId, queueItemId }: {
 }) => {
   console.log(`Getting video for ${name} - ${artist}`)
   const searchQuery = PrefsDb.source.createSearchQuery({ artist, name });
-  const { video, videoId } = await PrefsDb.source.getVideo(searchQuery);
+  const { videoId } = await PrefsDb.source.getVideo(searchQuery);
 
   // TODO Probably move this?
   QueuesDb.editItem(queueId, queueItemId, { videoId })
 
-  await PrefsDb.source.writeVideoStream(video, videoId);
-
   return { videoId }
 }
+
+// get video info endpoint
+// get actual video endpoint
+
+
 
 app.post(url.api.video, async (req, res) => {
   const { artist, name, queueId, queueItemId } = req.body;
