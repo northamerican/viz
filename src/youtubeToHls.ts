@@ -6,18 +6,7 @@ import ytdl from "@distube/ytdl-core";
 import ffmpegPath from "ffmpeg-static";
 import { hlsDir } from "./consts";
 import { VideosDb } from "./db/VideosDb";
-
-function getSegmentDurations(filePath: fs.PathOrFileDescriptor) {
-  return fs.readFileSync(filePath)
-    .toString()
-    .split('\n')
-    .filter(line => line.startsWith('#EXTINF'))
-    .map(extInfDuration => +extInfDuration.match(/\#EXTINF:([\d\.]+),/)[1])
-}
-
-function durationTotal(total: number, duration: number) {
-  return total + duration
-}
+import { getSegmentDurations, durationTotal } from "./helpers";
 
 // TODO move to players/youtube
 export default function youtubeToHls({ videoId, url, options }: {
@@ -56,7 +45,7 @@ export default function youtubeToHls({ videoId, url, options }: {
       const process = cp.spawn(
         ffmpegPath,
         [
-          "-loglevel", "8",
+          "-loglevel", "32",
           //
           "-i", "pipe:3",
           //
@@ -93,6 +82,7 @@ export default function youtubeToHls({ videoId, url, options }: {
       videoStream.pipe(process.stdio[4]);
 
       process.stdio[2].on('data', (data: any) => {
+        // TODO could maybe just do this on 'close', ie the end of the video loaded ?
         // For debugging
         // console.log(data.toString())
 

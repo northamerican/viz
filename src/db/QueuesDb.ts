@@ -15,7 +15,8 @@ const queuesDbDefault: QueuesDbType = {
   currentQueueId: defaultUuid,
   queues: [{
     id: defaultUuid,
-    items: []
+    totalDuration: 0,
+    items: [],
   }]
 }
 const queuesDb = await JSONPreset<QueuesDbType>(queuesDbPath, queuesDbDefault)
@@ -25,19 +26,20 @@ export const QueuesDb = {
     return queuesDb.data.queues
   },
 
+  get currentQueueId() {
+    return queuesDb.data.currentQueueId
+  },
+
   get state() {
     return queuesDb.data.state
   },
 
   get currentQueue(): Queue {
-    return this.queues.find(queue => queue.id === queuesDb.data.currentQueueId)
+    return this.getQueue(this.currentQueueId)
   },
 
   get currentQueueWithVideos(): Queue {
-    return {
-      ...this.currentQueue,
-      items: this.currentQueue.items.map(this.getItemWithVideo)
-    }
+    return this.getQueueWithVideos(this.currentQueueId)
   },
 
   get currentQueueVideos(): Video[] {
@@ -79,9 +81,13 @@ export const QueuesDb = {
 
   getQueueWithVideos(queueId: string): Queue {
     const queue = this.getQueue(queueId)
+    const itemsWithVideos = queue.items.map(this.getItemWithVideo)
     return {
       ...queue,
-      items: queue.items.map(this.getItemWithVideo)
+      items: itemsWithVideos,
+      totalDuration: itemsWithVideos.reduce((totalDuration, { video }) => {
+        return totalDuration + (video?.duration || 0);
+      }, 0)
     }
   },
 

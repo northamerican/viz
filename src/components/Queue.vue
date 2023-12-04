@@ -40,7 +40,7 @@ const playQueue = () => {
   videoEl.play()
 }
 
-const downloadQueue = () => {
+const queueDownload = () => {
   axios.post(url.api.queueDownload)
 }
 
@@ -80,7 +80,7 @@ onMounted(() => {
       <h2>Queue</h2>
       <div>
         <button @click="deleteQueueAndVideos">X</button>
-        <button @click="downloadQueue">⬇</button>
+        <button @click="queueDownload">⬇</button>
         <button @click="playQueue">▶</button>
       </div>
     </header>

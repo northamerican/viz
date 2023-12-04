@@ -74,7 +74,8 @@ declare module "Viz" {
   }
   export type Queue = {
     id: string,
-    items: QueueItem[]
+    items: QueueItem[],
+    totalDuration: number,
     // TODO use this for fetching new tracks from playlist
     // and updating queue with new tracks
     // playlistId: string
