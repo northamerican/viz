@@ -1,7 +1,7 @@
 {
   "name": "viz",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1 enterprise edition",
   "license": "compluter school of gabagool",
   "type": "module",
   "scripts": {
