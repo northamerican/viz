@@ -30,8 +30,8 @@ onMounted(() => {
       playsinline
       autoplay
     />
-    <!-- <p>{{ currentTime }}/{{ totalDuration }}</p> -->
     <p>
+      <small>{{ currentTime }}</small>
       <input
         class="seeker"
         type="range"
@@ -40,6 +40,7 @@ onMounted(() => {
         :max="totalDuration"
         @input="seekTo"
       />
+      <small>{{ totalDuration }}</small>
     </p>
   </section>
 </template>

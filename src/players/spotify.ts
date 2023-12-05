@@ -8,11 +8,12 @@ const clientId = process.env.SPOTIFY_CLIENT_ID
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
 
 const spotifyAxios = axios.create();
+const SPOTIFY = <const>'spotify';
 
 // Request interceptor for API calls
 spotifyAxios.interceptors.request.use(
   async config => {
-    config.headers.Authorization = config.headers.Authorization || `Bearer ${AuthDb.player('spotify').token}`
+    config.headers.Authorization = config.headers.Authorization || `Bearer ${AuthDb.player(SPOTIFY).token}`
     return config;
   },
   error => {
@@ -40,7 +41,7 @@ const getToken: GetToken = async (req, refresh) => {
       refresh ?
         {
           grant_type: "refresh_token",
-          refresh_token: AuthDb.player('spotify').refreshToken,
+          refresh_token: AuthDb.player(SPOTIFY).refreshToken,
           client_id: clientId
         }
         : {
@@ -57,9 +58,9 @@ const getToken: GetToken = async (req, refresh) => {
       }
     );
 
-    AuthDb.editAuth('spotify', {
+    AuthDb.editAuth(SPOTIFY, {
       token: data.access_token,
-      refreshToken: data.refresh_token || AuthDb.player('spotify').refreshToken,
+      refreshToken: data.refresh_token || AuthDb.player(SPOTIFY).refreshToken,
     })
 
     return data;
@@ -84,7 +85,7 @@ const authorize = () => {
 }
 
 const logout = async () => {
-  AuthDb.clearAuth('spotify')
+  AuthDb.clearAuth(SPOTIFY)
 }
 
 // TODO pagination
@@ -136,7 +137,7 @@ const getPlaylist: GetPlaylist = async (playlistId, total) => {
     const allTracks = playlistTrackResponses.flatMap(({ data }) => {
       return data.items.map(item => ({
         id: item.track.id,
-        player: 'spotify' as const,
+        player: SPOTIFY,
         artists: item.track.artists.map(artist => artist.name),
         name: item.track.name,
         playerUrl: item.track.external_urls.spotify
@@ -147,7 +148,7 @@ const getPlaylist: GetPlaylist = async (playlistId, total) => {
       id: playlistId,
       name: playlistObjectFullResponse.data.name,
       tracks: allTracks,
-      player: 'spotify'
+      player: SPOTIFY
     }
   } catch (error) {
     return Promise.reject(error);

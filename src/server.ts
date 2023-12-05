@@ -95,7 +95,7 @@ app.delete(url.api.videos, async (_, res) => {
   }
 });
 
-const postVideo = async ({ artist, name, queueId, queueItemId }: {
+const downloadVideo = async ({ artist, name, queueId, queueItemId }: {
   artist: string;
   name: string;
   queueId: string;
@@ -103,23 +103,20 @@ const postVideo = async ({ artist, name, queueId, queueItemId }: {
 }) => {
   console.log(`Getting video for ${name} - ${artist}`)
   const searchQuery = PrefsDb.source.createSearchQuery({ artist, name });
-  const { videoId } = await PrefsDb.source.getVideo(searchQuery);
+  const { videoId, url } = await PrefsDb.source.getVideoUrl(searchQuery);
+  await PrefsDb.source.writeVideo({ videoId, url })
 
-  // TODO Probably move this?
   QueuesDb.editItem(queueId, queueItemId, { videoId })
 
   return { videoId }
 }
-
-// get video info endpoint
-// get actual video endpoint
 
 app.post(url.api.video, async (req, res) => {
   const { artist, name, queueId, queueItemId } = req.body;
 
   res
     .status(HttpStatusCode.Created)
-    .json(postVideo({ artist, name, queueId, queueItemId }));
+    .json(downloadVideo({ artist, name, queueId, queueItemId }));
 });
 
 app.get(url.api.m3u, async (_, res) => {
@@ -215,7 +212,7 @@ const queueDownload = () => {
     const queueId = QueuesDb.currentQueue.id
     const queueItemId = item.id
 
-    postVideo({ artist, name, queueId, queueItemId })
+    downloadVideo({ artist, name, queueId, queueItemId })
   })
 }
 
