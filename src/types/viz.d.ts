@@ -5,7 +5,7 @@ declare module "Viz" {
     playlists: PlaylistList
     selectedPlaylist: Playlist
     queue: Queue
-    // currentQueue
+    // TODO currentQueue
   }
 
   export type AuthState = {
@@ -22,12 +22,14 @@ declare module "Viz" {
     artists: string[]
     name: string
     player: PlayerNames
+    playerUrl: string
   }
 
   export type Playlist = {
     id: string
     name: string
     tracks: Track[]
+    player: PlayerNames
   }
 
   export type PlaylistListItem = {
@@ -76,9 +78,8 @@ declare module "Viz" {
     id: string,
     items: QueueItem[],
     totalDuration: number,
-    // TODO use this for fetching new tracks from playlist
-    // and updating queue with new tracks
-    // playlistId: string
+    player: PlayerNames
+    playlistId: string;
   }
   export type QueuesDbType = {
     state: QueueState

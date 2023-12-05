@@ -1,6 +1,6 @@
 export const appPort = 1989;
-// export const appIp = "compluter.local"
-export const appIp = "192.168.68.115"
+// export const appIp = os.networkInterfaces().en0.find(({ family }) => family === 'IPv4').address
+export const appIp = "192.168.68.109"
 export const appUrl = `http://${appIp}:${appPort}/`;
 
 const projectRoot = new URL(import.meta.url + "/../..").pathname;
@@ -29,7 +29,7 @@ export const url = {
     queues: '/api/queues',
     queue: '/api/queue',
     queueId: (queueId: string) => `/api/queue/${queueId}`,
-    queueItem: (queueItemId: string) => `/api/queue/item${queueItemId}`,
+    queueItem: (queueId: string, queueItemId: string) => `/api/queue/${queueId}/item/${queueItemId}`,
     queueDownload: '/api/queue/download',
     current: '/api/queue/current',
     update: '/api/queue/update'

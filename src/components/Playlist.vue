@@ -8,14 +8,16 @@ import { url } from '../consts'
 const props = defineProps<{ state: AppState }>()
 
 const addToQueue = (tracks: Track[]) => {
-  axios.post(url.api.queue, {
+  axios.post(url.api.queueId(props.state.queue.id), {
     items: tracks.map(track => {
       return { track, videoId: null }
-    })
+    }),
+    player: props.state.selectedPlaylist.player,
+    playlistId: props.state.selectedPlaylist.id
   })
 }
 
-const unselectPlaylist = () => {
+const deselectPlaylist = () => {
   props.state.selectedPlaylist = null
 }
 
@@ -28,13 +30,15 @@ const actionsMenuOptions = (track: Track) => [
   <div v-if="state.selectedPlaylist">
     <header>
       <h2>
-        <button @click="unselectPlaylist">⇦</button>
+        <button @click="deselectPlaylist">⇦</button>
         {{ state.selectedPlaylist.name }}
       </h2>
       <div>
         <button @click="() => addToQueue(state.selectedPlaylist.tracks)">
           +
         </button>
+        <!-- Function to have queue follow updates to this playlist -->
+        <!-- <button>Follow playlist</button> -->
       </div>
     </header>
     <ListItem v-for="track in state.selectedPlaylist.tracks">

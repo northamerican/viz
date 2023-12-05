@@ -4,9 +4,9 @@ import { createReadStream, readdirSync, rmSync } from "fs";
 import ViteExpress from "vite-express";
 import {
   url,
+  appIp,
   appUrl,
   appPort,
-  appIp,
   tsPath,
   hlsDir,
 } from "./consts.ts";
@@ -15,6 +15,7 @@ import { VizM3u8 } from "./VizM3u8.ts";
 import { QueuesDb, queuesDbEvents } from "./db/QueuesDb.ts";
 import { VideosDb } from "./db/VideosDb.ts";
 import { PrefsDb } from "./db/PrefsDb.ts";
+import type { Queue } from 'Viz'
 
 const app = express();
 app.use(express.json());
@@ -73,7 +74,6 @@ app.get(url.api.playlist(':playlistId'), async (req, res) => {
 
   try {
     const playlist = await PrefsDb.player.getPlaylist(playlistId, Number(total));
-
     res.json(playlist);
   } catch (error) {
     if (isAxiosError(error)) {
@@ -192,10 +192,15 @@ app.delete(url.api.queues, async (_, res) => {
   }
 });
 
-app.post(url.api.queue, async (req, res) => {
+app.post(url.api.queueId(':queueId'), async (req: {
+  body: Partial<Queue>,
+  params: { queueId: string }
+}, res) => {
   try {
-    const { items } = req.body
-    QueuesDb.addItems(items)
+    const { queueId } = req.params;
+    const { items, player, playlistId } = req.body
+    QueuesDb.addItems(queueId, items)
+    QueuesDb.editQueue(queueId, { player, playlistId })
 
     return res.sendStatus(HttpStatusCode.Ok);
   } catch (error) {
@@ -216,6 +221,8 @@ const queueDownload = () => {
 
 app.post(url.api.queueDownload, async (_, res) => {
   try {
+    // TODO check for playlist updates from player here 
+
     queueDownload()
     // TODO instead 
     // queuesDbEvents.on('downloadComplete', queueDownload);
@@ -229,13 +236,12 @@ app.post(url.api.queueDownload, async (_, res) => {
   }
 });
 
-app.delete(url.api.queueItem(':queueItemId'), (req, res) => {
-  const { queueItemId } = req.params;
-  QueuesDb.removeItem(queueItemId)
+app.delete(url.api.queueItem(':queueId', ':queueItemId'), (req, res) => {
+  const { queueId, queueItemId } = req.params;
+  QueuesDb.removeItem(queueId, queueItemId)
 
   return res.sendStatus(HttpStatusCode.NoContent);
 })
-
 
 const server = app.listen(appPort, appIp, () =>
   console.log(`viz running at ${appUrl}`)

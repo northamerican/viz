@@ -103,7 +103,7 @@ const getPlaylists: GetPlaylists = async (offset = 0) => {
       items: data.items.map(({ id, name, tracks }) => ({
         id,
         name,
-        total: tracks.total
+        total: tracks.total,
       }))
     }
   } catch (error) {
@@ -128,7 +128,7 @@ const getPlaylist: GetPlaylist = async (playlistId, total) => {
         params: {
           offset: offset * itemsMaxLimit,
           limit: itemsMaxLimit,
-          fields: 'offset,total,items(track(id,name,artists))'
+          fields: 'offset,total,items(track(id,name,artists,external_urls))'
         }
       }))
     ])
@@ -138,14 +138,16 @@ const getPlaylist: GetPlaylist = async (playlistId, total) => {
         id: item.track.id,
         player: 'spotify' as const,
         artists: item.track.artists.map(artist => artist.name),
-        name: item.track.name
+        name: item.track.name,
+        playerUrl: item.track.external_urls.spotify
       }))
     })
 
     return {
       id: playlistId,
       name: playlistObjectFullResponse.data.name,
-      tracks: allTracks
+      tracks: allTracks,
+      player: 'spotify'
     }
   } catch (error) {
     return Promise.reject(error);

@@ -50,7 +50,7 @@ const deleteQueueAndVideos = () => {
 }
 
 const remove = (item: QueueItem) => {
-  axios.delete(url.api.queueItem(item.id))
+  axios.delete(url.api.queueItem(props.state.queue.id, item.id))
 }
 
 const actionsMenuOptions = (item: QueueItem) => [
@@ -70,7 +70,12 @@ const actionsMenuOptions = (item: QueueItem) => [
     label: 'Go to YouTube Video...',
     disabled: !item.video?.sourceUrl
   },
-  { action: () => {}, label: 'Go to Spotify Song...', disabled: true }
+  {
+    action: () => {
+      window.open(item.track.playerUrl, '_blank')
+    },
+    label: 'Go to Spotify Song...'
+  }
 ]
 
 onMounted(() => {
@@ -87,6 +92,7 @@ onMounted(() => {
         <button @click="queueDownload">⬇</button>
         <button @click="playQueue">▶</button>
       </div>
+      {{ state.queue.playlistId }}
     </header>
     <ListItem v-for="item in state.queue.items">
       <div class="track-info">

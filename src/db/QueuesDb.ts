@@ -17,6 +17,8 @@ const queuesDbDefault: QueuesDbType = {
     id: defaultUuid,
     totalDuration: 0,
     items: [],
+    player: null,
+    playlistId: null
   }]
 }
 const queuesDb = await JSONPreset<QueuesDbType>(queuesDbPath, queuesDbDefault)
@@ -91,6 +93,12 @@ export const QueuesDb = {
     }
   },
 
+  editQueue(queueId: string, props: Omit<Partial<Queue>, 'items'>) {
+    const queue = this.getQueue(queueId)
+    Object.assign(queue, props)
+    this.write()
+  },
+
   getItem(queueId: string, queueItemId: string): QueueItem {
     return this.getQueue(queueId).items.find(({ id }) => id === queueItemId)
   },
@@ -102,26 +110,26 @@ export const QueuesDb = {
     }
   },
 
-  addItem(props: QueueItem) {
-    this.addItems([props])
+  addItem(queueId: string, props: QueueItem) {
+    this.addItems(queueId, [props])
     this.write()
   },
 
-  addItems(items: Omit<QueueItem, 'id'>[]) {
-    this.currentQueue.items.push(...items.map(props => ({
+  addItems(queueId: string, items: Omit<QueueItem, 'id'>[]) {
+    this.getQueue(queueId).items.push(...items.map(props => ({
       ...props,
       id: uuidv4()
     })))
     this.write()
   },
 
-  removeItem(queueItemId: string) {
-    this.removeItems([queueItemId])
+  removeItem(queueId: string, queueItemId: string) {
+    this.removeItems(queueId, [queueItemId])
     this.write()
   },
 
-  removeItems(queueItemIds: string[]) {
-    this.currentQueue.items = this.currentQueue.items.filter(queueItem => !queueItemIds.includes(queueItem.id))
+  removeItems(queueId: string, queueItemIds: string[]) {
+    this.getQueue(queueId).items = this.getQueue(queueId).items.filter(queueItem => !queueItemIds.includes(queueItem.id))
     this.write()
   },
 

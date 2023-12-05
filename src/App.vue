@@ -18,7 +18,6 @@ const state = reactive<AppState>({
   },
   selectedPlaylist: null,
   queue: null
-  // TODO currentQueue:
 })
 </script>
 
