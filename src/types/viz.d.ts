@@ -83,7 +83,6 @@ declare module "Viz" {
       id: string
       name: string
       player: PlayerNames
-      latestAddedAt: number
     }
   }
   export type QueuesDbType = {

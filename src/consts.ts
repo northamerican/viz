@@ -20,17 +20,17 @@ export const url = {
   api: {
     logout: '/api/logout',
     playlists: '/api/playlists',
-    playlist: (playlistId: string) => `/api/playlists/${playlistId}`,
+    playlist: (playlistId = "playlistId") => `/api/playlists/${playlistId}`,
     videos: '/api/videos',
     video: '/api/video',
     m3u: '/api/m3u',
-    ts: (videoId: string, segmentIndex: string | number) => `/api/ts/${videoId}/${segmentIndex}`,
+    ts: (videoId = ':videoId', segmentIndex: string | number = ':segmentIndex') => `/api/ts/${videoId}/${segmentIndex}`,
     play: '/api/play',
     queues: '/api/queues',
     queue: '/api/queue',
-    queueId: (queueId: string) => `/api/queue/${queueId}`,
-    queueItem: (queueId: string, queueItemId: string) => `/api/queue/${queueId}/item/${queueItemId}`,
     queueDownload: '/api/queue/download',
+    queueItem: (queueId = ':queueId', queueItemId = ':queueItemId') => `/api/queue/${queueId}/item/${queueItemId}`,
+    queueId: (queueId = ':queueId') => `/api/queue/${queueId}`,
     current: '/api/queue/current',
     update: '/api/queue/update'
   }

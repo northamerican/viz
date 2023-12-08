@@ -49,7 +49,7 @@ const deleteQueueAndVideos = () => {
   axios.delete(url.api.queues)
 }
 
-const remove = (item: QueueItem) => {
+const removeItem = (item: QueueItem) => {
   axios.delete(url.api.queueItem(props.state.queue.id, item.id))
 }
 
@@ -60,7 +60,7 @@ const actionsMenuOptions = (item: QueueItem) => [
     disabled: item.video?.downloaded
   },
   { action: () => {}, label: 'Replace Video...', disabled: true },
-  { action: () => remove(item), label: 'Remove from Queue' },
+  { action: () => removeItem(item), label: 'Remove from Queue' },
   {},
   {
     action: () => {

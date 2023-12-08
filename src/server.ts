@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request } from "express";
 import compression from "compression";
 import { createReadStream, readdirSync, rmSync } from "fs";
 import ViteExpress from "vite-express";
@@ -110,7 +110,7 @@ app.get(url.api.playlists, async (_, res) => {
   }
 });
 
-app.get(url.api.playlist(':playlistId'), async (req, res) => {
+app.get(url.api.playlist(), async (req, res) => {
   const { playlistId } = req.params;
 
   try {
@@ -157,7 +157,7 @@ app.get(url.api.m3u, async (_, res) => {
   }
 });
 
-app.get(url.api.ts(':videoId', ':segmentIndex'), async (req, res) => {
+app.get(url.api.ts(), async (req, res) => {
   const { videoId, segmentIndex } = req.params;
   try {
     const stream = createReadStream(tsPath(videoId, segmentIndex), {
@@ -234,7 +234,10 @@ app.post(url.api.queueDownload, async (_, res) => {
   }
 });
 
-app.delete(url.api.queueItem(':queueId', ':queueItemId'), (req, res) => {
+app.delete(url.api.queueItem(), (
+  req: Request<{ queueId: string, queueItemId: string }>,
+  res
+) => {
   const { queueId, queueItemId } = req.params;
   QueuesDb.removeItem(queueId, queueItemId)
 
@@ -242,7 +245,7 @@ app.delete(url.api.queueItem(':queueId', ':queueItemId'), (req, res) => {
 })
 
 
-app.post(url.api.queueId(':queueId'), async (req: {
+app.post(url.api.queueId(), async (req: {
   body: Partial<Queue>,
   params: { queueId: string }
 }, res) => {
