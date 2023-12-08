@@ -24,21 +24,19 @@ spotifyAxios.interceptors.request.use(
 spotifyAxios.interceptors.response.use((response) => {
   return response
 }, async function (error) {
-  console.log('response error interceptor')
   const originalRequest = error.config;
 
   if (error.response.status === 401 && !originalRequest._retry) {
-    console.log('response error interceptor status was 401')
+    console.log('Getting refresh token...')
     originalRequest._retry = true;
     await getRefreshToken();
-    console.log('calling original request...')
+    originalRequest.headers.Authorization = `Bearer ${AuthDb.player(SPOTIFY).token}`
     return spotifyAxios(originalRequest);
   }
   return Promise.reject(error);
 });
 
 const getToken: GetToken = async (req, refresh) => {
-  console.log('getToken')
   try {
     const { data } = await spotifyAxios.post(
       "https://accounts.spotify.com/api/token",
@@ -94,9 +92,7 @@ const logout = async () => {
 
 // TODO pagination
 const getPlaylists: GetPlaylists = async (offset = 0) => {
-  console.log('getPlaylists')
   try {
-
     const { data } = await spotifyAxios.get<SpotifyApi.ListOfCurrentUsersPlaylistsResponse>(
       "https://api.spotify.com/v1/me/playlists", {
       params: {
