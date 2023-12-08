@@ -23,6 +23,7 @@ declare module "Viz" {
     name: string
     player: PlayerNames
     playerUrl: string
+    addedAt: number
   }
 
   export type Playlist = {
@@ -76,10 +77,14 @@ declare module "Viz" {
   }
   export type Queue = {
     id: string,
-    items: QueueItem[],
-    totalDuration: number,
-    player: PlayerNames
-    playlistId: string;
+    items: QueueItem[]
+    totalDuration: number
+    playlist: {
+      id: string
+      name: string
+      player: PlayerNames
+      latestAddedAt: number
+    }
   }
   export type QueuesDbType = {
     state: QueueState

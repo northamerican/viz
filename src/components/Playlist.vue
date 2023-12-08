@@ -7,13 +7,18 @@ import { url } from '../consts'
 
 const props = defineProps<{ state: AppState }>()
 
+// TODO playlist prop, don't use selectedPlaylist
+
 const addToQueue = (tracks: Track[]) => {
   axios.post(url.api.queueId(props.state.queue.id), {
     items: tracks.map(track => {
       return { track, videoId: null }
     }),
-    player: props.state.selectedPlaylist.player,
-    playlistId: props.state.selectedPlaylist.id
+    playlist: {
+      id: props.state.selectedPlaylist.id,
+      name: props.state.selectedPlaylist.name,
+      player: props.state.selectedPlaylist.player
+    }
   })
 }
 

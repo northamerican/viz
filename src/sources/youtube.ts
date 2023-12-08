@@ -156,7 +156,6 @@ const writeVideo: WriteVideo = async ({ videoId, url }) => {
   return ytStream;
 }
 
-
 export const youtube = {
   createSearchQuery,
   getVideoUrl,

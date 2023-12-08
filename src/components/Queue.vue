@@ -92,7 +92,6 @@ onMounted(() => {
         <button @click="queueDownload">⬇</button>
         <button @click="playQueue">▶</button>
       </div>
-      {{ state.queue.playlistId }}
     </header>
     <ListItem v-for="item in state.queue.items">
       <div class="track-info">
@@ -106,6 +105,14 @@ onMounted(() => {
         {{ item.video?.downloading ? '⌛︎' : '' }}
         {{ item.video?.downloaded ? '✔' : '' }}
         <ActionsMenu :options="actionsMenuOptions(item)" />
+      </div>
+    </ListItem>
+    <hr />
+    <ListItem>
+      <div>
+        <strong>{{ state.queue.playlist.name }}</strong>
+        <br />
+        <span>on {{ state.queue.playlist.player }}</span>
       </div>
     </ListItem>
   </div>

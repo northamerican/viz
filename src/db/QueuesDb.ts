@@ -17,8 +17,11 @@ const queuesDbDefault: QueuesDbType = {
     id: defaultUuid,
     totalDuration: 0,
     items: [],
-    player: null,
-    playlistId: null
+    playlist: {
+      id: null,
+      name: null,
+      player: null
+    }
   }]
 }
 const queuesDb = await JSONPreset<QueuesDbType>(queuesDbPath, queuesDbDefault)

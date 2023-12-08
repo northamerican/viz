@@ -21,6 +21,48 @@ const app = express();
 app.use(express.json());
 app.use(compression());
 
+
+const downloadVideo = async ({ artist, name, queueId, queueItemId }: {
+  artist: string;
+  name: string;
+  queueId: string;
+  queueItemId: string;
+}) => {
+  console.log(`Getting video for ${name} - ${artist}`)
+  const searchQuery = PrefsDb.source.createSearchQuery({ artist, name });
+  const { videoId, url } = await PrefsDb.source.getVideoUrl(searchQuery);
+  await PrefsDb.source.writeVideo({ videoId, url })
+
+  QueuesDb.editItem(queueId, queueItemId, { videoId })
+
+  return { videoId }
+}
+
+const queueDownload = () => {
+  QueuesDb.downloadableQueue(1).forEach((item) => {
+    const artist = item.track.artists[0]
+    const name = item.track.name
+    const queueId = QueuesDb.currentQueue.id
+    const queueItemId = item.id
+
+    downloadVideo({ artist, name, queueId, queueItemId })
+  })
+}
+
+const queueUpdateFromPlaylist = async () => {
+  const latestAddedAt = Math.max(...QueuesDb.currentQueue.items.map(item => item.track.addedAt))
+  const playlist = await PrefsDb.player.getPlaylist(
+    QueuesDb.currentQueue.playlist.id
+  );
+
+  const newTracks = playlist.tracks.filter(track => track.addedAt > latestAddedAt)
+  const newItems = newTracks.map(track => {
+    return { track, videoId: null }
+  })
+
+  QueuesDb.addItems(QueuesDb.currentQueue.id, newItems)
+}
+
 // Player
 
 app.get(url.authorize, (_, res) => {
@@ -70,10 +112,9 @@ app.get(url.api.playlists, async (_, res) => {
 
 app.get(url.api.playlist(':playlistId'), async (req, res) => {
   const { playlistId } = req.params;
-  const { total } = req.query;
 
   try {
-    const playlist = await PrefsDb.player.getPlaylist(playlistId, Number(total));
+    const playlist = await PrefsDb.player.getPlaylist(playlistId);
     res.json(playlist);
   } catch (error) {
     if (isAxiosError(error)) {
@@ -94,22 +135,6 @@ app.delete(url.api.videos, async (_, res) => {
     return res.sendStatus(HttpStatusCode.InternalServerError);
   }
 });
-
-const downloadVideo = async ({ artist, name, queueId, queueItemId }: {
-  artist: string;
-  name: string;
-  queueId: string;
-  queueItemId: string;
-}) => {
-  console.log(`Getting video for ${name} - ${artist}`)
-  const searchQuery = PrefsDb.source.createSearchQuery({ artist, name });
-  const { videoId, url } = await PrefsDb.source.getVideoUrl(searchQuery);
-  await PrefsDb.source.writeVideo({ videoId, url })
-
-  QueuesDb.editItem(queueId, queueItemId, { videoId })
-
-  return { videoId }
-}
 
 app.post(url.api.video, async (req, res) => {
   const { artist, name, queueId, queueItemId } = req.body;
@@ -189,47 +214,23 @@ app.delete(url.api.queues, async (_, res) => {
   }
 });
 
-app.post(url.api.queueId(':queueId'), async (req: {
-  body: Partial<Queue>,
-  params: { queueId: string }
-}, res) => {
-  try {
-    const { queueId } = req.params;
-    const { items, player, playlistId } = req.body
-    QueuesDb.addItems(queueId, items)
-    QueuesDb.editQueue(queueId, { player, playlistId })
-
-    return res.sendStatus(HttpStatusCode.Ok);
-  } catch (error) {
-    return res.sendStatus(HttpStatusCode.InternalServerError);
-  }
-});
-
-const queueDownload = () => {
-  QueuesDb.downloadableQueue(1).forEach((item) => {
-    const artist = item.track.artists[0]
-    const name = item.track.name
-    const queueId = QueuesDb.currentQueue.id
-    const queueItemId = item.id
-
-    downloadVideo({ artist, name, queueId, queueItemId })
-  })
-}
-
 app.post(url.api.queueDownload, async (_, res) => {
   try {
-    // TODO check for playlist updates from player here 
-
     queueDownload()
-    // TODO instead 
+    queueUpdateFromPlaylist()
+
     // queuesDbEvents.on('downloadComplete', queueDownload);
     // from QueuesDb: queuesDbEvents.emit('downloadComplete');
-    // or based on current play position
+    // or based on current play position?
     // + cancellable fn/endpoint
-    setInterval(queueDownload, 10_000)
+    setInterval(() => {
+      queueDownload()
+      queueUpdateFromPlaylist()
+    }, 10_000)
     return res.sendStatus(HttpStatusCode.Ok); // TODO NoContent?
   } catch (error) {
-    return res.sendStatus(HttpStatusCode.InternalServerError);
+    return res.status(HttpStatusCode.InternalServerError).send(error);
+    // return res.sendStatus(HttpStatusCode.InternalServerError);
   }
 });
 
@@ -239,6 +240,24 @@ app.delete(url.api.queueItem(':queueId', ':queueItemId'), (req, res) => {
 
   return res.sendStatus(HttpStatusCode.NoContent);
 })
+
+
+app.post(url.api.queueId(':queueId'), async (req: {
+  body: Partial<Queue>,
+  params: { queueId: string }
+}, res) => {
+  try {
+    const { queueId } = req.params;
+    const { items, playlist } = req.body
+
+    QueuesDb.addItems(queueId, items)
+    QueuesDb.editQueue(queueId, { playlist })
+
+    return res.sendStatus(HttpStatusCode.Ok);
+  } catch (error) {
+    return res.sendStatus(HttpStatusCode.InternalServerError);
+  }
+});
 
 const server = app.listen(appPort, appIp, () =>
   console.log(`viz running at ${appUrl}`)

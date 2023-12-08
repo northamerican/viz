@@ -14,13 +14,9 @@ const getPlaylists = async () => {
 }
 
 const getPlaylist = async (playlist: PlaylistListItem) => {
-  const { id, total } = playlist
+  const { id } = playlist
   props.state.selectedPlaylist = null
-  const { data } = await axios.get<Playlist>(url.api.playlist(id), {
-    params: {
-      total
-    }
-  })
+  const { data } = await axios.get<Playlist>(url.api.playlist(id))
   props.state.selectedPlaylist = data
   // if (status === 204) throw new Error("");
 }

@@ -24,17 +24,21 @@ spotifyAxios.interceptors.request.use(
 spotifyAxios.interceptors.response.use((response) => {
   return response
 }, async function (error) {
+  console.log('response error interceptor')
   const originalRequest = error.config;
 
   if (error.response.status === 401 && !originalRequest._retry) {
+    console.log('response error interceptor status was 401')
     originalRequest._retry = true;
     await getRefreshToken();
+    console.log('calling original request...')
     return spotifyAxios(originalRequest);
   }
   return Promise.reject(error);
 });
 
 const getToken: GetToken = async (req, refresh) => {
+  console.log('getToken')
   try {
     const { data } = await spotifyAxios.post(
       "https://accounts.spotify.com/api/token",
@@ -90,7 +94,9 @@ const logout = async () => {
 
 // TODO pagination
 const getPlaylists: GetPlaylists = async (offset = 0) => {
+  console.log('getPlaylists')
   try {
+
     const { data } = await spotifyAxios.get<SpotifyApi.ListOfCurrentUsersPlaylistsResponse>(
       "https://api.spotify.com/v1/me/playlists", {
       params: {
@@ -112,27 +118,30 @@ const getPlaylists: GetPlaylists = async (offset = 0) => {
   }
 }
 
-const getPlaylist: GetPlaylist = async (playlistId, total) => {
+const getPlaylist: GetPlaylist = async (playlistId) => {
   const itemsMaxLimit = 50
-  const callsCount = Math.ceil(total / itemsMaxLimit)
-  const offsets = [...Array(callsCount).keys()]
 
   try {
-    const [playlistObjectFullResponse, ...playlistTrackResponses] = await Promise.all([
-      // This call returns the playlist name
-      spotifyAxios.get<SpotifyApi.PlaylistObjectFull>(
-        `https://api.spotify.com/v1/playlists/${playlistId}`, {
-      }),
-      // These return all tracks info
-      ...offsets.map(offset => spotifyAxios.get<SpotifyApi.PlaylistTrackResponse>(
+    const { data: { name, tracks: { total } } } = await spotifyAxios.get<SpotifyApi.PlaylistObjectFull>(
+      `https://api.spotify.com/v1/playlists/${playlistId}`, {
+      params: {
+        fields: 'name,tracks.total'
+      }
+    })
+
+    const callsCount = Math.ceil(total / itemsMaxLimit)
+    const offsets = [...Array(callsCount).keys()]
+
+    const playlistTrackResponses = await Promise.all(
+      offsets.map(offset => spotifyAxios.get<SpotifyApi.PlaylistTrackResponse>(
         `https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
         params: {
           offset: offset * itemsMaxLimit,
           limit: itemsMaxLimit,
-          fields: 'offset,total,items(track(id,name,artists,external_urls))'
+          fields: 'items(added_at,track(id,name,artists,external_urls))'
         }
       }))
-    ])
+    )
 
     const allTracks = playlistTrackResponses.flatMap(({ data }) => {
       return data.items.map(item => ({
@@ -140,13 +149,14 @@ const getPlaylist: GetPlaylist = async (playlistId, total) => {
         player: SPOTIFY,
         artists: item.track.artists.map(artist => artist.name),
         name: item.track.name,
-        playerUrl: item.track.external_urls.spotify
+        playerUrl: item.track.external_urls.spotify,
+        addedAt: (new Date(item.added_at)).getTime()
       }))
     })
 
     return {
       id: playlistId,
-      name: playlistObjectFullResponse.data.name,
+      name,
       tracks: allTracks,
       player: SPOTIFY
     }
