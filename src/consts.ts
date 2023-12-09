@@ -20,7 +20,7 @@ export const url = {
   api: {
     logout: '/api/logout',
     playlists: '/api/playlists',
-    playlist: (playlistId = "playlistId") => `/api/playlists/${playlistId}`,
+    playlist: (playlistId = ":playlistId") => `/api/playlists/${playlistId}`,
     videos: '/api/videos',
     video: '/api/video',
     m3u: '/api/m3u',
