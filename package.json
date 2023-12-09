@@ -18,6 +18,7 @@
     "ffmpeg-static": "^5.2.0",
     "hls.js": "^1.4.12",
     "lowdb": "^6.1.1",
+    "telefunc": "^0.1.64",
     "tsx": "^4.1.2",
     "typescript-cookie": "^1.0.6",
     "uuid": "^9.0.1",
