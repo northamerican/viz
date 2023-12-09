@@ -6,8 +6,8 @@ import ytsr from "ytsr";
 import ytdl from "@distube/ytdl-core";
 import ffmpegPath from "ffmpeg-static";
 import { VideosDb } from "../db/VideosDb.ts";
-import { hlsDir } from "../consts.ts";
-import { getSegmentDurations, durationTotal } from "../helpers";
+import { hlsDir } from "../../consts.ts";
+import { getSegmentDurations, durationTotal } from "../helpers.ts";
 import type {
   CreateSearchQuery,
   GetVideoUrl,

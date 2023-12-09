@@ -1,5 +1,5 @@
 import { JSONPreset } from "lowdb/node";
-import { videosDbPath } from "../consts";
+import { videosDbPath } from "../../consts";
 import EventEmitter from 'node:events';
 import type { Video, VideosDbType } from "Viz";
 import { queuesDbEvents } from "./QueuesDb";

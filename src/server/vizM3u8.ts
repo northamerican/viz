@@ -1,4 +1,4 @@
-import { url } from "./consts";
+import { url } from "../consts";
 import { QueuesDb } from "./db/QueuesDb";
 
 type M3u8Template = (args: { now: number; longestSegmentDuration: number, mediaSequence?: number; }) => string
@@ -19,7 +19,7 @@ const m3u8Template: M3u8Template = ({ now, longestSegmentDuration, mediaSequence
 const streamWindowTimeBefore = 0
 const streamWindowTimeAfter = 45000
 
-export const VizM3u8 = () => {
+export const vizM3u8 = () => {
   let totalDuration = 0
   let mediaSequence = Infinity
 

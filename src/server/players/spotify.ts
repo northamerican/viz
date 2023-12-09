@@ -1,6 +1,6 @@
 import axios from "axios";
 import querystring from "node:querystring";
-import { appUrl, url } from "../consts";
+import { appUrl, url } from "../../consts";
 import type { GetToken, GetPlaylist, GetPlaylists } from "VizPlayer";
 import { AuthDb } from "../db/AuthDb";
 

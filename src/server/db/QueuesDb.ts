@@ -1,6 +1,6 @@
 import { JSONPreset } from "lowdb/node";
 import EventEmitter from 'node:events';
-import { queuesDbPath } from "../consts";
+import { queuesDbPath } from "../../consts";
 import type { Queue, QueuesDbType, QueueItem, SegmentInfo, Video } from "Viz";
 import { v4 as uuidv4 } from 'uuid';
 import { VideosDb } from "./VideosDb";

@@ -11,7 +11,7 @@ const handleLogin = () => {
 }
 
 const handleLogout = async () => {
-  await axios.get(url.api.logout)
+  await axios.post(url.api.logout)
   removeCookie('isLoggedIn')
   props.state.isLoggedIn = false
 }

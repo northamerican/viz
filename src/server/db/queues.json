@@ -1,0 +1,260 @@
+{
+  "state": {
+    "isPlaying": true,
+    "startTime": 1701962731845,
+    "seekOffsetTime": 0
+  },
+  "currentQueueId": "ccb49321-7992-4551-acfe-1df7f3ae2b94",
+  "queues": [
+    {
+      "id": "ccb49321-7992-4551-acfe-1df7f3ae2b94",
+      "totalDuration": 0,
+      "items": [
+        {
+          "track": {
+            "id": "0jX5phmoEyevUXOk6WH3Iz",
+            "player": "spotify",
+            "artists": [
+              "Jack Stauber"
+            ],
+            "name": "Databend",
+            "playerUrl": "https://open.spotify.com/track/0jX5phmoEyevUXOk6WH3Iz",
+            "addedAt": 1700982503000
+          },
+          "videoId": null,
+          "id": "89c01258-265d-4427-83c2-8d9e5da5fa25"
+        },
+        {
+          "track": {
+            "id": "2xaFtNhCw5Q4hn1EKsrkLv",
+            "player": "spotify",
+            "artists": [
+              "Bomfunk MC's"
+            ],
+            "name": "Freestyler - Radio Edit",
+            "playerUrl": "https://open.spotify.com/track/2xaFtNhCw5Q4hn1EKsrkLv",
+            "addedAt": 1700982846000
+          },
+          "videoId": null,
+          "id": "e75a6f2c-434a-41bd-8f4d-56d74497afb0"
+        },
+        {
+          "track": {
+            "id": "7IBLt4Qarf4JDLxIQDv2O5",
+            "player": "spotify",
+            "artists": [
+              "A$AP Rocky"
+            ],
+            "name": "D.M.B.",
+            "playerUrl": "https://open.spotify.com/track/7IBLt4Qarf4JDLxIQDv2O5",
+            "addedAt": 1700982867000
+          },
+          "videoId": null,
+          "id": "93dca829-fa60-4cb1-95be-1e51541695a6"
+        },
+        {
+          "track": {
+            "id": "4aAk4O7SQXqEAwl41P1cVY",
+            "player": "spotify",
+            "artists": [
+              "Vladimir Cauchemar"
+            ],
+            "name": "Aulos",
+            "playerUrl": "https://open.spotify.com/track/4aAk4O7SQXqEAwl41P1cVY",
+            "addedAt": 1700982879000
+          },
+          "videoId": null,
+          "id": "dac3dde0-7156-4bdd-b5c1-4e01da047fec"
+        },
+        {
+          "track": {
+            "id": "7KvSuH86lIT2aTl9PBCAfd",
+            "player": "spotify",
+            "artists": [
+              "Sneaker Pimps"
+            ],
+            "name": "6 Underground",
+            "playerUrl": "https://open.spotify.com/track/7KvSuH86lIT2aTl9PBCAfd",
+            "addedAt": 1700982887000
+          },
+          "videoId": null,
+          "id": "c0762eaf-4e6e-4521-9596-9631a89be4fd"
+        },
+        {
+          "track": {
+            "id": "3W8hvNnVNEOx8J38dDdzny",
+            "player": "spotify",
+            "artists": [
+              "Tom Tom Club"
+            ],
+            "name": "As Above, so Below",
+            "playerUrl": "https://open.spotify.com/track/3W8hvNnVNEOx8J38dDdzny",
+            "addedAt": 1700982910000
+          },
+          "videoId": null,
+          "id": "96298ca5-ae5a-4597-a9e9-637273ca730a"
+        },
+        {
+          "track": {
+            "id": "5AGy7y5onMvRM1Vd8QqJku",
+            "player": "spotify",
+            "artists": [
+              "Moon King"
+            ],
+            "name": "In & Out",
+            "playerUrl": "https://open.spotify.com/track/5AGy7y5onMvRM1Vd8QqJku",
+            "addedAt": 1700982934000
+          },
+          "videoId": null,
+          "id": "dd270394-b35b-416f-ba96-721f52081ace"
+        },
+        {
+          "track": {
+            "id": "4RkKf3UBRxF2kn2Vh0ww8l",
+            "player": "spotify",
+            "artists": [
+              "Thomas Dolby"
+            ],
+            "name": "She Blinded Me With Science",
+            "playerUrl": "https://open.spotify.com/track/4RkKf3UBRxF2kn2Vh0ww8l",
+            "addedAt": 1700982962000
+          },
+          "videoId": null,
+          "id": "b59d0cfb-2edf-4c01-ac8d-83da87b847b9"
+        },
+        {
+          "track": {
+            "id": "3cAeVEM3e2qv2V4lVhMpdR",
+            "player": "spotify",
+            "artists": [
+              "Omar Souleyman"
+            ],
+            "name": "Warni Warni",
+            "playerUrl": "https://open.spotify.com/track/3cAeVEM3e2qv2V4lVhMpdR",
+            "addedAt": 1700982973000
+          },
+          "videoId": null,
+          "id": "82ba2ea2-d902-4947-90a6-44a65b9d10a7"
+        },
+        {
+          "track": {
+            "id": "0aWhxzFrP2Yyz3CetJe0xE",
+            "player": "spotify",
+            "artists": [
+              "The Knife"
+            ],
+            "name": "Pass This On",
+            "playerUrl": "https://open.spotify.com/track/0aWhxzFrP2Yyz3CetJe0xE",
+            "addedAt": 1700986308000
+          },
+          "videoId": null,
+          "id": "cb720be7-30b3-4141-a0b1-e73d3a31e0e5"
+        },
+        {
+          "track": {
+            "id": "6EMynpZ10GVcwVqiLZj6Ye",
+            "player": "spotify",
+            "artists": [
+              "Oasis"
+            ],
+            "name": "Champagne Supernova",
+            "playerUrl": "https://open.spotify.com/track/6EMynpZ10GVcwVqiLZj6Ye",
+            "addedAt": 1701571188000
+          },
+          "videoId": null,
+          "id": "c0505ecb-ee83-4b63-87c9-62dd43dae243"
+        },
+        {
+          "track": {
+            "id": "5eHB7iz8fKG1IkaGddI7LA",
+            "player": "spotify",
+            "artists": [
+              "Nation of Language"
+            ],
+            "name": "Sole Obsession",
+            "playerUrl": "https://open.spotify.com/track/5eHB7iz8fKG1IkaGddI7LA",
+            "addedAt": 1701571767000
+          },
+          "videoId": "7ox_SnQOpXk",
+          "id": "7343c010-b7a7-4c65-af97-8fed5a77890f"
+        },
+        {
+          "track": {
+            "id": "4q2lRiodoQnyFO65watkse",
+            "player": "spotify",
+            "artists": [
+              "Spandau Ballet"
+            ],
+            "name": "True",
+            "playerUrl": "https://open.spotify.com/track/4q2lRiodoQnyFO65watkse",
+            "addedAt": 1701572058000
+          },
+          "videoId": "AR8D2yqgQ1U",
+          "id": "eee1c5cb-a951-40ef-9e26-d02055e38216"
+        },
+        {
+          "track": {
+            "id": "3VZmChrnVW8JK6ano4gSED",
+            "player": "spotify",
+            "artists": [
+              "Marvin Gaye"
+            ],
+            "name": "Sexual Healing",
+            "playerUrl": "https://open.spotify.com/track/3VZmChrnVW8JK6ano4gSED",
+            "addedAt": 1701572334000
+          },
+          "videoId": null,
+          "id": "95c66ed3-03b8-4716-a913-2e2019f420cb"
+        },
+        {
+          "track": {
+            "id": "6ON0WPRm1tLITpeUsyYoOk",
+            "player": "spotify",
+            "artists": [
+              "Cindy Lee"
+            ],
+            "name": "Heavy Metal",
+            "playerUrl": "https://open.spotify.com/track/6ON0WPRm1tLITpeUsyYoOk",
+            "addedAt": 1701924001000
+          },
+          "videoId": "9zUavOJ23Uk",
+          "id": "640a22b1-8e5b-4a4e-8dfd-6ffa696ce1bd"
+        },
+        {
+          "track": {
+            "id": "29Tr5faNVWpHHaN2JytX98",
+            "player": "spotify",
+            "artists": [
+              "Miss Grit"
+            ],
+            "name": "Follow the Cyborg",
+            "playerUrl": "https://open.spotify.com/track/29Tr5faNVWpHHaN2JytX98",
+            "addedAt": 1701924244000
+          },
+          "videoId": "QZFxE1LcNsM",
+          "id": "c08c50dd-4210-4fed-9589-38d859e01d04"
+        },
+        {
+          "track": {
+            "id": "6s0F09N7jp4wSqN8vVgMQR",
+            "player": "spotify",
+            "artists": [
+              "Sufjan Stevens",
+              "Angelo De Augustine"
+            ],
+            "name": "Back To Oz",
+            "playerUrl": "https://open.spotify.com/track/6s0F09N7jp4wSqN8vVgMQR",
+            "addedAt": 1701750331000
+          },
+          "videoId": "00f2kSnIxfw",
+          "id": "c796f4d7-ecc3-4cee-8e15-bdccbf58d8e3"
+        }
+      ],
+      "playlist": {
+        "id": "5CxAABHQh2gHxYIQdPqGlc",
+        "name": "viz 1",
+        "player": "spotify"
+      }
+    }
+  ]
+}
