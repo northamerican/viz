@@ -5,8 +5,8 @@ export const appUrl = `http://${appIp}:${appPort}/`;
 
 const projectRoot = new URL(import.meta.url + "/../..").pathname;
 export const hlsDir = `${projectRoot}public/hls/`;
-export const tsPath = (videoId: string, segmentIndex: string | number) =>
-  `${hlsDir}${videoId}/${videoId}${segmentIndex}.ts`;
+export const tsPath = (videoId = ':videoId', segmentIndex: string | number = ':segmentIndex') =>
+  `/hls/${videoId}/${videoId}${segmentIndex}.ts`
 
 const dbDir = `${projectRoot}src/server/db/data/`;
 export const authDbPath = `${dbDir}auth.json`;
@@ -24,7 +24,6 @@ export const url = {
     videos: '/api/videos',
     video: '/api/video',
     m3u: '/api/m3u',
-    ts: (videoId = ':videoId', segmentIndex: string | number = ':segmentIndex') => `/api/ts/${videoId}/${segmentIndex}`,
     play: '/api/play',
     queues: '/api/queues',
     queue: '/api/queue',

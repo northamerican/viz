@@ -1,13 +1,12 @@
 import express, { Request } from "express";
 import compression from "compression";
-import { createReadStream, readdirSync, rmSync } from "fs";
+import { readdirSync, rmSync } from "fs";
 import ViteExpress from "vite-express";
 import {
   url,
   appIp,
   appUrl,
   appPort,
-  tsPath,
   hlsDir,
 } from "../consts.ts";
 import { HttpStatusCode } from "axios";
@@ -22,8 +21,7 @@ app.use(express.json());
 app.use(compression());
 
 
-
-const downloadVideo = async ({ artist, name, queueId, queueItemId }: {
+const getVideo = async ({ artist, name, queueId, queueItemId }: {
   artist: string;
   name: string;
   queueId: string;
@@ -46,7 +44,7 @@ const queueDownload = () => {
     const queueId = QueuesDb.currentQueue.id
     const queueItemId = item.id
 
-    downloadVideo({ artist, name, queueId, queueItemId })
+    getVideo({ artist, name, queueId, queueItemId })
   })
 }
 
@@ -108,7 +106,7 @@ app.post(url.api.video, async (req, res) => {
 
   res
     .status(HttpStatusCode.Created)
-    .json(downloadVideo({ artist, name, queueId, queueItemId }));
+    .json(getVideo({ artist, name, queueId, queueItemId }));
 });
 
 app.get(url.api.m3u, async (_, res) => {
@@ -120,15 +118,15 @@ app.get(url.api.m3u, async (_, res) => {
     .send(m3u8);
 });
 
-app.get(url.api.ts(), async (req, res) => {
-  const { videoId, segmentIndex } = req.params;
+// app.get(url.api.ts(), async (req, res) => {
+//   const { videoId, segmentIndex } = req.params;
 
-  const stream = createReadStream(tsPath(videoId, segmentIndex), {
-    highWaterMark: 64 * 1024, // TODO adjust?
-  });
-  res.setHeader('Content-Type', 'video/mp2t');
-  return stream.pipe(res);
-});
+//   const stream = createReadStream(tsPath(videoId, segmentIndex), {
+//     highWaterMark: 64 * 1024, // TODO adjust?
+//   });
+//   res.setHeader('Content-Type', 'video/mp2t');
+//   return stream.pipe(res);
+// });
 
 // Queue
 

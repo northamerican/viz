@@ -1,4 +1,4 @@
-import { url } from "../consts";
+import { tsPath } from "../consts";
 import { QueuesDb } from "./db/QueuesDb";
 
 type M3u8Template = (args: { now: number; longestSegmentDuration: number, mediaSequence?: number; }) => string
@@ -47,7 +47,7 @@ export const vizM3u8 = () => {
     const discontinuity = segmentIndex === 0 ? '\n#EXT-X-DISCONTINUITY' : ''
     // const programDateTime = `#EXT-X-PROGRAM-DATE-TIME:${new Date(timeOffset).toISOString()}`;
     const infDuration = `#EXTINF:${duration.toFixed(6)}`;
-    const tsUrl = url.api.ts(videoId, segmentIndex);
+    const tsUrl = tsPath(videoId, segmentIndex);
 
     // return [discontinuity, programDateTime, infDuration, url].join('\n');
     return [discontinuity, infDuration, tsUrl].join('\n');
