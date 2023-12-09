@@ -8,7 +8,7 @@ export const hlsDir = `${projectRoot}public/hls/`;
 export const tsPath = (videoId: string, segmentIndex: string | number) =>
   `${hlsDir}${videoId}/${videoId}${segmentIndex}.ts`;
 
-const dbDir = `${projectRoot}src/server/db/`;
+const dbDir = `${projectRoot}src/server/db/data/`;
 export const authDbPath = `${dbDir}auth.json`;
 export const prefsDbPath = `${dbDir}prefs.json`;
 export const queuesDbPath = `${dbDir}queues.json`;
