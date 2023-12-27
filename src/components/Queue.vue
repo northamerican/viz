@@ -13,7 +13,7 @@ import {
   onDownloadNextVideoInQueue,
   onUpdateQueueFromPlaylist,
   onUpdateQueueWithVideo
-} from '../server/queue.telefunc'
+} from './Queue.telefunc'
 import { store } from '../store'
 
 const playQueue = async () => {
@@ -138,3 +138,4 @@ header {
   margin-left: auto;
 }
 </style>
+./queue.telefunc

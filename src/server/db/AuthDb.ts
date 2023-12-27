@@ -7,7 +7,7 @@ await authDb.read()
 
 export const AuthDb = {
   player(player: string) {
-    return authDb.data[player]
+    return authDb.data?.[player]
   },
 
   editAuth(player: string, props: AuthState) {

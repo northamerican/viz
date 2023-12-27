@@ -6,6 +6,6 @@ declare module "VizSource" {
   export type DownloadVideo = ({
     videoId: string,
     url: string
-  }) => Promise<void>
+  }) => Promise<{ videoId: string, url: string }>
 }
 

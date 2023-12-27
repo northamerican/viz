@@ -14,7 +14,7 @@ const tokenUrl = '/token'
 // Request interceptor for API calls
 spotifyAxios.interceptors.request.use(
   async config => {
-    config.headers.Authorization = config.headers.Authorization || `Bearer ${AuthDb.player(SPOTIFY).token}`
+    config.headers.Authorization = config.headers.Authorization || `Bearer ${AuthDb.player(SPOTIFY)?.token}`
     return config;
   },
   error => {
@@ -43,7 +43,7 @@ const getToken: GetToken = async (code, refresh) => {
       refresh ?
         {
           grant_type: "refresh_token",
-          refresh_token: AuthDb.player(SPOTIFY).refreshToken,
+          refresh_token: AuthDb.player(SPOTIFY)?.refreshToken,
           client_id: clientId
         }
         : {

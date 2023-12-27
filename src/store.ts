@@ -2,7 +2,7 @@ import { VizStore } from "Viz"
 import { getCookie } from "typescript-cookie"
 import { reactive } from "vue"
 import { loggedInCookie } from "./consts"
-import { onUpdateQueueWithVideo } from "./server/queue.telefunc"
+import { onUpdateQueueWithVideo } from "./components/Queue.telefunc"
 
 export const store = reactive<VizStore>({
   videoEl: null,

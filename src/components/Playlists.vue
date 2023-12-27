@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ListItem from './ListItem.vue'
 import { onMounted } from 'vue'
-import { onLoadPlaylists, onLoadPlaylist } from '../server/playlists.telefunc'
+import { onLoadPlaylists, onLoadPlaylist } from './Playlists.telefunc'
 import { store } from '../store'
 
 const getPlaylists = async () => {
@@ -48,3 +48,4 @@ onMounted(() => getPlaylists())
   margin-left: auto;
 }
 </style>
+./playlists.telefunc

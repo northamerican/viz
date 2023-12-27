@@ -1,9 +1,9 @@
 import { QueueItem } from "Viz";
 import { readdirSync, rmSync } from "fs";
-import { VideosDb } from "./db/VideosDb";
-import { PrefsDb } from "./db/PrefsDb";
-import { QueuesDb } from "./db/QueuesDb";
-import { hlsDir } from "./consts";
+import { VideosDb } from "../server/db/VideosDb";
+import { PrefsDb } from "../server/db/PrefsDb";
+import { QueuesDb } from "../server/db/QueuesDb";
+import { hlsDir } from "../server/consts";
 
 export async function onGetVideo(queueId: string, queueItem: QueueItem) {
   const { track, id: queueItemId } = queueItem
@@ -33,8 +33,7 @@ export async function onGetVideo(queueId: string, queueItem: QueueItem) {
 export async function onDownloadVideo(videoId: string, url: string) {
   const { downloadVideo } = PrefsDb.source;
 
-  await downloadVideo({ videoId, url })
-  return { videoId }
+  return await downloadVideo({ videoId, url })
 }
 
 export async function onDownloadNextVideoInQueue() {
@@ -77,6 +76,5 @@ export async function onUpdateQueueFromPlaylist() {
 }
 
 export async function onUpdateQueueWithVideo() {
-  await QueuesDb.read()
   return QueuesDb.currentQueueWithVideos
 }

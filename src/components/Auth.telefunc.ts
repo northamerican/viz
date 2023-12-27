@@ -1,5 +1,5 @@
 import { loggedInCookie } from "../consts";
-import { PrefsDb } from "./db/PrefsDb";
+import { PrefsDb } from "../server/db/PrefsDb";
 
 export async function onAuthorize() {
   const redirectUrl = PrefsDb.player.authorize();

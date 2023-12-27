@@ -4,7 +4,6 @@ import Player from './components/Player.vue'
 import Playlist from './components/Playlist.vue'
 import Playlists from './components/Playlists.vue'
 import Queue from './components/Queue.vue'
-
 import { store } from './store'
 </script>
 
@@ -38,7 +37,7 @@ nav {
   align-items: center;
   min-height: 50px;
 
-  & h1 {
+  h1 {
     margin: 0;
   }
 }
@@ -47,7 +46,7 @@ nav {
   display: flex;
   flex-direction: row;
 
-  & > * {
+  > * {
     flex: 0 50%;
   }
 }

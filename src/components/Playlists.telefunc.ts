@@ -1,4 +1,4 @@
-import { PrefsDb } from "./db/PrefsDb";
+import { PrefsDb } from "../server/db/PrefsDb";
 
 export async function onLoadPlaylists() {
   const playlists = await PrefsDb.player.getPlaylists();

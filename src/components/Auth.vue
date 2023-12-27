@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { removeCookie } from 'typescript-cookie'
 import { loggedInCookie } from '../consts'
-import { onAuthorize, onLogin, onLogout } from '../server/auth.telefunc'
+import { onAuthorize, onLogin, onLogout } from './Auth.telefunc'
 import { onMounted } from 'vue'
 import { setCookie } from 'typescript-cookie'
 import { store } from '../store'
@@ -36,3 +36,4 @@ onMounted(async () => {
     <button v-else @click="handleLogin">Login with Spotify</button>
   </div>
 </template>
+./auth.telefunc

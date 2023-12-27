@@ -132,7 +132,7 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
 
         console.timeEnd(wroteToDbMsg)
 
-        resolve(null)
+        resolve({ videoId, url })
       });
   })
 }

@@ -2,7 +2,7 @@
 import type { Track } from 'Viz'
 import ListItem from './ListItem.vue'
 import ActionsMenu from './ActionsMenu.vue'
-import { onAddToQueue } from '../server/playlist.telefunc'
+import { onAddToQueue } from './Playlist.telefunc'
 import { store } from '../store'
 
 // TODO playlist prop, don't use selectedPlaylist
@@ -75,3 +75,4 @@ header {
   margin-left: auto;
 }
 </style>
+./playlist.telefunc

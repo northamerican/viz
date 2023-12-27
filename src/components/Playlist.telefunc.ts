@@ -1,5 +1,5 @@
 import { QueueItem, QueuePlaylistReference } from "Viz";
-import { QueuesDb } from "./db/QueuesDb";
+import { QueuesDb } from "../server/db/QueuesDb";
 
 export async function onAddToQueue(
   queueId: string = QueuesDb.currentQueue.id,
