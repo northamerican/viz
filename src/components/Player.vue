@@ -1,21 +1,17 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { url } from '../consts'
+import { store } from '../store'
+import { m3u8Path } from '../consts'
 // import '../hlsjs.ts'
-import type { AppState } from 'Viz'
-
-const props = defineProps<{ state: AppState }>()
 
 const currentTime = ref(0)
-const totalDuration = computed(() =>
-  Math.round(props.state.queue?.totalDuration)
-)
+const totalDuration = computed(() => Math.round(store.queue?.totalDuration))
 
-const seekTo = (e: any) => props.state.videoEl.fastSeek(e.target.value)
+const seekTo = (e: any) => store.videoEl.fastSeek(e.target.value)
 
 onMounted(() => {
-  props.state.videoEl.addEventListener('timeupdate', () => {
-    currentTime.value = Math.round(props.state.videoEl?.currentTime)
+  store.videoEl.addEventListener('timeupdate', () => {
+    currentTime.value = Math.round(store.videoEl?.currentTime)
   })
 })
 </script>
@@ -24,8 +20,8 @@ onMounted(() => {
   <section class="player">
     <video
       id="video"
-      :ref="el => (props.state.videoEl = el)"
-      :src="url.api.m3u"
+      :ref="el => (store.videoEl = el)"
+      :src="m3u8Path"
       controls
       playsinline
       autoplay

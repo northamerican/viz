@@ -1,0 +1,11 @@
+import { QueueItem, QueuePlaylistReference } from "Viz";
+import { QueuesDb } from "./db/QueuesDb";
+
+export async function onAddToQueue(
+  queueId: string = QueuesDb.currentQueue.id,
+  queueItems: Omit<QueueItem, 'id'>[],
+  queuePlaylistReference: QueuePlaylistReference
+) {
+  await QueuesDb.addItems(queueId, queueItems)
+  await QueuesDb.editQueue(queueId, { playlist: queuePlaylistReference })
+};

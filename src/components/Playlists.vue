@@ -1,35 +1,29 @@
 <script setup lang="ts">
-import axios from 'axios'
-import type { AppState, Playlist, PlaylistList, PlaylistListItem } from 'Viz'
 import ListItem from './ListItem.vue'
 import { onMounted } from 'vue'
-import { url } from '../consts'
-
-const props = defineProps<{ state: AppState }>()
+import { onLoadPlaylists, onLoadPlaylist } from '../server/playlists.telefunc'
+import { store } from '../store'
 
 const getPlaylists = async () => {
-  const { data } = await axios.get<PlaylistList>(url.api.playlists)
-  props.state.playlists = data
-  // if (status === 204) throw new Error("");
+  const { playlists } = await onLoadPlaylists()
+  store.playlists = playlists
 }
 
-const getPlaylist = async (playlist: PlaylistListItem) => {
-  const { id } = playlist
-  props.state.selectedPlaylist = null
-  const { data } = await axios.get<Playlist>(url.api.playlist(id))
-  props.state.selectedPlaylist = data
-  // if (status === 204) throw new Error("");
+const getPlaylist = async (playlistId: string) => {
+  store.selectedPlaylist = null
+  const { playlist } = await onLoadPlaylist(playlistId)
+  store.selectedPlaylist = playlist
 }
 
 onMounted(() => getPlaylists())
 </script>
 
 <template>
-  <div v-if="state.playlists.items?.length">
+  <div v-if="store.playlists.items?.length">
     <h1>Playlists [Spotify]</h1>
-    <div v-for="playlist in state.playlists.items">
+    <div v-for="playlist in store.playlists.items">
       <ListItem>
-        <strong class="name" @click="getPlaylist(playlist)">{{
+        <strong class="name" @click="getPlaylist(playlist.id)">{{
           playlist.name
         }}</strong>
         <div class="actions">

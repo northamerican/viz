@@ -1,11 +1,12 @@
 declare module "Viz" {
-  export type AppState = {
+  export type VizStore = {
     videoEl: any
     isLoggedIn: boolean
     playlists: PlaylistList
     selectedPlaylist: Playlist
-    queue: Queue
     // TODO currentQueue
+    queue: Queue
+    updateQueue: () => Promise<void>
   }
 
   export type AuthState = {
@@ -17,6 +18,7 @@ declare module "Viz" {
     [player: string]: AuthState
   }
 
+  // TODO type TrackId = string ..
   export type Track = {
     id: string
     artists: string[]
@@ -65,9 +67,10 @@ declare module "Viz" {
   }
 
   export type QueueState = {
+    currentQueueId: string
     isPlaying: boolean
-    startTime: number,
-    seekOffsetTime: number,
+    startTime: number
+    seekOffsetTime: number
   }
   export type QueueItem = {
     id: string
@@ -75,19 +78,17 @@ declare module "Viz" {
     videoId: string
     video?: Video
   }
+
+  export type QueuePlaylistReference = Omit<Playlist, 'tracks'>
+
   export type Queue = {
     id: string,
     items: QueueItem[]
     totalDuration: number
-    playlist: {
-      id: string
-      name: string
-      player: PlayerNames
-    }
+    playlist: QueuePlaylistReference
   }
   export type QueuesDbType = {
     state: QueueState
-    currentQueueId: string
     queues: Queue[]
   }
 
