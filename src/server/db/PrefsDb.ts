@@ -10,13 +10,20 @@ const prefsDbDefault = {
 } as const
 
 const prefsDb = await JSONPreset<VizPrefsDbType>(prefsDbPath, prefsDbDefault)
+await prefsDb.read()
 
 export const PrefsDb = {
-  get player() {
-    return players[prefsDb.data.player]
+  get playerName() {
+    return prefsDb.data.player
+  },
+  get sourceName() {
+    return prefsDb.data.source
   },
 
+  get player() {
+    return players[this.playerName]
+  },
   get source() {
-    return sources[prefsDb.data.source]
+    return sources[this.sourceName]
   }
 }

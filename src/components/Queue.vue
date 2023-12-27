@@ -1,90 +1,91 @@
 <script setup lang="ts">
-import axios from 'axios'
-import type { AppState, QueueItem } from 'Viz'
+import type { QueueItem } from 'Viz'
 import ListItem from './ListItem.vue'
 import ActionsMenu from './ActionsMenu.vue'
-import { url } from '../consts'
-import { onBeforeUnmount, onMounted } from 'vue'
+import { onMounted } from 'vue'
+import {
+  onGetVideo,
+  onDownloadVideo,
+  onDeleteQueues,
+  onDeleteVideos,
+  onRemoveQueueItem,
+  onPlayVideo,
+  onDownloadNextVideoInQueue,
+  onUpdateQueueFromPlaylist,
+  onUpdateQueueWithVideo
+} from '../server/queue.telefunc'
+import { store } from '../store'
 
-const props = defineProps<{ state: AppState }>()
-
-const getVideo = async (item: QueueItem) => {
-  const { track, id: queueItemId } = item
-  const { artists, name } = track
-
-  await axios.post(url.api.video, {
-    queueId: props.state.queue.id,
-    queueItemId,
-    artist: artists[0],
-    name
-  })
-}
-
-const getQueue = async () => {
-  const currentQueueSource = new EventSource(url.api.current)
-
-  currentQueueSource.addEventListener('update', ({ data }) => {
-    props.state.queue = JSON.parse(data)
-  })
-
-  onBeforeUnmount(() => {
-    currentQueueSource.close()
-  })
-}
-
-const playQueue = () => {
-  axios.post(url.api.play)
-  const { videoEl } = props.state
+const playQueue = async () => {
+  await onPlayVideo()
+  const { videoEl } = store
   videoEl.src = videoEl.src
   videoEl.fastSeek(0)
   videoEl.play()
 }
 
-const queueDownload = () => {
-  axios.post(url.api.queueDownload)
+const queueDownload = async () => {
+  // TODO interval or on event
+  // if has nextDownloadableInQueue:
+  await onDownloadNextVideoInQueue()
+
+  // and check again on completion, recursively
+  store.updateQueue()
 }
 
-const deleteQueueAndVideos = () => {
-  axios.delete(url.api.videos)
-  axios.delete(url.api.queues)
+const downloadVideo = async (queueItem: QueueItem) => {
+  const { videoId, url } = await onGetVideo(store.queue.id, queueItem)
+  await store.updateQueue()
+  await onDownloadVideo(videoId, url)
+  await store.updateQueue()
 }
 
-const removeItem = (item: QueueItem) => {
-  axios.delete(url.api.queueItem(props.state.queue.id, item.id))
+const deleteQueueAndVideos = async () => {
+  const { videoEl } = store
+  await Promise.all([onDeleteQueues(), onDeleteVideos()])
+  store.updateQueue()
+  videoEl.src = videoEl.src
 }
 
-const actionsMenuOptions = (item: QueueItem) => [
+const removeItem = async (queueItem: QueueItem) => {
+  await onRemoveQueueItem(store.queue.id, queueItem.id)
+  store.updateQueue()
+}
+
+const actionsMenuOptions = (queueItem: QueueItem) => [
   {
-    action: () => getVideo(item),
+    action: () => downloadVideo(queueItem),
     label: 'Get Video',
-    disabled: item.video?.downloaded
+    disabled: queueItem.video?.downloaded
   },
+  { action: () => removeItem(queueItem), label: 'Remove from Queue' },
   { action: () => {}, label: 'Replace Video...', disabled: true },
-  { action: () => removeItem(item), label: 'Remove from Queue' },
   {},
   {
     action: () => {
-      window.open(item.video.sourceUrl, '_blank')
+      window.open(queueItem.video.sourceUrl, '_blank')
     },
     // TODO label can read "[Video title] on Youtube...""
     label: 'Go to YouTube Video...',
-    disabled: !item.video?.sourceUrl
+    disabled: !queueItem.video?.sourceUrl
   },
   {
     action: () => {
-      window.open(item.track.playerUrl, '_blank')
+      window.open(queueItem.track.playerUrl, '_blank')
     },
     label: 'Go to Spotify Song...'
   }
 ]
 
 onMounted(() => {
-  getQueue()
+  store.updateQueue()
+  onUpdateQueueWithVideo()
+  // onUpdateQueueFromPlaylist()
 })
 </script>
 
 <template>
-  <div v-if="state.queue?.items.length">
+  <div v-if="store.queue">
     <header>
       <h2>Queue</h2>
       <div>
@@ -93,7 +94,7 @@ onMounted(() => {
         <button @click="playQueue">▶</button>
       </div>
     </header>
-    <ListItem v-for="item in state.queue.items">
+    <ListItem v-for="item in store.queue.items" v-if="store.queue.items.length">
       <div class="track-info">
         <strong>{{ item.track.name }}</strong>
         <br />
@@ -107,16 +108,16 @@ onMounted(() => {
         <ActionsMenu :options="actionsMenuOptions(item)" />
       </div>
     </ListItem>
+    <p v-else>Nothing queued.</p>
     <hr />
-    <ListItem>
+    <ListItem v-if="store.queue.playlist">
       <div>
-        <strong>{{ state.queue.playlist.name }}</strong>
+        <strong>{{ store.queue.playlist.name }}</strong>
         <br />
-        <span>on {{ state.queue.playlist.player }}</span>
+        <span>on {{ store.queue.playlist.player }}</span>
       </div>
     </ListItem>
   </div>
-  <p v-else>Nothing queued.</p>
 </template>
 
 <style>

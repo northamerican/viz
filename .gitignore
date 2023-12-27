@@ -25,4 +25,4 @@ dist-ssr
 
 public/hls/*
 .env
-src/db/*.json
+src/server/db/data/*.json

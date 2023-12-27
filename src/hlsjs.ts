@@ -1,5 +1,6 @@
 import Hls from "hls.js";
-import { url } from "./consts";
+import { m3u8Path } from "./consts";
+
 
 window.addEventListener("load", () => {
   if (!Hls.isSupported()) return;
@@ -12,7 +13,7 @@ window.addEventListener("load", () => {
   //@ts-ignore
   hls.attachMedia(video);
 
-  hls.loadSource(url.api.m3u);
+  hls.loadSource(m3u8Path);
 
   hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
     console.log(data);

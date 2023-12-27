@@ -1,29 +1,25 @@
 <script setup lang="ts">
-import axios from 'axios'
-import type { AppState, Track } from 'Viz'
+import type { Track } from 'Viz'
 import ListItem from './ListItem.vue'
 import ActionsMenu from './ActionsMenu.vue'
-import { url } from '../consts'
-
-const props = defineProps<{ state: AppState }>()
+import { onAddToQueue } from '../server/playlist.telefunc'
+import { store } from '../store'
 
 // TODO playlist prop, don't use selectedPlaylist
-
-const addToQueue = (tracks: Track[]) => {
-  axios.post(url.api.queueId(props.state.queue.id), {
-    items: tracks.map(track => {
+const addToQueue = async (tracks: Track[]) => {
+  const { id, name, player } = store.selectedPlaylist
+  await onAddToQueue(
+    store.queue?.id,
+    tracks.map(track => {
       return { track, videoId: null }
     }),
-    playlist: {
-      id: props.state.selectedPlaylist.id,
-      name: props.state.selectedPlaylist.name,
-      player: props.state.selectedPlaylist.player
-    }
-  })
+    { id, name, player }
+  )
+  store.updateQueue()
 }
 
 const deselectPlaylist = () => {
-  props.state.selectedPlaylist = null
+  store.selectedPlaylist = null
 }
 
 const actionsMenuOptions = (track: Track) => [
@@ -32,24 +28,25 @@ const actionsMenuOptions = (track: Track) => [
 </script>
 
 <template>
-  <div v-if="state.selectedPlaylist">
+  <div v-if="store.selectedPlaylist">
     <header>
       <h2>
         <button @click="deselectPlaylist">⇦</button>
-        {{ state.selectedPlaylist.name }}
+        {{ store.selectedPlaylist.name }}
       </h2>
       <div>
-        <button @click="() => addToQueue(state.selectedPlaylist.tracks)">
+        <button @click="() => addToQueue(store.selectedPlaylist.tracks)">
           +
         </button>
         <!-- Function to have queue follow updates to this playlist -->
         <!-- <button>Follow playlist</button> -->
       </div>
     </header>
-    <ListItem v-for="track in state.selectedPlaylist.tracks">
+    <ListItem v-for="track in store.selectedPlaylist.tracks">
       <div class="info">
         <strong>{{ track.name }}</strong>
-        <br /><span class="track-artist" v-for="artist in track.artists">
+        <br />
+        <span class="track-artist" v-for="artist in track.artists">
           {{ artist }}
         </span>
       </div>

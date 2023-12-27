@@ -1,44 +1,31 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
-import { getCookie } from 'typescript-cookie'
-
-import Login from './components/Login.vue'
+import Auth from './components/Auth.vue'
 import Player from './components/Player.vue'
 import Playlist from './components/Playlist.vue'
 import Playlists from './components/Playlists.vue'
 import Queue from './components/Queue.vue'
 
-import type { AppState } from 'Viz'
-
-const state = reactive<AppState>({
-  videoEl: null,
-  isLoggedIn: !!getCookie('isLoggedIn'),
-  playlists: {
-    items: []
-  },
-  selectedPlaylist: null,
-  queue: null
-})
+import { store } from './store'
 </script>
 
 <template>
   <nav>
     <h1 class="logo"></h1>
-    <Login :state="state" />
+    <Auth />
   </nav>
 
   <main>
-    <Player :state="state" />
+    <Player />
     <section class="library">
-      <div v-if="state.isLoggedIn">
-        <Playlists :state="state" v-if="state.selectedPlaylist === null" />
-        <Playlist :state="state" v-else />
+      <div v-if="store.isLoggedIn">
+        <Playlists v-if="store.selectedPlaylist === null" />
+        <Playlist v-else />
       </div>
       <div v-else>
         <p>Log in to see your playlists.</p>
       </div>
       <div>
-        <Queue :state="state" />
+        <Queue />
       </div>
     </section>
   </main>

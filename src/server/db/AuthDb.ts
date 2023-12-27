@@ -3,6 +3,7 @@ import { authDbPath } from "../consts";
 import { AuthState, AuthStateDbType } from "Viz";
 
 const authDb = await JSONPreset<AuthStateDbType>(authDbPath, {})
+await authDb.read()
 
 export const AuthDb = {
   player(player: string) {

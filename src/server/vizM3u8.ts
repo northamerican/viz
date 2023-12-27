@@ -1,8 +1,9 @@
-import { url } from "./consts";
+import { tsPath } from "./consts";
 import { QueuesDb } from "./db/QueuesDb";
+import { VideosDb } from "./db/VideosDb";
 
-type M3u8Template = (args: { now: number; longestSegmentDuration: number, mediaSequence?: number; }) => string
-const m3u8Template: M3u8Template = ({ now, longestSegmentDuration, mediaSequence = 0 }) => `#EXTM3U
+type M3u8Template = (args: { QueuesDb: any, now: number; longestSegmentDuration: number, mediaSequence?: number }) => string
+const m3u8Template: M3u8Template = ({ QueuesDb, now, longestSegmentDuration, mediaSequence = 0 }) => `#EXTM3U
 #EXT-X-VERSION:3
 #EXT-X-TARGETDURATION:${longestSegmentDuration}
 #EXT-X-MEDIA-SEQUENCE:${mediaSequence}
@@ -19,7 +20,12 @@ const m3u8Template: M3u8Template = ({ now, longestSegmentDuration, mediaSequence
 const streamWindowTimeBefore = 0
 const streamWindowTimeAfter = 45000
 
-export const VizM3u8 = () => {
+export async function vizM3u8() {
+  await Promise.all([
+    QueuesDb.read(),
+    VideosDb.read()
+  ])
+
   let totalDuration = 0
   let mediaSequence = Infinity
 
@@ -31,7 +37,7 @@ export const VizM3u8 = () => {
     duration,
     segmentIndex
   }, playlistSegmentIndex) => {
-    const timeOffset = QueuesDb.state.startTime + (1000 * totalDuration);
+    const timeOffset = QueuesDb.startTime + (1000 * totalDuration);
     totalDuration += duration
 
     const earliestSegmentTime = now - streamWindowTimeBefore
@@ -47,7 +53,7 @@ export const VizM3u8 = () => {
     const discontinuity = segmentIndex === 0 ? '\n#EXT-X-DISCONTINUITY' : ''
     // const programDateTime = `#EXT-X-PROGRAM-DATE-TIME:${new Date(timeOffset).toISOString()}`;
     const infDuration = `#EXTINF:${duration.toFixed(6)}`;
-    const tsUrl = url.api.ts(videoId, segmentIndex);
+    const tsUrl = tsPath(videoId, segmentIndex);
 
     // return [discontinuity, programDateTime, infDuration, url].join('\n');
     return [discontinuity, infDuration, tsUrl].join('\n');
@@ -55,5 +61,5 @@ export const VizM3u8 = () => {
 
   // TODO append endless stream of Viz logo at the end until something new is queued
 
-  return [m3u8Template({ now, longestSegmentDuration, mediaSequence }), tsSegments].join('\n');
+  return [m3u8Template({ QueuesDb, now, longestSegmentDuration, mediaSequence }), tsSegments].join('\n');
 }

@@ -1,14 +1,15 @@
 import axios from "axios";
 import querystring from "node:querystring";
-import { appUrl, url } from "../consts";
 import type { GetToken, GetPlaylist, GetPlaylists } from "VizPlayer";
 import { AuthDb } from "../db/AuthDb";
+import { appUrl } from "../consts";
 
 const clientId = process.env.SPOTIFY_CLIENT_ID
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
 
 const spotifyAxios = axios.create();
 const SPOTIFY = <const>'spotify';
+const tokenUrl = '/token'
 
 // Request interceptor for API calls
 spotifyAxios.interceptors.request.use(
@@ -26,8 +27,7 @@ spotifyAxios.interceptors.response.use((response) => {
 }, async function (error) {
   const originalRequest = error.config;
 
-  if (error.response.status === 401 && !originalRequest._retry) {
-    console.log('Getting refresh token...')
+  if (error.response?.status === 401 && !originalRequest._retry) {
     originalRequest._retry = true;
     await getRefreshToken();
     originalRequest.headers.Authorization = `Bearer ${AuthDb.player(SPOTIFY).token}`
@@ -36,7 +36,7 @@ spotifyAxios.interceptors.response.use((response) => {
   return Promise.reject(error);
 });
 
-const getToken: GetToken = async (req, refresh) => {
+const getToken: GetToken = async (code, refresh) => {
   try {
     const { data } = await spotifyAxios.post(
       "https://accounts.spotify.com/api/token",
@@ -48,8 +48,8 @@ const getToken: GetToken = async (req, refresh) => {
         }
         : {
           grant_type: "authorization_code",
-          code: req.query.code,
-          redirect_uri: new URL(url.token, appUrl).href,
+          code,
+          redirect_uri: new URL(tokenUrl, appUrl).href,
         },
       {
         headers: {
@@ -77,12 +77,13 @@ const authorize = () => {
   const scope =
     "user-read-private user-read-email playlist-read-private";
 
+  console.log({ appUrl })
   return "https://accounts.spotify.com/authorize?" +
     querystring.stringify({
       response_type: "code",
       client_id: clientId,
       scope: scope,
-      redirect_uri: new URL(url.token, appUrl).href
+      redirect_uri: new URL(tokenUrl, appUrl).href
     })
 }
 
