@@ -4,6 +4,7 @@ import { VideosDb } from "../server/db/VideosDb";
 import { PrefsDb } from "../server/db/PrefsDb";
 import { QueuesDb } from "../server/db/QueuesDb";
 import { hlsDir } from "../server/consts";
+import players from "../server/players";
 
 export async function onGetVideo(queueId: string, queueItem: QueueItem) {
   const { track, id: queueItemId } = queueItem
@@ -39,6 +40,9 @@ export async function onDownloadVideo(videoId: string, url: string) {
 export async function onDownloadNextVideoInQueue() {
   const queueId = QueuesDb.currentQueue.id
   const queueItem = QueuesDb.nextDownloadableInQueue
+
+  if (!queueItem) return false
+
   const { videoId, url } = await onGetVideo(queueId, queueItem)
 
   return await onDownloadVideo(videoId, url)
@@ -62,10 +66,13 @@ export async function onPlayVideo() {
 }
 
 export async function onUpdateQueueFromPlaylist() {
+  const currentQueuePlaylist = QueuesDb.currentQueue.playlist
+  if (!currentQueuePlaylist) return
+
+  const { id, player } = currentQueuePlaylist
+
   const latestAddedAt = Math.max(...QueuesDb.currentQueue.items.map(item => item.track.addedAt))
-  const playlist = await PrefsDb.player.getPlaylist(
-    QueuesDb.currentQueue.playlist.id
-  );
+  const playlist = await players[player].getPlaylist(id);
 
   const newTracks = playlist.tracks.filter(track => track.addedAt > latestAddedAt)
   const newItems = newTracks.map(track => {

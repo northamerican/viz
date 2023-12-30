@@ -68,7 +68,7 @@ export const QueuesDb = {
 
   get nextDownloadableInQueue(): QueueItem {
     const firstNotDownloaded = this.currentQueueNotDownloaded[0]
-    return firstNotDownloaded.video?.downloading ? null : firstNotDownloaded
+    return firstNotDownloaded?.video?.downloading ? null : firstNotDownloaded
   },
 
   getQueue(queueId: string): Queue {
@@ -77,7 +77,9 @@ export const QueuesDb = {
 
   getQueueWithVideos(queueId: string): Queue {
     const queue = this.getQueue(queueId)
-    const itemsWithVideos = queue.items.map(this.getItemWithVideo)
+    const itemsWithVideos = queue.items
+      .filter(item => !item.removed)
+      .map(this.getItemWithVideo)
 
     return {
       ...queue,
@@ -106,9 +108,10 @@ export const QueuesDb = {
   },
 
   async editQueue(queueId: string, props: Omit<Partial<Queue>, 'items'>) {
-    const queue = this.getQueue(queueId)
-    Object.assign(queue, props)
-    await queuesDb.write()
+    await queuesDb.update(() => {
+      const queue = this.getQueue(queueId)
+      Object.assign(queue, props)
+    })
   },
 
   async addItem(queueId: string, props: QueueItem) {
@@ -138,16 +141,8 @@ export const QueuesDb = {
   },
 
   async deleteDb() {
-    await this.read()
-    console.log('aaa', queuesDbDefault.queues[0].items.length)
-    queuesDb.data = structuredClone(queuesDbDefault);
-    console.log('deleteDb')
-    // console.log(queuesDb.data)
-    await queuesDb.write()
+    await queuesDb.update((data) => {
+      data = structuredClone(queuesDbDefault);
+    })
   },
 }
-
-
-setInterval(() => {
-  console.log('l', queuesDbDefault.queues[0].items.length)
-}, 2000)

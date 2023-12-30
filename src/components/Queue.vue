@@ -2,7 +2,7 @@
 import type { QueueItem } from 'Viz'
 import ListItem from './ListItem.vue'
 import ActionsMenu from './ActionsMenu.vue'
-import { computed, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import {
   onGetVideo,
   onDownloadVideo,
@@ -27,12 +27,9 @@ const playQueue = async () => {
 }
 
 const queueDownload = async () => {
-  // TODO interval or on event
-  // if has nextDownloadableInQueue:
-  await onDownloadNextVideoInQueue()
-
-  // and check again on completion, recursively
-  store.updateQueue()
+  const res = await onDownloadNextVideoInQueue()
+  await store.updateQueue()
+  if (res) queueDownload()
 }
 
 const downloadVideo = async (queueItem: QueueItem) => {
@@ -83,14 +80,13 @@ const actionsMenuOptions = (queueItem: QueueItem) => [
   }
 ]
 
-const nonRemovedItems = computed(() =>
-  store.queue.items.filter(item => !item.removed)
-)
-
-onMounted(() => {
+onMounted(async () => {
   store.updateQueue()
-  onUpdateQueueWithVideo()
-  // onUpdateQueueFromPlaylist()
+  await onUpdateQueueWithVideo()
+  await onUpdateQueueFromPlaylist()
+  await store.updateQueue()
+
+  setInterval(queueDownload, 5000)
 })
 </script>
 
@@ -104,7 +100,7 @@ onMounted(() => {
         <button @click="playQueue">▶</button>
       </div>
     </header>
-    <ListItem v-if="store.queue.items.length" v-for="item in nonRemovedItems">
+    <ListItem v-if="store.queue.items.length" v-for="item in store.queue.items">
       <div class="track-info">
         <strong>{{ item.track.name }}</strong>
         <br />

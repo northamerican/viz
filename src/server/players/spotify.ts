@@ -77,7 +77,6 @@ const authorize = () => {
   const scope =
     "user-read-private user-read-email playlist-read-private";
 
-  console.log({ appUrl })
   return "https://accounts.spotify.com/authorize?" +
     querystring.stringify({
       response_type: "code",
