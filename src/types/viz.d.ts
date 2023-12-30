@@ -3,7 +3,6 @@ declare module "Viz" {
     videoEl: any
     isLoggedIn: boolean
     playlists: PlaylistList
-    // TODO currentQueue
     queue: Queue
     updateQueue: () => Promise<void>
   }
@@ -92,6 +91,11 @@ declare module "Viz" {
     state: QueueState
     queues: Queue[]
   }
+
+  // export type QueuesList = {
+  //   queues: []
+  //   selected: Queue
+  // }
 
   export type PlayerNames = 'spotify'
   export type SourceNames = 'youtube'

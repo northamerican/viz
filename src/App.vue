@@ -18,7 +18,7 @@ import { store } from './store'
     <section class="library">
       <div v-if="store.isLoggedIn">
         <Playlists v-if="store.playlists.selected === null" />
-        <Playlist :playlist="store.playlists.selected" v-else />
+        <Playlist v-else :playlist="store.playlists.selected" />
       </div>
       <div v-else>
         <p>Log in to see your playlists.</p>
