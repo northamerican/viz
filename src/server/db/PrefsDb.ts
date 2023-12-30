@@ -1,4 +1,4 @@
-import { JSONPreset } from "lowdb/node";
+import { JSONFilePreset } from "lowdb/node";
 import { prefsDbPath } from "../consts";
 import { VizPrefsDbType } from "Viz";
 import players from "../players";
@@ -9,7 +9,7 @@ const prefsDbDefault = {
   source: "youtube",
 } as const
 
-const prefsDb = await JSONPreset<VizPrefsDbType>(prefsDbPath, prefsDbDefault)
+const prefsDb = await JSONFilePreset<VizPrefsDbType>(prefsDbPath, prefsDbDefault)
 await prefsDb.read()
 
 export const PrefsDb = {

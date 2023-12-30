@@ -69,7 +69,7 @@ export async function onUpdateQueueFromPlaylist() {
 
   const newTracks = playlist.tracks.filter(track => track.addedAt > latestAddedAt)
   const newItems = newTracks.map(track => {
-    return { track, videoId: null }
+    return { track, videoId: null, removed: false }
   })
 
   await QueuesDb.addItems(QueuesDb.currentQueue.id, newItems)

@@ -1,11 +1,11 @@
-import { JSONPreset } from "lowdb/node";
+import { JSONFilePreset } from "lowdb/node";
 import { videosDbPath } from "../consts";
 import type { Video, VideosDbType } from "Viz";
 
 const videosDbDefault = {
   videos: {}
 }
-const videosDb = await JSONPreset<VideosDbType>(videosDbPath, videosDbDefault)
+const videosDb = await JSONFilePreset<VideosDbType>(videosDbPath, structuredClone(videosDbDefault))
 await videosDb.read()
 
 export const VideosDb = {
@@ -32,7 +32,7 @@ export const VideosDb = {
   },
 
   async deleteDb() {
-    videosDb.data = videosDbDefault;
+    videosDb.data = structuredClone(videosDbDefault);
     await videosDb.write()
   },
 }

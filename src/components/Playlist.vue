@@ -4,14 +4,16 @@ import ListItem from './ListItem.vue'
 import ActionsMenu from './ActionsMenu.vue'
 import { onAddToQueue } from './Playlist.telefunc'
 import { store } from '../store'
+import { Playlist } from 'Viz'
 
-// TODO playlist prop, don't use selectedPlaylist
+const props = defineProps<{ playlist: Playlist }>()
+
 const addToQueue = async (tracks: Track[]) => {
-  const { id, name, player } = store.selectedPlaylist
+  const { id, name, player } = props.playlist
   await onAddToQueue(
     store.queue?.id,
     tracks.map(track => {
-      return { track, videoId: null }
+      return { track, videoId: null, removed: false }
     }),
     { id, name, player }
   )
@@ -19,7 +21,7 @@ const addToQueue = async (tracks: Track[]) => {
 }
 
 const deselectPlaylist = () => {
-  store.selectedPlaylist = null
+  store.playlists.selected = null
 }
 
 const actionsMenuOptions = (track: Track) => [
@@ -28,21 +30,19 @@ const actionsMenuOptions = (track: Track) => [
 </script>
 
 <template>
-  <div v-if="store.selectedPlaylist">
+  <div v-if="props.playlist">
     <header>
       <h2>
         <button @click="deselectPlaylist">⇦</button>
-        {{ store.selectedPlaylist.name }}
+        {{ props.playlist.name }}
       </h2>
       <div>
-        <button @click="() => addToQueue(store.selectedPlaylist.tracks)">
-          +
-        </button>
+        <button @click="() => addToQueue(props.playlist.tracks)">+</button>
         <!-- Function to have queue follow updates to this playlist -->
         <!-- <button>Follow playlist</button> -->
       </div>
     </header>
-    <ListItem v-for="track in store.selectedPlaylist.tracks">
+    <ListItem v-for="track in props.playlist.tracks">
       <div class="info">
         <strong>{{ track.name }}</strong>
         <br />

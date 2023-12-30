@@ -1,8 +1,8 @@
-import { JSONPreset } from "lowdb/node";
+import { JSONFilePreset } from "lowdb/node";
 import { authDbPath } from "../consts";
 import { AuthState, AuthStateDbType } from "Viz";
 
-const authDb = await JSONPreset<AuthStateDbType>(authDbPath, {})
+const authDb = await JSONFilePreset<AuthStateDbType>(authDbPath, {})
 await authDb.read()
 
 export const AuthDb = {

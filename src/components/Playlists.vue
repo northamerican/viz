@@ -6,13 +6,13 @@ import { store } from '../store'
 
 const getPlaylists = async () => {
   const { playlists } = await onLoadPlaylists()
-  store.playlists = playlists
+  Object.assign(store.playlists, playlists)
 }
 
 const getPlaylist = async (playlistId: string) => {
-  store.selectedPlaylist = null
+  store.playlists.selected = null
   const { playlist } = await onLoadPlaylist(playlistId)
-  store.selectedPlaylist = playlist
+  store.playlists.selected = playlist
 }
 
 onMounted(() => getPlaylists())

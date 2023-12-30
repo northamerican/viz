@@ -3,7 +3,6 @@ declare module "Viz" {
     videoEl: any
     isLoggedIn: boolean
     playlists: PlaylistList
-    selectedPlaylist: Playlist
     // TODO currentQueue
     queue: Queue
     updateQueue: () => Promise<void>
@@ -42,6 +41,7 @@ declare module "Viz" {
   }
   export type PlaylistList = {
     items: PlaylistListItem[]
+    selected: Playlist
   }
 
   export type SegmentInfo = {
@@ -77,6 +77,7 @@ declare module "Viz" {
     track: Track
     videoId: string
     video?: Video
+    removed: boolean
   }
 
   export type QueuePlaylistReference = Omit<Playlist, 'tracks'>

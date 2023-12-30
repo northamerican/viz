@@ -8,9 +8,9 @@ export const store = reactive<VizStore>({
   videoEl: null,
   isLoggedIn: !!getCookie(loggedInCookie),
   playlists: {
+    selected: null,
     items: []
   },
-  selectedPlaylist: null,
   queue: null,
   async updateQueue() {
     this.queue = await onUpdateQueueWithVideo()

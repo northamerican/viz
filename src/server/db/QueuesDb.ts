@@ -1,4 +1,4 @@
-import { JSONPreset } from "lowdb/node";
+import { JSONFilePreset } from "lowdb/node";
 import { queuesDbPath } from "../consts";
 import type { Queue, QueuesDbType, QueueItem, SegmentInfo, Video } from "Viz";
 import { v4 as uuidv4 } from 'uuid';
@@ -19,7 +19,8 @@ const queuesDbDefault: QueuesDbType = {
     playlist: null
   }]
 }
-const queuesDb = await JSONPreset<QueuesDbType>(queuesDbPath, queuesDbDefault)
+
+const queuesDb = await JSONFilePreset<QueuesDbType>(queuesDbPath, structuredClone(queuesDbDefault))
 await queuesDb.read()
 
 export const QueuesDb = {
@@ -99,8 +100,9 @@ export const QueuesDb = {
   },
 
   async setStartTime(timestamp: number) {
-    this.state.startTime = timestamp
-    await queuesDb.write()
+    await queuesDb.update((data) => {
+      data.state.startTime = timestamp
+    })
   },
 
   async editQueue(queueId: string, props: Omit<Partial<Queue>, 'items'>) {
@@ -111,9 +113,7 @@ export const QueuesDb = {
 
   async addItem(queueId: string, props: QueueItem) {
     this.addItems(queueId, [props])
-    await queuesDb.write()
   },
-
   async addItems(queueId: string, items: Omit<QueueItem, 'id'>[]) {
     this.getQueue(queueId).items.push(...items.map(props => ({
       ...props,
@@ -123,23 +123,31 @@ export const QueuesDb = {
   },
 
   async removeItem(queueId: string, queueItemId: string) {
-    this.removeItems(queueId, [queueItemId])
-    await queuesDb.write()
-  },
-
-  async removeItems(queueId: string, queueItemIds: string[]) {
-    this.getQueue(queueId).items = this.getQueue(queueId).items.filter(queueItem => !queueItemIds.includes(queueItem.id))
-    await queuesDb.write()
+    this.editItem(queueId, queueItemId, { removed: true })
   },
 
   async editItem(queueId: string, queueItemId: string, props: Partial<QueueItem>) {
-    const queueItem = this.getItem(queueId, queueItemId)
-    Object.assign(queueItem, props)
+    this.editItems(queueId, [queueItemId], props)
+  },
+  async editItems(queueId: string, queueItemIds: string[], props: Partial<QueueItem>) {
+    queueItemIds.forEach(queueItemId => {
+      const queueItem = this.getItem(queueId, queueItemId)
+      Object.assign(queueItem, props)
+    })
     await queuesDb.write()
   },
 
   async deleteDb() {
-    queuesDb.data = queuesDbDefault;
+    await this.read()
+    console.log('aaa', queuesDbDefault.queues[0].items.length)
+    queuesDb.data = structuredClone(queuesDbDefault);
+    console.log('deleteDb')
+    // console.log(queuesDb.data)
     await queuesDb.write()
   },
 }
+
+
+setInterval(() => {
+  console.log('l', queuesDbDefault.queues[0].items.length)
+}, 2000)

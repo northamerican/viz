@@ -2,7 +2,7 @@
 import type { QueueItem } from 'Viz'
 import ListItem from './ListItem.vue'
 import ActionsMenu from './ActionsMenu.vue'
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import {
   onGetVideo,
   onDownloadVideo,
@@ -16,10 +16,12 @@ import {
 } from './Queue.telefunc'
 import { store } from '../store'
 
+// TODO store should have queues / 1:1 copy of the queues json?
+
 const playQueue = async () => {
   await onPlayVideo()
   const { videoEl } = store
-  videoEl.src = videoEl.src
+  videoEl.load()
   videoEl.fastSeek(0)
   videoEl.play()
 }
@@ -38,13 +40,17 @@ const downloadVideo = async (queueItem: QueueItem) => {
   await store.updateQueue()
   await onDownloadVideo(videoId, url)
   await store.updateQueue()
+  if (store.videoEl.currentTime === 0) {
+    playQueue()
+  }
 }
 
 const deleteQueueAndVideos = async () => {
   const { videoEl } = store
   await Promise.all([onDeleteQueues(), onDeleteVideos()])
-  store.updateQueue()
-  videoEl.src = videoEl.src
+  await store.updateQueue()
+  videoEl.pause()
+  videoEl.load()
 }
 
 const removeItem = async (queueItem: QueueItem) => {
@@ -77,6 +83,10 @@ const actionsMenuOptions = (queueItem: QueueItem) => [
   }
 ]
 
+const nonRemovedItems = computed(() =>
+  store.queue.items.filter(item => !item.removed)
+)
+
 onMounted(() => {
   store.updateQueue()
   onUpdateQueueWithVideo()
@@ -94,7 +104,7 @@ onMounted(() => {
         <button @click="playQueue">▶</button>
       </div>
     </header>
-    <ListItem v-for="item in store.queue.items" v-if="store.queue.items.length">
+    <ListItem v-if="store.queue.items.length" v-for="item in nonRemovedItems">
       <div class="track-info">
         <strong>{{ item.track.name }}</strong>
         <br />
@@ -138,4 +148,3 @@ header {
   margin-left: auto;
 }
 </style>
-./queue.telefunc
