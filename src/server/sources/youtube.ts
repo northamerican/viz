@@ -116,25 +116,27 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
   //@ts-expect-error nodejs dumb
   videoStream.pipe(process.stdio[4]);
 
-  process.stdio[2].on("data", async () => {
-    // TODO could maybe just do this on 'close', ie the end of the video loaded ?
-    // For debugging
-    // console.log(data.toString())
+  // process.stdio[2].on("data", async () => {
+  //   // TODO could maybe just do this on 'close', ie the end of the video loaded ?
+  //   // For debugging
+  //   // console.log(data.toString())
 
-    // TODO remove this hack
-    // Data can be received before the creation of the m3u file
-    if (!fs.existsSync(videoFilePath)) return;
+  //   // TODO remove this hack
+  //   // Data can be received before the creation of the m3u file
+  //   if (!fs.existsSync(videoFilePath)) return;
 
-    // TODO prob not necessary
-    await VideosDb.editVideo(videoId, {
-      segmentDurations: getSegmentDurations(videoFilePath),
-      duration: getSegmentDurations(videoFilePath).reduce(durationTotal, 0),
-    });
-  });
+  //   // TODO prob not necessary
+  //   await VideosDb.editVideo(videoId, {
+  //     segmentDurations: getSegmentDurations(videoFilePath),
+  //     duration: getSegmentDurations(videoFilePath).reduce(durationTotal, 0),
+  //   });
+  // });
 
   return new Promise((resolve) => {
     process.on("close", async () => {
       await VideosDb.editVideo(videoId, {
+        segmentDurations: getSegmentDurations(videoFilePath),
+        duration: getSegmentDurations(videoFilePath).reduce(durationTotal, 0),
         downloaded: true,
         downloading: false,
       });
