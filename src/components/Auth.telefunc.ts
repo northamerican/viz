@@ -9,11 +9,11 @@ export async function onAuthorize() {
 export async function onLogin({ code }: { code: string }) {
   await PrefsDb.player.getToken(code);
   // TODO use this or lose this
-  return { [loggedInCookie]: true }
+  return { [loggedInCookie]: true };
 }
 
 export async function onLogout() {
   await PrefsDb.player.logout();
   // TODO use this or lose this
-  return { [loggedInCookie]: false }
+  return { [loggedInCookie]: false };
 }

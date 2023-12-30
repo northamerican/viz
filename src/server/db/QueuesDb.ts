@@ -1,10 +1,10 @@
 import { JSONFilePreset } from "lowdb/node";
 import { queuesDbPath } from "../consts";
 import type { Queue, QueuesDbType, QueueItem, SegmentInfo, Video } from "Viz";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { VideosDb } from "./VideosDb";
 
-const defaultUuid = uuidv4()
+const defaultUuid = uuidv4();
 const queuesDbDefault: QueuesDbType = {
   state: {
     currentQueueId: defaultUuid,
@@ -12,48 +12,57 @@ const queuesDbDefault: QueuesDbType = {
     startTime: Date.now(),
     seekOffsetTime: 0,
   },
-  queues: [{
-    id: defaultUuid,
-    totalDuration: null,
-    items: [],
-    playlist: null
-  }]
-}
+  queues: [
+    {
+      id: defaultUuid,
+      totalDuration: null,
+      items: [],
+      playlist: null,
+    },
+  ],
+};
 
-const queuesDb = await JSONFilePreset<QueuesDbType>(queuesDbPath, structuredClone(queuesDbDefault))
-await queuesDb.read()
+const queuesDb = await JSONFilePreset<QueuesDbType>(
+  queuesDbPath,
+  structuredClone(queuesDbDefault),
+);
+await queuesDb.read();
 
 export const QueuesDb = {
   async read() {
-    await queuesDb.read()
+    await queuesDb.read();
   },
 
   get state() {
-    return queuesDb.data.state
+    return queuesDb.data.state;
   },
 
   get queues() {
-    return queuesDb.data.queues
+    return queuesDb.data.queues;
   },
 
   get startTime() {
-    return this.state.startTime
+    return this.state.startTime;
   },
 
   get currentQueue(): Queue {
-    return this.getQueue(this.state.currentQueueId)
+    return this.getQueue(this.state.currentQueueId);
   },
 
   get currentQueueWithVideos(): Queue {
-    return this.getQueueWithVideos(this.state.currentQueueId)
+    return this.getQueueWithVideos(this.state.currentQueueId);
   },
 
   get currentQueueVideos(): Video[] {
-    return this.currentQueueWithVideos.items.flatMap(item => item.video ?? [])
+    return this.currentQueueWithVideos.items.flatMap(
+      (item) => item.video ?? [],
+    );
   },
 
   get currentQueueNotDownloaded() {
-    return this.currentQueueWithVideos.items.filter(item => !item.video?.downloaded)
+    return this.currentQueueWithVideos.items.filter(
+      (item) => !item.video?.downloaded,
+    );
   },
 
   get currentQueueSegmentInfo(): SegmentInfo[] {
@@ -62,87 +71,97 @@ export const QueuesDb = {
         segmentIndex,
         videoId: id,
         duration,
-      }))
-    })
+      }));
+    });
   },
 
   get nextDownloadableInQueue(): QueueItem {
-    const firstNotDownloaded = this.currentQueueNotDownloaded[0]
-    return firstNotDownloaded?.video?.downloading ? null : firstNotDownloaded
+    const firstNotDownloaded = this.currentQueueNotDownloaded[0];
+    return firstNotDownloaded?.video?.downloading ? null : firstNotDownloaded;
   },
 
   getQueue(queueId: string): Queue {
-    return this.queues.find(({ id }) => id === queueId)
+    return this.queues.find(({ id }) => id === queueId);
   },
 
   getQueueWithVideos(queueId: string): Queue {
-    const queue = this.getQueue(queueId)
+    const queue = this.getQueue(queueId);
     const itemsWithVideos = queue.items
-      .filter(item => !item.removed)
-      .map(this.getItemWithVideo)
+      .filter((item) => !item.removed)
+      .map(this.getItemWithVideo);
 
     return {
       ...queue,
       items: itemsWithVideos,
       totalDuration: itemsWithVideos.reduce((totalDuration, { video }) => {
         return totalDuration + (video?.duration || 0);
-      }, 0)
-    }
+      }, 0),
+    };
   },
 
   getItem(queueId: string, queueItemId: string): QueueItem {
-    return this.getQueue(queueId).items.find(({ id }) => id === queueItemId)
+    return this.getQueue(queueId).items.find(({ id }) => id === queueItemId);
   },
 
   getItemWithVideo(item: QueueItem): QueueItem {
     return {
       ...item,
-      video: VideosDb.getVideo(item.videoId) || null
-    }
+      video: VideosDb.getVideo(item.videoId) || null,
+    };
   },
 
   async setStartTime(timestamp: number) {
     await queuesDb.update((data) => {
-      data.state.startTime = timestamp
-    })
+      data.state.startTime = timestamp;
+    });
   },
 
-  async editQueue(queueId: string, props: Omit<Partial<Queue>, 'items'>) {
+  async editQueue(queueId: string, props: Omit<Partial<Queue>, "items">) {
     await queuesDb.update(() => {
-      const queue = this.getQueue(queueId)
-      Object.assign(queue, props)
-    })
+      const queue = this.getQueue(queueId);
+      Object.assign(queue, props);
+    });
   },
 
   async addItem(queueId: string, props: QueueItem) {
-    this.addItems(queueId, [props])
+    this.addItems(queueId, [props]);
   },
-  async addItems(queueId: string, items: Omit<QueueItem, 'id'>[]) {
-    this.getQueue(queueId).items.push(...items.map(props => ({
-      ...props,
-      id: uuidv4()
-    })))
-    await queuesDb.write()
+  async addItems(queueId: string, items: Omit<QueueItem, "id">[]) {
+    this.getQueue(queueId).items.push(
+      ...items.map((props) => ({
+        ...props,
+        id: uuidv4(),
+      })),
+    );
+    await queuesDb.write();
   },
 
   async removeItem(queueId: string, queueItemId: string) {
-    this.editItem(queueId, queueItemId, { removed: true })
+    this.editItem(queueId, queueItemId, { removed: true });
   },
 
-  async editItem(queueId: string, queueItemId: string, props: Partial<QueueItem>) {
-    this.editItems(queueId, [queueItemId], props)
+  async editItem(
+    queueId: string,
+    queueItemId: string,
+    props: Partial<QueueItem>,
+  ) {
+    this.editItems(queueId, [queueItemId], props);
   },
-  async editItems(queueId: string, queueItemIds: string[], props: Partial<QueueItem>) {
-    queueItemIds.forEach(queueItemId => {
-      const queueItem = this.getItem(queueId, queueItemId)
-      Object.assign(queueItem, props)
-    })
-    await queuesDb.write()
+  async editItems(
+    queueId: string,
+    queueItemIds: string[],
+    props: Partial<QueueItem>,
+  ) {
+    queueItemIds.forEach((queueItemId) => {
+      const queueItem = this.getItem(queueId, queueItemId);
+      Object.assign(queueItem, props);
+    });
+    await queuesDb.write();
   },
 
   async deleteDb() {
-    await queuesDb.update((data) => {
-      data = structuredClone(queuesDbDefault);
-    })
+    await queuesDb.update(() => {
+      queuesDb.data = structuredClone(queuesDbDefault);
+    });
   },
-}
+};

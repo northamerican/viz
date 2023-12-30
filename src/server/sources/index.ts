@@ -1,7 +1,7 @@
 import { youtube } from "./youtube";
 
 const sources = {
-  youtube
+  youtube,
 };
 
-export default sources
+export default sources;

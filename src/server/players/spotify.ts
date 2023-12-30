@@ -4,101 +4,112 @@ import type { GetToken, GetPlaylist, GetPlaylists } from "VizPlayer";
 import { AuthDb } from "../db/AuthDb";
 import { appUrl } from "../consts";
 
-const clientId = process.env.SPOTIFY_CLIENT_ID
-const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
+const clientId = process.env.SPOTIFY_CLIENT_ID;
+const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
 const spotifyAxios = axios.create();
-const SPOTIFY = <const>'spotify';
-const tokenUrl = '/token'
+const SPOTIFY = <const>"spotify";
+const tokenUrl = "/token";
 
 // Request interceptor for API calls
 spotifyAxios.interceptors.request.use(
-  async config => {
-    config.headers.Authorization = config.headers.Authorization || `Bearer ${AuthDb.player(SPOTIFY)?.token}`
+  async (config) => {
+    config.headers.Authorization =
+      config.headers.Authorization || `Bearer ${AuthDb.player(SPOTIFY)?.token}`;
     return config;
   },
-  error => {
-    Promise.reject(error)
-  }
+  (error) => {
+    Promise.reject(error);
+  },
 );
 
-spotifyAxios.interceptors.response.use((response) => {
-  return response
-}, async function (error) {
-  const originalRequest = error.config;
+spotifyAxios.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async function (error) {
+    const originalRequest = error.config;
 
-  if (error.response?.status === 401 && !originalRequest._retry) {
-    originalRequest._retry = true;
-    await getRefreshToken();
-    originalRequest.headers.Authorization = `Bearer ${AuthDb.player(SPOTIFY).token}`
-    return spotifyAxios(originalRequest);
-  }
-  return Promise.reject(error);
-});
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      await getRefreshToken();
+      originalRequest.headers.Authorization = `Bearer ${
+        AuthDb.player(SPOTIFY).token
+      }`;
+      return spotifyAxios(originalRequest);
+    }
+    return Promise.reject(error);
+  },
+);
 
 const getToken: GetToken = async (code, refresh) => {
   try {
     const { data } = await spotifyAxios.post(
       "https://accounts.spotify.com/api/token",
-      refresh ?
-        {
-          grant_type: "refresh_token",
-          refresh_token: AuthDb.player(SPOTIFY)?.refreshToken,
-          client_id: clientId
-        }
+      refresh
+        ? {
+            grant_type: "refresh_token",
+            refresh_token: AuthDb.player(SPOTIFY)?.refreshToken,
+            client_id: clientId,
+          }
         : {
-          grant_type: "authorization_code",
-          code,
-          redirect_uri: new URL(tokenUrl, appUrl).href,
-        },
+            grant_type: "authorization_code",
+            code,
+            redirect_uri: new URL(tokenUrl, appUrl).href,
+          },
       {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
           Authorization:
-            "Basic " + Buffer.from(clientId + ":" + clientSecret).toString("base64"),
+            "Basic " +
+            Buffer.from(clientId + ":" + clientSecret).toString("base64"),
         },
-      }
+      },
     );
 
     AuthDb.editAuth(SPOTIFY, {
       token: data.access_token,
       refreshToken: data.refresh_token || AuthDb.player(SPOTIFY).refreshToken,
-    })
+    });
 
     return data;
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
 };
 
-const getRefreshToken = () => getToken(null, true)
+const getRefreshToken = () => getToken(null, true);
 
 const authorize = () => {
-  const scope =
-    "user-read-private user-read-email playlist-read-private";
+  const scope = "user-read-private user-read-email playlist-read-private";
 
-  return "https://accounts.spotify.com/authorize?" +
+  return (
+    "https://accounts.spotify.com/authorize?" +
     querystring.stringify({
       response_type: "code",
       client_id: clientId,
       scope: scope,
-      redirect_uri: new URL(tokenUrl, appUrl).href
+      redirect_uri: new URL(tokenUrl, appUrl).href,
     })
-}
+  );
+};
 
 const logout = async () => {
-  AuthDb.clearAuth(SPOTIFY)
-}
+  AuthDb.clearAuth(SPOTIFY);
+};
 
 // TODO pagination
 const getPlaylists: GetPlaylists = async (offset = 0) => {
   try {
-    const { data } = await spotifyAxios.get<SpotifyApi.ListOfCurrentUsersPlaylistsResponse>(
-      "https://api.spotify.com/v1/me/playlists", {
-      params: {
-        offset
-      }
-    });
+    const { data } =
+      await spotifyAxios.get<SpotifyApi.ListOfCurrentUsersPlaylistsResponse>(
+        "https://api.spotify.com/v1/me/playlists",
+        {
+          params: {
+            offset,
+          },
+        },
+      );
 
     return {
       // offset,
@@ -107,64 +118,75 @@ const getPlaylists: GetPlaylists = async (offset = 0) => {
         id,
         name,
         total: tracks.total,
-      }))
-    }
+      })),
+    };
   } catch (error) {
     return Promise.reject(error);
   }
-}
+};
 
 const getPlaylist: GetPlaylist = async (playlistId) => {
-  const itemsMaxLimit = 50
+  const itemsMaxLimit = 50;
 
   try {
-    const { data: { name, tracks: { total } } } = await spotifyAxios.get<SpotifyApi.PlaylistObjectFull>(
-      `https://api.spotify.com/v1/playlists/${playlistId}`, {
-      params: {
-        fields: 'name,tracks.total'
-      }
-    })
+    const {
+      data: {
+        name,
+        tracks: { total },
+      },
+    } = await spotifyAxios.get<SpotifyApi.PlaylistObjectFull>(
+      `https://api.spotify.com/v1/playlists/${playlistId}`,
+      {
+        params: {
+          fields: "name,tracks.total",
+        },
+      },
+    );
 
-    const callsCount = Math.ceil(total / itemsMaxLimit)
-    const offsets = [...Array(callsCount).keys()]
+    const callsCount = Math.ceil(total / itemsMaxLimit);
+    const offsets = [...Array(callsCount).keys()];
 
     const playlistTrackResponses = await Promise.all(
-      offsets.map(offset => spotifyAxios.get<SpotifyApi.PlaylistTrackResponse>(
-        `https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
-        params: {
-          offset: offset * itemsMaxLimit,
-          limit: itemsMaxLimit,
-          fields: 'items(added_at,track(id,name,artists,external_urls))'
-        }
-      }))
-    )
+      offsets.map((offset) =>
+        spotifyAxios.get<SpotifyApi.PlaylistTrackResponse>(
+          `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+          {
+            params: {
+              offset: offset * itemsMaxLimit,
+              limit: itemsMaxLimit,
+              fields: "items(added_at,track(id,name,artists,external_urls))",
+            },
+          },
+        ),
+      ),
+    );
 
     const allTracks = playlistTrackResponses.flatMap(({ data }) => {
-      return data.items.map(item => ({
+      return data.items.map((item) => ({
         id: item.track.id,
         player: SPOTIFY,
-        artists: item.track.artists.map(artist => artist.name),
+        artists: item.track.artists.map((artist) => artist.name),
         name: item.track.name,
         playerUrl: item.track.external_urls.spotify,
-        addedAt: (new Date(item.added_at)).getTime()
-      }))
-    })
+        addedAt: new Date(item.added_at).getTime(),
+      }));
+    });
 
     return {
       id: playlistId,
       name,
       tracks: allTracks,
-      player: SPOTIFY
-    }
+      player: SPOTIFY,
+    };
   } catch (error) {
     return Promise.reject(error);
   }
-}
+};
 
 export const spotify = {
   getToken,
   authorize,
   logout,
   getPlaylists,
-  getPlaylist
+  getPlaylist,
 };

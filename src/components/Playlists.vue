@@ -1,27 +1,27 @@
 <script setup lang="ts">
-import ListItem from './ListItem.vue'
-import { onMounted } from 'vue'
-import { onLoadPlaylists, onLoadPlaylist } from './Playlists.telefunc'
-import { store } from '../store'
+import ListItem from "./ListItem.vue";
+import { onMounted } from "vue";
+import { onLoadPlaylists, onLoadPlaylist } from "./Playlists.telefunc";
+import { store } from "../store";
 
 const getPlaylists = async () => {
-  const { playlists } = await onLoadPlaylists()
-  Object.assign(store.playlists, playlists)
-}
+  const { playlists } = await onLoadPlaylists();
+  Object.assign(store.playlists, playlists);
+};
 
 const getPlaylist = async (playlistId: string) => {
-  store.playlists.selected = null
-  const { playlist } = await onLoadPlaylist(playlistId)
-  store.playlists.selected = playlist
-}
+  store.playlists.selected = null;
+  const { playlist } = await onLoadPlaylist(playlistId);
+  store.playlists.selected = playlist;
+};
 
-onMounted(() => getPlaylists())
+onMounted(() => getPlaylists());
 </script>
 
 <template>
   <div v-if="store.playlists.items?.length">
     <h1>Playlists [Spotify]</h1>
-    <div v-for="playlist in store.playlists.items">
+    <div v-for="playlist in store.playlists.items" :key="playlist.id">
       <ListItem>
         <strong class="name" @click="getPlaylist(playlist.id)">{{
           playlist.name

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { QueueItem } from 'Viz'
-import ListItem from './ListItem.vue'
-import ActionsMenu from './ActionsMenu.vue'
-import { onMounted, ref } from 'vue'
+import type { QueueItem } from "Viz";
+import ListItem from "./ListItem.vue";
+import ActionsMenu from "./ActionsMenu.vue";
+import { onMounted } from "vue";
 import {
   onGetVideo,
   onDownloadVideo,
@@ -12,82 +12,82 @@ import {
   onPlayVideo,
   onDownloadNextVideoInQueue,
   onUpdateQueueFromPlaylist,
-  onUpdateQueueWithVideo
-} from './Queue.telefunc'
-import { store } from '../store'
+  onUpdateQueueWithVideo,
+} from "./Queue.telefunc";
+import { store } from "../store";
 
 // TODO store should have queues / 1:1 copy of the queues json?
 
 const playQueue = async () => {
-  await onPlayVideo()
-  const { videoEl } = store
-  videoEl.load()
-  videoEl.fastSeek(0)
-  videoEl.play()
-}
+  await onPlayVideo();
+  const { videoEl } = store;
+  videoEl.load();
+  videoEl.fastSeek(0);
+  videoEl.play();
+};
 
 const queueDownload = async () => {
-  const res = await onDownloadNextVideoInQueue()
-  await store.updateQueue()
-  if (res) queueDownload()
-}
+  const res = await onDownloadNextVideoInQueue();
+  await store.updateQueue();
+  if (res) queueDownload();
+};
 
 const downloadVideo = async (queueItem: QueueItem) => {
-  const { videoId, url } = await onGetVideo(store.queue.id, queueItem)
-  await store.updateQueue()
-  await onDownloadVideo(videoId, url)
-  await store.updateQueue()
+  const { videoId, url } = await onGetVideo(store.queue.id, queueItem);
+  await store.updateQueue();
+  await onDownloadVideo(videoId, url);
+  await store.updateQueue();
   if (store.videoEl.currentTime === 0) {
-    playQueue()
+    playQueue();
   }
-}
+};
 
 const deleteQueueAndVideos = async () => {
-  const { videoEl } = store
-  await Promise.all([onDeleteQueues(), onDeleteVideos()])
-  await store.updateQueue()
-  videoEl.pause()
-  videoEl.load()
-}
+  const { videoEl } = store;
+  await Promise.all([onDeleteQueues(), onDeleteVideos()]);
+  await store.updateQueue();
+  videoEl.pause();
+  videoEl.load();
+};
 
 const removeItem = async (queueItem: QueueItem) => {
-  await onRemoveQueueItem(store.queue.id, queueItem.id)
-  store.updateQueue()
-}
+  await onRemoveQueueItem(store.queue.id, queueItem.id);
+  store.updateQueue();
+};
 
 const actionsMenuOptions = (queueItem: QueueItem) => [
   {
     action: () => downloadVideo(queueItem),
-    label: 'Get Video',
-    disabled: queueItem.video?.downloaded
+    label: "Get Video",
+    disabled: queueItem.video?.downloaded,
   },
-  { action: () => removeItem(queueItem), label: 'Remove from Queue' },
-  { action: () => {}, label: 'Replace Video...', disabled: true },
+  { action: () => removeItem(queueItem), label: "Remove from Queue" },
+  { action: () => {}, label: "Replace Video...", disabled: true },
   {},
   {
     action: () => {
-      window.open(queueItem.video.sourceUrl, '_blank')
+      window.open(queueItem.video.sourceUrl, "_blank");
     },
     // TODO label can read "[Video title] on Youtube...""
-    label: 'Go to YouTube Video...',
-    disabled: !queueItem.video?.sourceUrl
+    label: "Go to YouTube Video...",
+    disabled: !queueItem.video?.sourceUrl,
   },
   {
     action: () => {
-      window.open(queueItem.track.playerUrl, '_blank')
+      window.open(queueItem.track.playerUrl, "_blank");
     },
-    label: 'Go to Spotify Song...'
-  }
-]
+    label: "Go to Spotify Song...",
+  },
+];
 
 onMounted(async () => {
-  store.updateQueue()
-  await onUpdateQueueWithVideo()
-  await onUpdateQueueFromPlaylist()
-  await store.updateQueue()
+  store.updateQueue();
+  await onUpdateQueueWithVideo();
+  await onUpdateQueueFromPlaylist();
+  await store.updateQueue();
 
-  setInterval(queueDownload, 5000)
-})
+  setInterval(queueDownload, 5000);
+});
 </script>
 
 <template>
@@ -100,20 +100,26 @@ onMounted(async () => {
         <button @click="playQueue">▶</button>
       </div>
     </header>
-    <ListItem v-if="store.queue.items.length" v-for="item in store.queue.items">
-      <div class="track-info">
-        <strong>{{ item.track.name }}</strong>
-        <br />
-        <span class="track-artist" v-for="artist in item.track.artists">
-          {{ artist }}
-        </span>
-      </div>
-      <div class="actions">
-        {{ item.video?.downloading ? '⌛︎' : '' }}
-        {{ item.video?.downloaded ? '✔' : '' }}
-        <ActionsMenu :options="actionsMenuOptions(item)" />
-      </div>
-    </ListItem>
+    <div v-if="store.queue.items.length">
+      <ListItem v-for="item in store.queue.items" :key="item.id">
+        <div class="track-info">
+          <strong>{{ item.track.name }}</strong>
+          <br />
+          <span
+            class="track-artist"
+            v-for="artist in item.track.artists"
+            :key="artist"
+          >
+            {{ artist }}
+          </span>
+        </div>
+        <div class="actions">
+          {{ item.video?.downloading ? "⌛︎" : "" }}
+          {{ item.video?.downloaded ? "✔" : "" }}
+          <ActionsMenu :options="actionsMenuOptions(item)" />
+        </div>
+      </ListItem>
+    </div>
     <p v-else>Nothing queued.</p>
     <hr />
     <ListItem v-if="store.queue.playlist">
@@ -136,7 +142,7 @@ header {
 
 .track-info {
   .track-artist + .track-artist::before {
-    content: ', ';
+    content: ", ";
   }
 }
 

@@ -1,26 +1,27 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { store } from '../store'
-import { m3u8Path } from '../consts'
+import { computed, onMounted, ref } from "vue";
+import { store } from "../store";
+import { m3u8Path } from "../consts";
 // import '../hlsjs.ts'
 
-const currentTime = ref(0)
-const totalDuration = computed(() => Math.round(store.queue?.totalDuration))
+const currentTime = ref(0);
+const totalDuration = computed(() => Math.round(store.queue?.totalDuration));
 
-const seekTo = (e: any) => store.videoEl.fastSeek(e.target.value)
+const seekTo = (e: Event) =>
+  store.videoEl.fastSeek(+(e.target as HTMLInputElement).value);
 
 onMounted(() => {
-  store.videoEl.addEventListener('timeupdate', () => {
-    currentTime.value = Math.round(store.videoEl?.currentTime)
-  })
-})
+  store.videoEl.addEventListener("timeupdate", () => {
+    currentTime.value = Math.round(store.videoEl?.currentTime);
+  });
+});
 </script>
 
 <template>
   <section class="player">
     <video
       id="video"
-      :ref="el => (store.videoEl = el)"
+      :ref="(el) => (store.videoEl = el as HTMLMediaElement)"
       :src="m3u8Path"
       controls
       playsinline

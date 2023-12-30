@@ -7,23 +7,26 @@ import sources from "../sources";
 const prefsDbDefault = {
   player: "spotify",
   source: "youtube",
-} as const
+} as const;
 
-const prefsDb = await JSONFilePreset<VizPrefsDbType>(prefsDbPath, prefsDbDefault)
-await prefsDb.read()
+const prefsDb = await JSONFilePreset<VizPrefsDbType>(
+  prefsDbPath,
+  prefsDbDefault,
+);
+await prefsDb.read();
 
 export const PrefsDb = {
   get playerName() {
-    return prefsDb.data.player
+    return prefsDb.data.player;
   },
   get sourceName() {
-    return prefsDb.data.source
+    return prefsDb.data.source;
   },
 
   get player() {
-    return players[this.playerName]
+    return players[this.playerName];
   },
   get source() {
-    return sources[this.sourceName]
-  }
-}
+    return sources[this.sourceName];
+  },
+};

@@ -1,107 +1,107 @@
 declare module "Viz" {
   export type VizStore = {
-    videoEl: any
-    isLoggedIn: boolean
-    playlists: PlaylistList
-    queue: Queue
-    updateQueue: () => Promise<void>
-  }
+    videoEl: HTMLMediaElement;
+    isLoggedIn: boolean;
+    playlists: PlaylistList;
+    queue: Queue;
+    updateQueue: () => Promise<void>;
+  };
 
   export type AuthState = {
-    token: string
-    refreshToken?: string
-  }
+    token: string;
+    refreshToken?: string;
+  };
 
   export type AuthStateDbType = {
-    [player: string]: AuthState
-  }
+    [player: string]: AuthState;
+  };
 
   // TODO type TrackId = string ..
   export type Track = {
-    id: string
-    artists: string[]
-    name: string
-    player: PlayerNames
-    playerUrl: string
-    addedAt: number
-  }
+    id: string;
+    artists: string[];
+    name: string;
+    player: PlayerNames;
+    playerUrl: string;
+    addedAt: number;
+  };
 
   export type Playlist = {
-    id: string
-    name: string
-    tracks: Track[]
-    player: PlayerNames
-  }
+    id: string;
+    name: string;
+    tracks: Track[];
+    player: PlayerNames;
+  };
 
   export type PlaylistListItem = {
-    id: string
-    name: string
-    total: number
-  }
+    id: string;
+    name: string;
+    total: number;
+  };
   export type PlaylistList = {
-    items: PlaylistListItem[]
-    selected: Playlist
-  }
+    items: PlaylistListItem[];
+    selected: Playlist;
+  };
 
   export type SegmentInfo = {
     segmentIndex: number;
     videoId: string;
     duration: number;
-  }
+  };
 
   export type Video = {
-    id: string
-    source: SourceNames
-    sourceUrl: string,
-    duration: number,
-    downloading: boolean
-    downloaded: boolean
-    segmentDurations: number[]
-  }
+    id: string;
+    source: SourceNames;
+    sourceUrl: string;
+    duration: number;
+    downloading: boolean;
+    downloaded: boolean;
+    segmentDurations: number[];
+  };
   export type Videos = {
-    [id: string]: Video
-  }
+    [id: string]: Video;
+  };
   export type VideosDbType = {
-    videos: Videos
-  }
+    videos: Videos;
+  };
 
   export type QueueState = {
-    currentQueueId: string
-    isPlaying: boolean
-    startTime: number
-    seekOffsetTime: number
-  }
+    currentQueueId: string;
+    isPlaying: boolean;
+    startTime: number;
+    seekOffsetTime: number;
+  };
   export type QueueItem = {
-    id: string
-    track: Track
-    videoId: string
-    video?: Video
-    removed: boolean
-  }
+    id: string;
+    track: Track;
+    videoId: string;
+    video?: Video;
+    removed: boolean;
+  };
 
-  export type QueuePlaylistReference = Omit<Playlist, 'tracks'>
+  export type QueuePlaylistReference = Omit<Playlist, "tracks">;
 
   export type Queue = {
-    id: string,
-    items: QueueItem[]
-    totalDuration: number
-    playlist: QueuePlaylistReference
-  }
+    id: string;
+    items: QueueItem[];
+    totalDuration: number;
+    playlist: QueuePlaylistReference;
+  };
   export type QueuesDbType = {
-    state: QueueState
-    queues: Queue[]
-  }
+    state: QueueState;
+    queues: Queue[];
+  };
 
   // export type QueuesList = {
   //   queues: []
   //   selected: Queue
   // }
 
-  export type PlayerNames = 'spotify'
-  export type SourceNames = 'youtube'
+  export type PlayerNames = "spotify";
+  export type SourceNames = "youtube";
 
   export type VizPrefsDbType = {
-    player: PlayerNames
-    source: SourceNames
-  }
+    player: PlayerNames;
+    source: SourceNames;
+  };
 }

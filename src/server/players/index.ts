@@ -1,7 +1,7 @@
 import { spotify } from "./spotify";
 
 const players = {
-  spotify
+  spotify,
 };
 
-export default players
+export default players;

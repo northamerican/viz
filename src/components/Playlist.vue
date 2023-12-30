@@ -1,32 +1,32 @@
 <script setup lang="ts">
-import type { Track } from 'Viz'
-import ListItem from './ListItem.vue'
-import ActionsMenu from './ActionsMenu.vue'
-import { onAddToQueue } from './Playlist.telefunc'
-import { store } from '../store'
-import { Playlist } from 'Viz'
+import type { Track } from "Viz";
+import ListItem from "./ListItem.vue";
+import ActionsMenu from "./ActionsMenu.vue";
+import { onAddToQueue } from "./Playlist.telefunc";
+import { store } from "../store";
+import { Playlist } from "Viz";
 
-const props = defineProps<{ playlist: Playlist }>()
+const props = defineProps<{ playlist: Playlist }>();
 
 const addToQueue = async (tracks: Track[]) => {
-  const { id, name, player } = props.playlist
+  const { id, name, player } = props.playlist;
   await onAddToQueue(
     store.queue?.id,
-    tracks.map(track => {
-      return { track, videoId: null, removed: false }
+    tracks.map((track) => {
+      return { track, videoId: null, removed: false };
     }),
-    { id, name, player }
-  )
-  store.updateQueue()
-}
+    { id, name, player },
+  );
+  store.updateQueue();
+};
 
 const deselectPlaylist = () => {
-  store.playlists.selected = null
-}
+  store.playlists.selected = null;
+};
 
 const actionsMenuOptions = (track: Track) => [
-  { action: () => addToQueue([track]), label: 'Add to Queue' }
-]
+  { action: () => addToQueue([track]), label: "Add to Queue" },
+];
 </script>
 
 <template>
@@ -42,11 +42,15 @@ const actionsMenuOptions = (track: Track) => [
         <!-- <button>Follow playlist</button> -->
       </div>
     </header>
-    <ListItem v-for="track in props.playlist.tracks">
+    <ListItem v-for="track in props.playlist.tracks" :key="track.id">
       <div class="info">
         <strong>{{ track.name }}</strong>
         <br />
-        <span class="track-artist" v-for="artist in track.artists">
+        <span
+          class="track-artist"
+          v-for="artist in track.artists"
+          :key="artist"
+        >
           {{ artist }}
         </span>
       </div>
@@ -67,7 +71,7 @@ header {
 
 .info {
   .track-artist + .track-artist::before {
-    content: ', ';
+    content: ", ";
   }
 }
 

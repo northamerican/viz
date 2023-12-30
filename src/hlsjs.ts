@@ -1,7 +1,6 @@
 import Hls from "hls.js";
 import { m3u8Path } from "./consts";
 
-
 window.addEventListener("load", () => {
   if (!Hls.isSupported()) return;
 
@@ -10,8 +9,7 @@ window.addEventListener("load", () => {
   });
 
   const video = document.getElementById("video");
-  //@ts-ignore
-  hls.attachMedia(video);
+  hls.attachMedia(video as HTMLMediaElement);
 
   hls.loadSource(m3u8Path);
 
