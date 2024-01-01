@@ -59,12 +59,6 @@ export const QueuesDb = {
     );
   },
 
-  get currentQueueNotDownloaded() {
-    return this.currentQueueWithVideos.items.filter(
-      (item) => !item.video?.downloaded,
-    );
-  },
-
   get currentQueueSegmentInfo(): SegmentInfo[] {
     return this.currentQueueVideos.flatMap(({ segmentDurations, id }) => {
       return segmentDurations.map((duration, segmentIndex) => ({
@@ -76,7 +70,9 @@ export const QueuesDb = {
   },
 
   get nextDownloadableInQueue(): QueueItem {
-    const firstNotDownloaded = this.currentQueueNotDownloaded[0];
+    const firstNotDownloaded = this.currentQueueWithVideos.items.find(
+      (item) => !item.video?.downloaded,
+    );
     return firstNotDownloaded?.video?.downloading ? null : firstNotDownloaded;
   },
 
