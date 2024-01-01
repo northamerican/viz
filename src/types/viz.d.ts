@@ -16,7 +16,6 @@ declare module "Viz" {
     [player: string]: AuthState;
   };
 
-  // TODO type TrackId = string ..
   export type Track = {
     id: string;
     artists: string[];
@@ -26,11 +25,14 @@ declare module "Viz" {
     addedAt: number;
   };
 
-  export type Playlist = {
+  export type PlaylistMeta = {
     id: string;
     name: string;
-    tracks: Track[];
     player: PlayerNames;
+  };
+
+  export type Playlist = PlaylistMeta & {
+    tracks: Track[];
   };
 
   export type PlaylistListItem = {
@@ -79,7 +81,7 @@ declare module "Viz" {
     removed: boolean;
   };
 
-  export type QueuePlaylistReference = Omit<Playlist, "tracks">;
+  export type QueuePlaylistReference = PlaylistMeta;
 
   export type Queue = {
     id: string;
