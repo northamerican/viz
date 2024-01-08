@@ -1,13 +1,17 @@
 import { JSONFilePreset } from "lowdb/node";
 import { videosDbPath } from "../consts";
-import type { Video, VideosDbType } from "Viz";
+import type { Video, Videos } from "Viz";
+
+type VideosDbType = {
+  videos: Videos;
+};
 
 const videosDbDefault = {
   videos: {},
 };
 const videosDb = await JSONFilePreset<VideosDbType>(
   videosDbPath,
-  structuredClone(videosDbDefault),
+  structuredClone(videosDbDefault)
 );
 await videosDb.read();
 

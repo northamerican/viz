@@ -1,8 +1,13 @@
 import { JSONFilePreset } from "lowdb/node";
 import { queuesDbPath } from "../consts";
-import type { Queue, QueuesDbType, QueueItem, SegmentInfo, Video } from "Viz";
+import type { Queue, QueueItem, SegmentInfo, Video, QueueState } from "Viz";
 import { v4 as uuidv4 } from "uuid";
 import { VideosDb } from "./VideosDb";
+
+type QueuesDbType = {
+  state: QueueState;
+  queues: Queue[];
+};
 
 const defaultUuid = uuidv4();
 const queuesDbDefault: QueuesDbType = {
@@ -24,7 +29,7 @@ const queuesDbDefault: QueuesDbType = {
 
 const queuesDb = await JSONFilePreset<QueuesDbType>(
   queuesDbPath,
-  structuredClone(queuesDbDefault),
+  queuesDbDefault
 );
 await queuesDb.read();
 
@@ -55,7 +60,7 @@ export const QueuesDb = {
 
   get currentQueueVideos(): Video[] {
     return this.currentQueueWithVideos.items.flatMap(
-      (item) => item.video ?? [],
+      (item) => item.video ?? []
     );
   },
 
@@ -71,7 +76,7 @@ export const QueuesDb = {
 
   get nextDownloadableInQueue(): QueueItem {
     const firstNotDownloaded = this.currentQueueWithVideos.items.find(
-      (item) => !item.video?.downloaded,
+      (item) => !item.video?.downloaded
     );
     return firstNotDownloaded?.video?.downloading ? null : firstNotDownloaded;
   },
@@ -127,7 +132,7 @@ export const QueuesDb = {
       ...items.map((props) => ({
         ...props,
         id: uuidv4(),
-      })),
+      }))
     );
     await queuesDb.write();
   },
@@ -139,14 +144,14 @@ export const QueuesDb = {
   async editItem(
     queueId: string,
     queueItemId: string,
-    props: Partial<QueueItem>,
+    props: Partial<QueueItem>
   ) {
     this.editItems(queueId, [queueItemId], props);
   },
   async editItems(
     queueId: string,
     queueItemIds: string[],
-    props: Partial<QueueItem>,
+    props: Partial<QueueItem>
   ) {
     queueItemIds.forEach((queueItemId) => {
       const queueItem = this.getItem(queueId, queueItemId);

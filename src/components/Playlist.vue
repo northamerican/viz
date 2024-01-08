@@ -13,15 +13,15 @@ const addToQueue = async (tracks: Track[]) => {
   await onAddToQueue(
     store.queue?.id,
     tracks.map((track) => {
-      return { track, videoId: null, removed: false };
+      return { track, videoId: null, removed: false, type: "track" };
     }),
-    { id, name, player },
+    { id, name, player, account: props.playlist.account }
   );
-  store.updateQueue();
+  store.updateQueueStore();
 };
 
 const deselectPlaylist = () => {
-  store.playlists.selected = null;
+  store.view.playlist = null;
 };
 
 const actionsMenuOptions = (track: Track) => [
@@ -74,9 +74,4 @@ header {
     content: ", ";
   }
 }
-
-.actions {
-  margin-left: auto;
-}
 </style>
-./playlist.telefunc

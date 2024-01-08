@@ -1,29 +1,41 @@
 <script setup lang="ts">
-import Auth from "./components/Auth.vue";
+import { computed } from "vue";
+import Accounts from "./components/Accounts.vue";
 import Player from "./components/Player.vue";
 import Playlist from "./components/Playlist.vue";
 import Playlists from "./components/Playlists.vue";
 import Queue from "./components/Queue.vue";
 import { store } from "./store";
+
+const libraryView = computed(
+  () => (isView: string) =>
+    isView ===
+    (store.view.playlist
+      ? "playlist"
+      : store.view.playlists
+        ? "playlists"
+        : "account")
+);
 </script>
 
 <template>
   <div>
     <nav>
       <h1 class="logo"></h1>
-      <Auth />
     </nav>
 
     <main>
       <Player />
       <section class="library">
-        <div v-if="store.isLoggedIn">
-          <Playlists v-if="store.playlists.selected === null" />
-          <Playlist v-else :playlist="store.playlists.selected" />
-        </div>
-        <div v-else>
-          <p>Log in to see your playlists.</p>
-        </div>
+        <Accounts v-show="libraryView('account')" />
+        <Playlists
+          v-show="libraryView('playlists')"
+          :account="store.view.account"
+        />
+        <Playlist
+          v-show="libraryView('playlist')"
+          :playlist="store.view.playlist"
+        />
         <div>
           <Queue />
         </div>

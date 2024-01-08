@@ -1,7 +1,16 @@
-import { spotify } from "./spotify";
+import players from "../../players";
+import { Players } from "../../types/VizPlayer";
+import spotify from "./spotify";
 
-const players = {
-  spotify,
+const playersWithApi: Players = {
+  spotify: {
+    ...players.spotify,
+    api: spotify,
+  },
+  youtube: {
+    ...players.youtube,
+    api: spotify, //youtube
+  },
 };
 
-export default players;
+export default playersWithApi;

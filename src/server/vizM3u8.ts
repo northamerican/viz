@@ -32,7 +32,7 @@ export async function vizM3u8() {
   const now = Date.now();
   const { currentQueueSegmentInfo } = QueuesDb;
   const longestSegmentDuration = Math.ceil(
-    Math.max(...currentQueueSegmentInfo.map(({ duration }) => duration)),
+    Math.max(...currentQueueSegmentInfo.map(({ duration }) => duration))
   );
   const tsSegments = currentQueueSegmentInfo
     .map(({ videoId, duration, segmentIndex }, playlistSegmentIndex) => {

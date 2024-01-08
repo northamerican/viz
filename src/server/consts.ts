@@ -11,11 +11,11 @@ export const projectRoot = new URL(import.meta.url + "/../../..").pathname;
 export const hlsDir = `${projectRoot}public/hls/`;
 export const tsPath = (
   videoId = ":videoId",
-  segmentIndex: string | number = ":segmentIndex",
+  segmentIndex: string | number = ":segmentIndex"
 ) => `/hls/${videoId}/${videoId}${segmentIndex}.ts`;
 
 const dbDir = `${projectRoot}src/server/db/data/`;
-export const authDbPath = `${dbDir}auth.json`;
+export const accountsDbPath = `${dbDir}accounts.json`;
 export const prefsDbPath = `${dbDir}prefs.json`;
 export const queuesDbPath = `${dbDir}queues.json`;
 export const videosDbPath = `${dbDir}videos.json`;

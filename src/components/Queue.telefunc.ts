@@ -55,7 +55,7 @@ export async function onRemoveQueueItem(queueId: string, queueItemId: string) {
 export async function onDeleteVideos() {
   await VideosDb.deleteDb();
   readdirSync(hlsDir).forEach((f) =>
-    rmSync(`${hlsDir}/${f}`, { recursive: true }),
+    rmSync(`${hlsDir}/${f}`, { recursive: true })
   );
 }
 
@@ -71,15 +71,16 @@ export async function onUpdateQueueFromPlaylist() {
   const currentQueuePlaylist = QueuesDb.currentQueue.playlist;
   if (!currentQueuePlaylist) return;
 
-  const { id, player } = currentQueuePlaylist;
+  const { id, account } = currentQueuePlaylist;
 
   const latestAddedAt = Math.max(
-    ...QueuesDb.currentQueue.items.map((item) => item.track.addedAt),
+    ...QueuesDb.currentQueue.items.map((item) => item.track.addedAt)
   );
-  const playlist = await players[player].getPlaylist(id);
+  const player = new players[account.player].api(account.id);
+  const playlist = await player.getPlaylist(id);
 
   const newTracks = playlist.tracks.filter(
-    (track) => track.addedAt > latestAddedAt,
+    (track) => track.addedAt > latestAddedAt
   );
   const newItems = newTracks.map((track) => {
     return { track, videoId: null, removed: false };
@@ -88,6 +89,6 @@ export async function onUpdateQueueFromPlaylist() {
   await QueuesDb.addItems(QueuesDb.currentQueue.id, newItems);
 }
 
-export async function onUpdateQueueWithVideo() {
+export async function onUpdateQueueStore() {
   return QueuesDb.currentQueueWithVideos;
 }

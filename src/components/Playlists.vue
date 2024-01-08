@@ -1,27 +1,42 @@
 <script setup lang="ts">
 import ListItem from "./ListItem.vue";
-import { onMounted } from "vue";
+import { computed, watch } from "vue";
 import { onLoadPlaylists, onLoadPlaylist } from "./Playlists.telefunc";
 import { store } from "../store";
+import { Account } from "Viz";
+
+const props = defineProps<{ account: Account }>();
 
 const getPlaylists = async () => {
-  const { playlists } = await onLoadPlaylists();
-  Object.assign(store.playlists, playlists);
+  const { playlists } = await onLoadPlaylists(props.account);
+  store.view.playlists = playlists;
 };
 
 const getPlaylist = async (playlistId: string) => {
-  store.playlists.selected = null;
-  const { playlist } = await onLoadPlaylist(playlistId);
-  store.playlists.selected = playlist;
+  store.view.playlist = null;
+  const { playlist } = await onLoadPlaylist(props.account, playlistId);
+  store.view.playlist = playlist;
 };
 
-onMounted(() => getPlaylists());
+const deselectPlaylists = () => {
+  store.view.account = null;
+  store.view.playlists = null;
+};
+
+const playlists = computed(() => store.view.playlists);
+
+watch(() => store.view.account, getPlaylists);
 </script>
 
 <template>
-  <div v-if="store.playlists.items?.length">
-    <h1>Playlists [Spotify]</h1>
-    <div v-for="playlist in store.playlists.items" :key="playlist.id">
+  <div v-if="playlists">
+    <header>
+      <h2>
+        <button @click="deselectPlaylists">⇦</button>
+        {{ store.view.account.displayName }} - playlists
+      </h2>
+    </header>
+    <div v-for="playlist in playlists.items" :key="playlist.id">
       <ListItem>
         <strong class="name" @click="getPlaylist(playlist.id)">{{
           playlist.name
@@ -36,6 +51,7 @@ onMounted(() => getPlaylists());
 </template>
 
 <style>
+/* TODO a (anchor) instead of strong? */
 .name {
   cursor: pointer;
 
@@ -43,9 +59,4 @@ onMounted(() => getPlaylists());
     text-decoration: underline;
   }
 }
-
-.actions {
-  margin-left: auto;
-}
 </style>
-./playlists.telefunc

@@ -4,7 +4,7 @@ declare module "VizSource" {
     name: string;
   }) => string;
   export type GetVideoUrl = (
-    query: string,
+    query: string
   ) => Promise<{ videoId: string; url: string }>;
   export type DownloadVideo = ({
     videoId: string,

@@ -1,192 +1,220 @@
 import axios from "axios";
 import querystring from "node:querystring";
-import type { GetToken, GetPlaylist, GetPlaylists } from "VizPlayer";
-import { AuthDb } from "../db/AuthDb";
+import { AccountsDb } from "../db/AccountsDb";
 import { appUrl } from "../consts";
+import { VizPlayer } from "../../types/VizPlayer";
+import { TrackType } from "Viz";
+import players from "../../players";
 
 const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
-
-const spotifyAxios = axios.create();
-const SPOTIFY = <const>"spotify";
 const tokenUrl = "/token";
 
-// Request interceptor for API calls
-spotifyAxios.interceptors.request.use(
-  async (config) => {
-    config.headers.Authorization =
-      config.headers.Authorization || `Bearer ${AuthDb.player(SPOTIFY)?.token}`;
-    return config;
-  },
-  (error) => {
-    Promise.reject(error);
-  },
-);
+export default class SpotifyPlayer implements VizPlayer {
+  #account;
+  #axios;
 
-spotifyAxios.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  async function (error) {
-    const originalRequest = error.config;
+  constructor(accountId?: string) {
+    this.#account = AccountsDb.account(accountId);
+    this.#axios = axios.create();
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      await getRefreshToken();
-      originalRequest.headers.Authorization = `Bearer ${
-        AuthDb.player(SPOTIFY).token
-      }`;
-      return spotifyAxios(originalRequest);
-    }
-    return Promise.reject(error);
-  },
-);
-
-const getToken: GetToken = async (code, refresh) => {
-  try {
-    const { data } = await spotifyAxios.post(
-      "https://accounts.spotify.com/api/token",
-      refresh
-        ? {
-            grant_type: "refresh_token",
-            refresh_token: AuthDb.player(SPOTIFY)?.refreshToken,
-            client_id: clientId,
-          }
-        : {
-            grant_type: "authorization_code",
-            code,
-            redirect_uri: new URL(tokenUrl, appUrl).href,
-          },
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization:
-            "Basic " +
-            Buffer.from(clientId + ":" + clientSecret).toString("base64"),
-        },
+    this.#axios.interceptors.request.use(
+      async (config) => {
+        config.headers.Authorization ||= `Bearer ${this.#account?.token}`;
+        return config;
       },
+      (error) => {
+        Promise.reject(error);
+      }
     );
 
-    AuthDb.editAuth(SPOTIFY, {
-      token: data.access_token,
-      refreshToken: data.refresh_token || AuthDb.player(SPOTIFY).refreshToken,
-    });
+    this.#axios.interceptors.response.use(
+      (response) => {
+        return response;
+      },
+      async (error) => {
+        const originalRequest = error.config;
 
-    return data;
-  } catch (error) {
-    console.log(error);
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+          await this.getRefreshToken();
+          originalRequest.headers.Authorization = `Bearer ${this.#account?.token}`;
+          return this.#axios(originalRequest);
+        }
+        return Promise.reject(error);
+      }
+    );
   }
-};
 
-const getRefreshToken = () => getToken(null, true);
+  async getProfile(token: string) {
+    try {
+      const { data } =
+        await this.#axios.get<SpotifyApi.CurrentUsersProfileResponse>(
+          "https://api.spotify.com/v1/me",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-const authorize = () => {
-  const scope = "user-read-private user-read-email playlist-read-private";
+      return {
+        id: data.id,
+        displayName: data.display_name,
+      };
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
 
-  return (
-    "https://accounts.spotify.com/authorize?" +
-    querystring.stringify({
-      response_type: "code",
-      client_id: clientId,
-      scope: scope,
-      redirect_uri: new URL(tokenUrl, appUrl).href,
-    })
-  );
-};
-
-const logout = async () => {
-  AuthDb.clearAuth(SPOTIFY);
-};
-
-// TODO pagination
-const getPlaylists: GetPlaylists = async (offset = 0) => {
-  try {
-    const { data } =
-      await spotifyAxios.get<SpotifyApi.ListOfCurrentUsersPlaylistsResponse>(
-        "https://api.spotify.com/v1/me/playlists",
+  async login(code: string, refresh?: boolean) {
+    try {
+      const { data } = await this.#axios.post(
+        "https://accounts.spotify.com/api/token",
+        refresh
+          ? {
+              grant_type: "refresh_token",
+              refresh_token: this.#account.refreshToken,
+              client_id: clientId,
+            }
+          : {
+              grant_type: "authorization_code",
+              code,
+              redirect_uri: new URL(tokenUrl, appUrl).href,
+            },
         {
-          params: {
-            offset,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization:
+              "Basic " +
+              Buffer.from(clientId + ":" + clientSecret).toString("base64"),
           },
-        },
+        }
       );
 
-    return {
-      // offset,
-      // total,
-      items: data.items.map(({ id, name, tracks }) => ({
+      const { id, displayName } = await this.getProfile(data.access_token);
+
+      AccountsDb.editAccount(id, {
         id,
-        name,
-        total: tracks.total,
-      })),
-    };
-  } catch (error) {
-    return Promise.reject(error);
+        displayName,
+        player: players.spotify.id,
+        token: data.access_token,
+        isLoggedIn: true,
+        refreshToken: data.refresh_token || this.#account.refreshToken,
+      });
+
+      return data;
+    } catch (error) {
+      Promise.reject(error);
+    }
   }
-};
 
-const getPlaylist: GetPlaylist = async (playlistId) => {
-  const itemsMaxLimit = 50;
+  async getRefreshToken() {
+    return this.login(null, true);
+  }
 
-  try {
-    const {
-      data: {
-        name,
-        tracks: { total },
-      },
-    } = await spotifyAxios.get<SpotifyApi.PlaylistObjectFull>(
-      `https://api.spotify.com/v1/playlists/${playlistId}`,
-      {
-        params: {
-          fields: "name,tracks.total",
-        },
-      },
+  static authorize() {
+    const scope = "user-read-private user-read-email playlist-read-private";
+
+    return (
+      "https://accounts.spotify.com/authorize?" +
+      querystring.stringify({
+        response_type: "code",
+        client_id: clientId,
+        scope: scope,
+        redirect_uri: new URL(tokenUrl, appUrl).href,
+      })
     );
+  }
 
-    const callsCount = Math.ceil(total / itemsMaxLimit);
-    const offsets = [...Array(callsCount).keys()];
+  async logout() {
+    AccountsDb.clearAccount(this.#account.id);
+  }
 
-    const playlistTrackResponses = await Promise.all(
-      offsets.map((offset) =>
-        spotifyAxios.get<SpotifyApi.PlaylistTrackResponse>(
-          `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+  // TODO pagination
+  async getPlaylists(offset = 0) {
+    try {
+      const { data } =
+        await this.#axios.get<SpotifyApi.ListOfCurrentUsersPlaylistsResponse>(
+          "https://api.spotify.com/v1/me/playlists",
           {
             params: {
-              offset: offset * itemsMaxLimit,
-              limit: itemsMaxLimit,
-              fields: "items(added_at,track(id,name,artists,external_urls))",
+              offset,
             },
-          },
-        ),
-      ),
-    );
+          }
+        );
 
-    const allTracks = playlistTrackResponses.flatMap(({ data }) => {
-      return data.items.map((item) => ({
-        id: item.track.id,
-        player: SPOTIFY,
-        artists: item.track.artists.map((artist) => artist.name),
-        name: item.track.name,
-        playerUrl: item.track.external_urls.spotify,
-        addedAt: new Date(item.added_at).getTime(),
-      }));
-    });
-
-    return {
-      id: playlistId,
-      name,
-      tracks: allTracks,
-      player: SPOTIFY,
-    };
-  } catch (error) {
-    return Promise.reject(error);
+      return {
+        // offset,
+        // total,
+        items: data.items.map(({ id, name, tracks }) => ({
+          id,
+          name,
+          total: tracks.total,
+        })),
+      };
+    } catch (error) {
+      return Promise.reject(error);
+    }
   }
-};
 
-export const spotify = {
-  getToken,
-  authorize,
-  logout,
-  getPlaylists,
-  getPlaylist,
-};
+  async getPlaylist(playlistId: string) {
+    const itemsMaxLimit = 50;
+
+    try {
+      const {
+        data: {
+          name,
+          tracks: { total },
+        },
+      } = await this.#axios.get<SpotifyApi.PlaylistObjectFull>(
+        `https://api.spotify.com/v1/playlists/${playlistId}`,
+        {
+          params: {
+            fields: "name,tracks.total",
+          },
+        }
+      );
+
+      const callsCount = Math.ceil(total / itemsMaxLimit);
+      const offsets = [...Array(callsCount).keys()];
+
+      const playlistTrackResponses = await Promise.all(
+        offsets.map((offset) =>
+          this.#axios.get<SpotifyApi.PlaylistTrackResponse>(
+            `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+            {
+              params: {
+                offset: offset * itemsMaxLimit,
+                limit: itemsMaxLimit,
+                fields: "items(added_at,track(id,name,artists,external_urls))",
+              },
+            }
+          )
+        )
+      );
+
+      const allTracks = playlistTrackResponses.flatMap(({ data }) => {
+        return data.items.map((item) => ({
+          id: item.track.id,
+          player: players.spotify.id,
+          artists: item.track.artists.map((artist) => artist.name),
+          name: item.track.name,
+          playerUrl: item.track.external_urls.spotify,
+          addedAt: new Date(item.added_at).getTime(),
+          type: "track" as TrackType,
+        }));
+      });
+
+      return {
+        id: playlistId,
+        name,
+        tracks: allTracks,
+        player: players.spotify.id,
+        account: this.#account,
+      };
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+}

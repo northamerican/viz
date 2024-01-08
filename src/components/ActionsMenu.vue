@@ -38,5 +38,6 @@ const onChange = (event: Event) => {
 select {
   width: 1rem;
   font-size: 1rem;
+  margin-left: auto;
 }
 </style>

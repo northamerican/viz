@@ -24,8 +24,7 @@ const createSearchQuery: CreateSearchQuery = (track) => {
 const filterVideo = (items: ytsr.Item[]): ytsr.Video | null => {
   const filterItems = items.filter(
     //@ts-expect-error ytsr is wrong
-    ({ duration }) =>
-      duration && durationToSeconds(duration) < maxVideoDuration,
+    ({ duration }) => duration && durationToSeconds(duration) < maxVideoDuration
     // TODO logic here, filtering out unwanted videos
   );
 
@@ -109,7 +108,7 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
         "pipe",
         "pipe",
       ],
-    },
+    }
   );
   //@ts-expect-error nodejs dumb
   audioStream.pipe(process.stdio[3]);

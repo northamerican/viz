@@ -12,9 +12,10 @@ import {
   onPlayVideo,
   onDownloadNextVideoInQueue,
   onUpdateQueueFromPlaylist,
-  onUpdateQueueWithVideo,
+  onUpdateQueueStore,
 } from "./Queue.telefunc";
 import { store } from "../store";
+import players from "../players";
 
 // TODO store should have queues / 1:1 copy of the queues json?
 
@@ -28,15 +29,15 @@ const playQueue = async () => {
 
 const queueDownload = async () => {
   const res = await onDownloadNextVideoInQueue();
-  await store.updateQueue();
+  await store.updateQueueStore();
   if (res) queueDownload();
 };
 
 const downloadVideo = async (queueItem: QueueItem) => {
   const { videoId, url } = await onGetVideo(store.queue.id, queueItem);
-  await store.updateQueue();
+  await store.updateQueueStore();
   await onDownloadVideo(videoId, url);
-  await store.updateQueue();
+  await store.updateQueueStore();
   if (store.videoEl.currentTime === 0) {
     playQueue();
   }
@@ -45,14 +46,14 @@ const downloadVideo = async (queueItem: QueueItem) => {
 const deleteQueueAndVideos = async () => {
   const { videoEl } = store;
   await Promise.all([onDeleteQueues(), onDeleteVideos()]);
-  await store.updateQueue();
+  await store.updateQueueStore();
   videoEl.pause();
   videoEl.load();
 };
 
 const removeItem = async (queueItem: QueueItem) => {
   await onRemoveQueueItem(store.queue.id, queueItem.id);
-  store.updateQueue();
+  store.updateQueueStore();
 };
 
 const actionsMenuOptions = (queueItem: QueueItem) => [
@@ -76,17 +77,17 @@ const actionsMenuOptions = (queueItem: QueueItem) => [
     action: () => {
       window.open(queueItem.track.playerUrl, "_blank");
     },
-    label: "Go to Spotify Song...",
+    label: `Go to ${players[queueItem.track.player].name} Song...`,
   },
 ];
 
 onMounted(async () => {
-  store.updateQueue();
-  await onUpdateQueueWithVideo();
+  store.updateQueueStore();
+  await onUpdateQueueStore();
   await onUpdateQueueFromPlaylist();
-  await store.updateQueue();
+  await store.updateQueueStore();
 
-  setInterval(queueDownload, 5000);
+  // setInterval(queueDownload, 5000);
 });
 </script>
 
@@ -126,7 +127,10 @@ onMounted(async () => {
       <div>
         <strong>{{ store.queue.playlist.name }}</strong>
         <br />
-        <span>on {{ store.queue.playlist.player }}</span>
+        <span>
+          on {{ store.queue.playlist.account.displayName }} -
+          {{ store.queue.playlist.player }}</span
+        >
       </div>
     </ListItem>
   </div>
@@ -144,9 +148,5 @@ header {
   .track-artist + .track-artist::before {
     content: ", ";
   }
-}
-
-.actions {
-  margin-left: auto;
 }
 </style>

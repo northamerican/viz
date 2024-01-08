@@ -1,48 +1,53 @@
 declare module "Viz" {
-  export type VizStore = {
-    videoEl: HTMLMediaElement;
+  import { PlayerId } from "./VizPlayer";
+
+  export type AccountBase = {
+    id: string;
+    displayName: string;
+    player: PlayerId;
     isLoggedIn: boolean;
-    playlists: PlaylistList;
-    queue: Queue;
-    updateQueue: () => Promise<void>;
   };
 
-  export type AuthState = {
+  export type Account = AccountBase & {
+    playlists: Playlists;
+  };
+
+  export type AccountDbItem = AccountBase & {
     token: string;
     refreshToken?: string;
   };
 
-  export type AuthStateDbType = {
-    [player: string]: AuthState;
-  };
+  export type TrackType = "track" | "interstitial";
 
   export type Track = {
     id: string;
     artists: string[];
     name: string;
-    player: PlayerNames;
+    player: PlayerId;
     playerUrl: string;
     addedAt: number;
+    type: TrackType;
+  };
+
+  export type Playlists = {
+    items: PlaylistsItem[];
   };
 
   export type PlaylistMeta = {
     id: string;
     name: string;
-    player: PlayerNames;
+    player: PlayerId;
+    account: AccountBase;
   };
 
   export type Playlist = PlaylistMeta & {
     tracks: Track[];
   };
 
-  export type PlaylistListItem = {
+  export type PlaylistsItem = {
     id: string;
     name: string;
     total: number;
-  };
-  export type PlaylistList = {
-    items: PlaylistListItem[];
-    selected: Playlist;
   };
 
   export type SegmentInfo = {
@@ -53,7 +58,7 @@ declare module "Viz" {
 
   export type Video = {
     id: string;
-    source: SourceNames;
+    source: unknown; // TODO define
     sourceUrl: string;
     duration: number;
     downloading: boolean;
@@ -62,9 +67,6 @@ declare module "Viz" {
   };
   export type Videos = {
     [id: string]: Video;
-  };
-  export type VideosDbType = {
-    videos: Videos;
   };
 
   export type QueueState = {
@@ -87,11 +89,8 @@ declare module "Viz" {
     id: string;
     items: QueueItem[];
     totalDuration: number;
+    // Following playlist
     playlist: QueuePlaylistReference;
-  };
-  export type QueuesDbType = {
-    state: QueueState;
-    queues: Queue[];
   };
 
   // export type QueuesList = {
@@ -99,11 +98,5 @@ declare module "Viz" {
   //   selected: Queue
   // }
 
-  export type PlayerNames = "spotify";
   export type SourceNames = "youtube";
-
-  export type VizPrefsDbType = {
-    player: PlayerNames;
-    source: SourceNames;
-  };
 }

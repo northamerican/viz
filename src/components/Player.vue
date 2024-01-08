@@ -25,8 +25,8 @@ onMounted(() => {
       :src="m3u8Path"
       controls
       playsinline
-      autoplay
     />
+    <!-- autoplay -->
     <p>
       <small>{{ currentTime }}</small>
       <input
