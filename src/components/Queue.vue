@@ -15,6 +15,7 @@ import {
 } from "./Queue.telefunc";
 import { store } from "../store";
 import players from "../players";
+import { onSaveStore } from "../store.telefunc";
 
 // TODO store should have queues / 1:1 copy of the queues json?
 
@@ -24,6 +25,7 @@ const playQueue = async () => {
   videoEl.load();
   videoEl.fastSeek(0);
   videoEl.play();
+  onSaveStore({ isPlaying: true });
 };
 
 const queueDownload = async () => {

@@ -2,18 +2,37 @@
 import { computed, onMounted, ref } from "vue";
 import { store } from "../store";
 import { m3u8Path } from "../consts";
+import { onSaveStore } from "../store.telefunc";
 // import '../hlsjs.ts'
 
 const currentTime = ref(0);
+const isPlaying = ref(null);
 const totalDuration = computed(() => Math.round(store.queue?.totalDuration));
 
 const seekTo = (e: Event) =>
   store.videoEl.fastSeek(+(e.target as HTMLInputElement).value);
 
-onMounted(() => {
+const playPause = () => {
+  const { videoEl } = store;
+  videoEl.paused ? videoEl.play() : videoEl.pause();
+};
+
+onMounted(async () => {
+  store.videoEl.addEventListener("pause", () => {
+    isPlaying.value = false;
+    onSaveStore({ isPlaying: false });
+  });
+
+  store.videoEl.addEventListener("play", () => {
+    isPlaying.value = true;
+    onSaveStore({ isPlaying: true });
+  });
+
   store.videoEl.addEventListener("timeupdate", () => {
     currentTime.value = Math.round(store.videoEl?.currentTime);
   });
+
+  await store.updateStore();
 });
 </script>
 
@@ -25,9 +44,10 @@ onMounted(() => {
       :src="m3u8Path"
       controls
       playsinline
+      :autoplay="store.isPlaying"
     />
-    <!-- autoplay -->
-    <p>
+    <div class="controls">
+      <button @click="playPause">{{ isPlaying ? "⏸" : "▶" }}</button>
       <small>{{ currentTime }}</small>
       <input
         class="seeker"
@@ -38,7 +58,7 @@ onMounted(() => {
         @input="seekTo"
       />
       <small>{{ totalDuration }}</small>
-    </p>
+    </div>
   </section>
 </template>
 
@@ -46,14 +66,21 @@ onMounted(() => {
 .player {
   flex-grow: 1;
   text-align: center;
+
+  #video {
+    width: auto;
+    max-height: 80vh;
+  }
 }
 
-video {
-  width: auto;
-  max-height: 80vh;
-}
-
-.seeker {
-  width: 400px;
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  gap: 10px;
+  .seeker {
+    width: 400px;
+  }
 }
 </style>

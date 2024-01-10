@@ -3,7 +3,8 @@ import { QueuesDb } from "./server/db/QueuesDb";
 import { StoreDb } from "./server/db/StoreDb";
 import { PersistedVizStore } from "./types/VizStore";
 
-export async function onSaveStore(storeData: PersistedVizStore) {
+// TODO should this just sync any persist data from store?
+export async function onSaveStore(storeData: Partial<PersistedVizStore>) {
   return StoreDb.update(storeData);
 }
 
