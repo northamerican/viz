@@ -15,7 +15,7 @@ export interface VizPlayer {
   getPlaylist(playlistId: string): Promise<Playlist>;
   getPlaylists(offset?: number): Promise<Partial<PlaylistList>>;
 }
-interface VizPlayerConstructable {
+export interface VizPlayerConstructable {
   new (accountId?: string): VizPlayer;
   authorize(): string;
 }

@@ -11,3 +11,5 @@ declare module "VizSource" {
     url: string,
   }) => Promise<{ videoId: string; url: string }>;
 }
+
+export type SourceId = "youtube";

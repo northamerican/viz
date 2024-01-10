@@ -1,10 +1,10 @@
 import { JSONFilePreset } from "lowdb/node";
 import { prefsDbPath } from "../consts";
-import { SourceNames } from "Viz";
 import sources from "../sources";
+import { SourceId } from "../../types/VizSource";
 
 type VizPrefsDbType = {
-  source: SourceNames;
+  source: SourceId;
 };
 
 const prefsDbDefault = {

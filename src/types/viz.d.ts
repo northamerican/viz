@@ -98,6 +98,4 @@ declare module "Viz" {
   //   queues: []
   //   selected: Queue
   // }
-
-  export type SourceNames = "youtube";
 }
