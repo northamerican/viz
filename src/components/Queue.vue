@@ -9,7 +9,7 @@ import {
   onDeleteQueues,
   onDeleteVideos,
   onRemoveQueueItem,
-  onPlayVideo,
+  onStartQueue,
   onDownloadNextVideoInQueue,
   onUpdateQueueFromPlaylist,
 } from "./Queue.telefunc";
@@ -19,7 +19,7 @@ import players from "../players";
 // TODO store should have queues / 1:1 copy of the queues json?
 
 const playQueue = async () => {
-  await onPlayVideo();
+  await onStartQueue();
   const { videoEl } = store;
   videoEl.load();
   videoEl.fastSeek(0);

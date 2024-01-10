@@ -16,6 +16,6 @@ export const tsPath = (
 
 const dbDir = `${projectRoot}src/server/db/data/`;
 export const accountsDbPath = `${dbDir}accounts.json`;
-export const prefsDbPath = `${dbDir}prefs.json`;
+export const storeDbPath = `${dbDir}store.json`;
 export const queuesDbPath = `${dbDir}queues.json`;
 export const videosDbPath = `${dbDir}videos.json`;

@@ -1,10 +1,11 @@
 import { QueueItem } from "Viz";
 import { readdirSync, rmSync } from "fs";
 import { VideosDb } from "../server/db/VideosDb";
-import { PrefsDb } from "../server/db/PrefsDb";
+import { StoreDb } from "../server/db/StoreDb";
 import { QueuesDb } from "../server/db/QueuesDb";
 import { hlsDir } from "../server/consts";
 import playerApi from "../server/players";
+import { PlayerId } from "../types/VizPlayer";
 
 export async function onGetVideo(queueId: string, queueItem: QueueItem) {
   const { track, id: queueItemId } = queueItem;
@@ -12,14 +13,14 @@ export async function onGetVideo(queueId: string, queueItem: QueueItem) {
   const artist = artists[0];
 
   console.log(`Getting video for ${name} - ${artist}`);
-  const { createSearchQuery, getVideoUrl } = PrefsDb.source;
+  const { createSearchQuery, getVideoUrl } = StoreDb.source;
   const searchQuery = createSearchQuery({ artist, name });
   const { videoId, url } = await getVideoUrl(searchQuery);
 
   // TODO handle no video found
   await VideosDb.addVideo({
     id: videoId,
-    source: PrefsDb.sourceName,
+    source: StoreDb.sourceId,
     sourceUrl: url,
     duration: 0,
     downloaded: false,
@@ -32,7 +33,7 @@ export async function onGetVideo(queueId: string, queueItem: QueueItem) {
 }
 
 export async function onDownloadVideo(videoId: string, url: string) {
-  const { downloadVideo } = PrefsDb.source;
+  const { downloadVideo } = StoreDb.source;
 
   return await downloadVideo({ videoId, url });
 }
@@ -63,7 +64,7 @@ export async function onDeleteQueues() {
   await QueuesDb.deleteDb();
 }
 
-export async function onPlayVideo() {
+export async function onStartQueue() {
   await QueuesDb.setStartTime(Date.now());
 }
 
@@ -76,7 +77,7 @@ export async function onUpdateQueueFromPlaylist() {
   const latestAddedAt = Math.max(
     ...QueuesDb.currentQueue.items.map((item) => item.track.addedAt)
   );
-  const player = new playerApi[account.player](account.id);
+  const player = new playerApi[<PlayerId>account.player](account.id);
   const playlist = await player.getPlaylist(id);
 
   const newTracks = playlist.tracks.filter(
@@ -87,8 +88,4 @@ export async function onUpdateQueueFromPlaylist() {
   });
 
   await QueuesDb.addItems(QueuesDb.currentQueue.id, newItems);
-}
-
-export async function onUpdateQueueStore() {
-  return QueuesDb.currentQueueWithVideos;
 }

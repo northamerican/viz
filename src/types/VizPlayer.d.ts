@@ -1,6 +1,5 @@
 import { AccountDbItem, Playlist, PlaylistList } from "Viz";
 import { AxiosInstance } from "axios";
-import players from "../players";
 
 export interface VizPlayer {
   #account: AccountDbItem;
@@ -27,4 +26,5 @@ export type Players = {
   };
 };
 
-export type PlayerId = keyof typeof players;
+// export type PlayerId = keyof typeof players;
+export type PlayerId = "spotify" | "youtube";

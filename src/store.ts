@@ -1,27 +1,19 @@
-import { Account, Playlist, Playlists, Queue } from "Viz";
 import { reactive } from "vue";
-import { onUpdateQueueStore } from "./components/Queue.telefunc";
-import { onUpdateAccountsStore } from "./components/Account.telefunc";
-import { SourceId } from "./types/VizSource";
+import {
+  onSaveStore,
+  onUpdateStore,
+  onUpdateAccountsStore,
+  onUpdateQueueStore,
+} from "./store.telefunc";
+import { VizStore } from "./types/VizStore";
 
-type VizStore = {
-  videoEl: HTMLMediaElement;
-  source: SourceId;
-  accounts: Account[];
-  view: {
-    account: Account;
-    playlists: Playlists;
-    playlist: Playlist;
-    queue: Queue;
-  };
-  queue: Queue;
-  updateAccountsStore: () => Promise<void>;
-  updateQueueStore: () => Promise<void>;
-};
+// TODO add 'view'
+// const persistKeys = ["isPlaying", "sourceId"];
 
 export const store = reactive<VizStore>({
   videoEl: null,
-  source: "youtube",
+  isPlaying: false,
+  sourceId: "youtube",
   accounts: [],
   view: {
     // Library
@@ -31,6 +23,20 @@ export const store = reactive<VizStore>({
     queue: null,
   },
   queue: null, // TODO queues
+  async saveStore() {
+    // onSaveStore(
+    //   Object.fromEntries(
+    //     persistKeys.map((key) => [key, store[key]])
+    //   ) as PersistedVizStore
+    // );
+    onSaveStore({
+      isPlaying: store.isPlaying,
+      sourceId: store.sourceId,
+    });
+  },
+  async updateStore() {
+    Object.assign(this, await onUpdateStore());
+  },
   async updateAccountsStore() {
     this.accounts = await onUpdateAccountsStore();
   },
