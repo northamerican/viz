@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import Accounts from "./components/Accounts.vue";
-import Player from "./components/Player.vue";
+import VideoPlayer from "./components/VideoPlayer.vue";
 import Playlist from "./components/Playlist.vue";
 import Playlists from "./components/Playlists.vue";
 import Queue from "./components/Queue.vue";
@@ -25,7 +25,7 @@ const libraryView = computed(
     </nav>
 
     <main>
-      <Player />
+      <VideoPlayer />
       <section class="library">
         <Accounts v-show="libraryView('account')" />
         <Playlists
