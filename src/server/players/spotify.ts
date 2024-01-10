@@ -61,6 +61,7 @@ export default class SpotifyPlayer implements VizPlayer {
       return {
         id: data.id,
         displayName: data.display_name,
+        profileUrl: data.external_urls.spotify,
       };
     } catch (error) {
       return Promise.reject(error);
@@ -92,11 +93,14 @@ export default class SpotifyPlayer implements VizPlayer {
         }
       );
 
-      const { id, displayName } = await this.getProfile(data.access_token);
+      const { id, displayName, profileUrl } = await this.getProfile(
+        data.access_token
+      );
 
-      AccountsDb.editAccount(id, {
+      AccountsDb.edit(id, {
         id,
         displayName,
+        profileUrl,
         player: players.spotify.id,
         token: data.access_token,
         isLoggedIn: true,
@@ -128,7 +132,12 @@ export default class SpotifyPlayer implements VizPlayer {
   }
 
   async logout() {
-    AccountsDb.clearAccount(this.#account.id);
+    // TODO isLoggedIn: false
+    AccountsDb.edit(this.#account.id, { isLoggedIn: false });
+  }
+
+  async remove() {
+    AccountsDb.remove(this.#account.id);
   }
 
   // TODO pagination

@@ -12,7 +12,6 @@ import {
   onPlayVideo,
   onDownloadNextVideoInQueue,
   onUpdateQueueFromPlaylist,
-  onUpdateQueueStore,
 } from "./Queue.telefunc";
 import { store } from "../store";
 import players from "../players";
@@ -82,11 +81,10 @@ const actionsMenuOptions = (queueItem: QueueItem) => [
 ];
 
 onMounted(async () => {
-  store.updateQueueStore();
-  await onUpdateQueueStore();
-  await onUpdateQueueFromPlaylist();
+  // await onUpdateQueueFromPlaylist();
   await store.updateQueueStore();
 
+  // TODO instead call queueDownload only on load, on item add.
   // setInterval(queueDownload, 5000);
 });
 </script>

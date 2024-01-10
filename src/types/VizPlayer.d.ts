@@ -24,7 +24,6 @@ export type Players = {
   [playerId: string]: {
     id: string;
     name: string;
-    api?: VizPlayerConstructable;
   };
 };
 

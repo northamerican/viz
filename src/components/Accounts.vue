@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { computed, onMounted } from "vue";
 import { store } from "../store";
 import Account from "./Account.vue";
 import LogInButton from "./LogInButton.vue";

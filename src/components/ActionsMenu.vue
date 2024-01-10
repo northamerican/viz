@@ -8,7 +8,6 @@ type Options = Partial<{
 }>[];
 
 const props = defineProps<{ options: Options }>();
-
 const select = ref(null);
 
 const onChange = (event: Event) => {

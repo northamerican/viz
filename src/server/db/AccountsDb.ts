@@ -18,13 +18,13 @@ export const AccountsDb = {
     return accountsDb.data?.[accountId];
   },
 
-  async editAccount(accountId: string, props: Partial<AccountDbItem>) {
+  async edit(accountId: string, props: Partial<AccountDbItem>) {
     await accountsDb.update((data) => {
       data[accountId] = { ...data?.[accountId], ...props };
     });
   },
 
-  async clearAccount(accountId: string) {
+  async remove(accountId: string) {
     await accountsDb.update((data) => {
       delete data[accountId];
     });

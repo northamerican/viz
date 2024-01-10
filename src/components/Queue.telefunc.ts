@@ -4,7 +4,7 @@ import { VideosDb } from "../server/db/VideosDb";
 import { PrefsDb } from "../server/db/PrefsDb";
 import { QueuesDb } from "../server/db/QueuesDb";
 import { hlsDir } from "../server/consts";
-import players from "../server/players";
+import playerApi from "../server/players";
 
 export async function onGetVideo(queueId: string, queueItem: QueueItem) {
   const { track, id: queueItemId } = queueItem;
@@ -53,7 +53,7 @@ export async function onRemoveQueueItem(queueId: string, queueItemId: string) {
 }
 
 export async function onDeleteVideos() {
-  await VideosDb.deleteDb();
+  VideosDb.deleteDb();
   readdirSync(hlsDir).forEach((f) =>
     rmSync(`${hlsDir}/${f}`, { recursive: true })
   );
@@ -76,7 +76,7 @@ export async function onUpdateQueueFromPlaylist() {
   const latestAddedAt = Math.max(
     ...QueuesDb.currentQueue.items.map((item) => item.track.addedAt)
   );
-  const player = new players[account.player].api(account.id);
+  const player = new playerApi[account.player](account.id);
   const playlist = await player.getPlaylist(id);
 
   const newTracks = playlist.tracks.filter(

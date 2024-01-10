@@ -1,17 +1,17 @@
-import players from "../players";
-import { PlayerIds } from "../types/VizPlayer";
+import playerApi from "../server/players";
+import { PlayerId } from "../types/VizPlayer";
 
-export async function onAuthorize(playerId: PlayerIds) {
-  return players[playerId].api.authorize();
+export async function onAuthorize(playerId: PlayerId) {
+  return playerApi[playerId].authorize();
 }
 
 export async function onLogin({
   playerId,
   code,
 }: {
-  playerId: PlayerIds;
+  playerId: PlayerId;
   code: string;
 }) {
-  const player = new players[playerId].api();
+  const player = new playerApi[playerId]();
   await player.login(code);
 }

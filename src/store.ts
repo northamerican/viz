@@ -19,13 +19,13 @@ type VizStore = {
 
 export const store = reactive<VizStore>({
   videoEl: null,
-  accounts: [],
   view: {
     account: null,
     playlists: null,
     playlist: null,
     queue: null,
   },
+  accounts: [],
   async updateAccountsStore() {
     this.accounts = await onUpdateAccountsStore();
   },

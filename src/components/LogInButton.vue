@@ -13,6 +13,8 @@ const handleLogin = async () => {
 };
 
 onMounted(async () => {
+  // TODO dynamic w logic for youtube, others
+  if (props.player.id !== "spotify") return;
   const params = new URLSearchParams(document.location.search);
   const code = params.get("code");
   if (code) {

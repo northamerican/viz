@@ -6,6 +6,7 @@ declare module "Viz" {
     displayName: string;
     player: PlayerId;
     isLoggedIn: boolean;
+    profileUrl: string;
   };
 
   export type Account = AccountBase & {
@@ -17,7 +18,7 @@ declare module "Viz" {
     refreshToken?: string;
   };
 
-  export type TrackType = "track" | "interstitial";
+  export type TrackType = "track" | "interstitial" | "videoContent";
 
   export type Track = {
     id: string;
