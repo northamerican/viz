@@ -31,7 +31,13 @@ declare module "Viz" {
   };
 
   export type Playlists = {
-    items: PlaylistsItem[];
+    items: PlaylistSummary[];
+  };
+
+  export type PlaylistSummary = {
+    id: string;
+    name: string;
+    total: number;
   };
 
   export type PlaylistMeta = {
@@ -43,12 +49,6 @@ declare module "Viz" {
 
   export type Playlist = PlaylistMeta & {
     tracks: Track[];
-  };
-
-  export type PlaylistsItem = {
-    id: string;
-    name: string;
-    total: number;
   };
 
   export type SegmentInfo = {
@@ -66,6 +66,7 @@ declare module "Viz" {
     downloaded: boolean;
     segmentDurations: number[];
   };
+
   export type Videos = {
     [id: string]: Video;
   };
@@ -84,13 +85,15 @@ declare module "Viz" {
     removed: boolean;
   };
 
-  export type QueuePlaylistReference = PlaylistMeta;
+  export type QueuePlaylistReference = PlaylistMeta & {
+    updatesQueue: boolean;
+    trackType: TrackType;
+  };
 
   export type Queue = {
     id: string;
     items: QueueItem[];
     totalDuration: number;
-    // Following playlist
     playlist: QueuePlaylistReference;
   };
 

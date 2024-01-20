@@ -11,6 +11,7 @@ type QueuesDbType = {
 
 const defaultUuid = uuidv4();
 const queuesDbDefault: QueuesDbType = {
+  // TODO get rid of these, or move em to inside queues
   state: {
     currentQueueId: defaultUuid,
     isPlaying: true,

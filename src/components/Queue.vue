@@ -101,6 +101,17 @@ onMounted(async () => {
         <button @click="playQueue">▶</button>
       </div>
     </header>
+    <ListItem v-if="store.queue.playlist">
+      <div>
+        <strong>{{ store.queue.playlist.name }}</strong>
+        <br />
+        <span>
+          on {{ store.queue.playlist.account.displayName }} -
+          {{ store.queue.playlist.player }}</span
+        >
+      </div>
+    </ListItem>
+    <hr />
     <div v-if="store.queue.items.length">
       <ListItem v-for="item in store.queue.items" :key="item.id">
         <div class="track-info">
@@ -122,17 +133,6 @@ onMounted(async () => {
       </ListItem>
     </div>
     <p v-else>Nothing queued.</p>
-    <hr />
-    <ListItem v-if="store.queue.playlist">
-      <div>
-        <strong>{{ store.queue.playlist.name }}</strong>
-        <br />
-        <span>
-          on {{ store.queue.playlist.account.displayName }} -
-          {{ store.queue.playlist.player }}</span
-        >
-      </div>
-    </ListItem>
   </div>
 </template>
 

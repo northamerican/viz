@@ -59,6 +59,7 @@ nav {
 .library {
   display: flex;
   flex-direction: row;
+  gap: 10px;
 
   > * {
     flex: 0 50%;
