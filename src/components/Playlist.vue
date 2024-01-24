@@ -10,13 +10,17 @@ const props = defineProps<{ playlist: Playlist }>();
 
 const addToQueue = async (tracks: Track[]) => {
   const { id, name, player } = props.playlist;
-  await onAddToQueue(
-    store.queue?.id,
-    tracks.map((track) => {
-      return { track, videoId: null, removed: false, type: "track" };
-    }),
-    { id, name, player, account: props.playlist.account }
-  );
+  const queueItems = tracks.map((track) => {
+    return { track, videoId: null, removed: false, type: "track" };
+  });
+  await onAddToQueue(store.queue?.id, queueItems, {
+    id,
+    name,
+    player,
+    account: props.playlist.account,
+    updatesQueue: true,
+    type: "track",
+  });
   store.updateQueueStore();
 };
 
@@ -38,7 +42,7 @@ const actionsMenuOptions = (track: Track) => [
       </h2>
       <div>
         <button @click="() => addToQueue(props.playlist.tracks)">+</button>
-        <!-- Function to have queue follow updates to this playlist -->
+        <!-- TODO Function to have queue follow updates to this playlist -->
         <!-- <button>Follow playlist</button> -->
       </div>
     </header>

@@ -7,7 +7,10 @@ export async function onLoadPlaylists(account: Account) {
   return { playlists };
 }
 
-export async function onLoadPlaylist(account: Account, playlistId: string) {
+export async function onLoadPlaylist(
+  account: Partial<Account>,
+  playlistId: string
+) {
   const player = new playerApi[account.player](account.id);
   const playlist = await player.getPlaylist(playlistId);
   return { playlist };

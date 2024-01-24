@@ -1,6 +1,13 @@
 import { JSONFilePreset } from "lowdb/node";
 import { queuesDbPath } from "../consts";
-import type { Queue, QueueItem, SegmentInfo, Video, QueueState } from "Viz";
+import type {
+  Queue,
+  QueueItem,
+  SegmentInfo,
+  Video,
+  QueueState,
+  QueuePlaylistReference,
+} from "Viz";
 import { v4 as uuidv4 } from "uuid";
 import { VideosDb } from "./VideosDb";
 
@@ -23,7 +30,7 @@ const queuesDbDefault: QueuesDbType = {
       id: defaultUuid,
       totalDuration: null,
       items: [],
-      playlist: null,
+      playlists: [],
     },
   ],
 };
@@ -118,10 +125,27 @@ export const QueuesDb = {
     });
   },
 
-  async editQueue(queueId: string, props: Omit<Partial<Queue>, "items">) {
+  // async editQueue(queueId: string, props: Omit<Partial<Queue>, "items">) {
+  //   await queuesDb.update(() => {
+  //     const queue = this.getQueue(queueId);
+  //     Object.assign(queue, props);
+  //   });
+  // },
+
+  async addPlaylist(queueId: string, newPlaylist: QueuePlaylistReference) {
     await queuesDb.update(() => {
       const queue = this.getQueue(queueId);
-      Object.assign(queue, props);
+      const newPlaylistType = newPlaylist.type;
+      const existingPlaylistOfType = queue.playlists.find(
+        (playlist) => playlist.type === newPlaylistType
+      );
+      if (existingPlaylistOfType) {
+        queue.playlists = queue.playlists.map((playlist) =>
+          playlist === existingPlaylistOfType ? newPlaylist : playlist
+        );
+      } else {
+        queue.playlists.push(newPlaylist);
+      }
     });
   },
 

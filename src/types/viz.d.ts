@@ -87,14 +87,14 @@ declare module "Viz" {
 
   export type QueuePlaylistReference = PlaylistMeta & {
     updatesQueue: boolean;
-    trackType: TrackType;
+    type: TrackType;
   };
 
   export type Queue = {
     id: string;
     items: QueueItem[];
     totalDuration: number;
-    playlist: QueuePlaylistReference;
+    playlists: QueuePlaylistReference[];
   };
 
   // export type QueuesList = {

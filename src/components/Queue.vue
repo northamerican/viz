@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { QueueItem } from "Viz";
+import type { QueueItem, QueuePlaylistReference } from "Viz";
 import ListItem from "./ListItem.vue";
 import ActionsMenu from "./ActionsMenu.vue";
 import { onMounted } from "vue";
@@ -16,8 +16,18 @@ import {
 import { store } from "../store";
 import players from "../players";
 import { onSaveStore } from "../store.telefunc";
+import { onLoadPlaylist } from "./Playlists.telefunc";
 
 // TODO store should have queues / 1:1 copy of the queues json?
+
+const getPlaylist = async (playlistReference: QueuePlaylistReference) => {
+  store.view.playlist = null;
+  const { playlist } = await onLoadPlaylist(
+    playlistReference.account,
+    playlistReference.id
+  );
+  store.view.playlist = playlist;
+};
 
 const playQueue = async () => {
   await onStartQueue();
@@ -83,7 +93,7 @@ const actionsMenuOptions = (queueItem: QueueItem) => [
 ];
 
 onMounted(async () => {
-  // await onUpdateQueueFromPlaylist();
+  await onUpdateQueueFromPlaylist();
   await store.updateQueueStore();
 
   // TODO instead call queueDownload only on load, on item add.
@@ -101,18 +111,29 @@ onMounted(async () => {
         <button @click="playQueue">▶</button>
       </div>
     </header>
-    <ListItem v-if="store.queue.playlist">
+    <ListItem
+      v-for="playlistReference in store.queue.playlists"
+      :key="playlistReference.id"
+    >
       <div>
-        <strong>{{ store.queue.playlist.name }}</strong>
+        <strong
+          ><a href="" @click.prevent="getPlaylist(playlistReference)">{{
+            playlistReference.name
+          }}</a></strong
+        >&nbsp;
+        <small
+          >{{ playlistReference.type }}
+          {{ playlistReference.updatesQueue ? "- updates queue" : null }}</small
+        >
         <br />
         <span>
-          on {{ store.queue.playlist.account.displayName }} -
-          {{ store.queue.playlist.player }}</span
-        >
+          on {{ playlistReference.player }} -
+          {{ playlistReference.account.displayName }}
+        </span>
       </div>
     </ListItem>
-    <hr />
     <div v-if="store.queue.items.length">
+      <hr />
       <ListItem v-for="item in store.queue.items" :key="item.id">
         <div class="track-info">
           <strong>{{ item.track.name }}</strong>

@@ -69,11 +69,13 @@ export async function onStartQueue() {
 }
 
 export async function onUpdateQueueFromPlaylist() {
-  const currentQueuePlaylist = QueuesDb.currentQueue.playlist;
+  const { playlists } = QueuesDb.currentQueue;
+  const currentQueuePlaylist = playlists.find(
+    (playlist) => playlist.updatesQueue
+  );
   if (!currentQueuePlaylist) return;
 
   const { id, account } = currentQueuePlaylist;
-
   const latestAddedAt = Math.max(
     ...QueuesDb.currentQueue.items.map((item) => item.track.addedAt)
   );

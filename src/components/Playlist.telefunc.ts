@@ -7,5 +7,5 @@ export async function onAddToQueue(
   queuePlaylistReference: QueuePlaylistReference
 ) {
   await QueuesDb.addItems(queueId, queueItems);
-  await QueuesDb.editQueue(queueId, { playlist: queuePlaylistReference });
+  await QueuesDb.addPlaylist(queueId, queuePlaylistReference);
 }
