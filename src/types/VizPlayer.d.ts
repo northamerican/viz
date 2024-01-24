@@ -10,7 +10,8 @@ export interface VizPlayer {
     code: string,
     refresh?: boolean
   ): Promise<{ access_token: string; refresh_token: string }>;
-  logout(): void;
+  logout(): Promise<void>;
+  remove(): Promise<void>;
   getPlaylist(playlistId: string): Promise<Playlist>;
   getPlaylists(offset?: number): Promise<Partial<PlaylistList>>;
 }
@@ -21,7 +22,7 @@ export interface VizPlayerConstructable {
 
 export type Players = {
   [playerId: string]: {
-    id: string;
+    id: PlayerId;
     name: string;
   };
 };

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { store } from "../store";
-import { onLogout } from "./Account.telefunc";
+import { onLogout, onRemove } from "./Account.telefunc";
 import { Account } from "Viz";
 import ActionsMenu from "./ActionsMenu.vue";
 
@@ -12,14 +12,14 @@ const setAccount = (account: Account) => {
 
 const handleLogin = () => {};
 
-const handleLogout = () => {
-  onLogout(props.account);
+const handleLogout = async () => {
+  await onLogout(props.account);
+  store.updateAccountsStore();
 };
 
 const handleRemove = async () => {
-  onLogout(props.account);
-  // TODO
-  // onRemove(props.account);
+  await onRemove(props.account);
+  store.updateAccountsStore();
 };
 
 const openProfile = () => {

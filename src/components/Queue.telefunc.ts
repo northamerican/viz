@@ -6,6 +6,7 @@ import { QueuesDb } from "../server/db/QueuesDb";
 import { hlsDir } from "../server/consts";
 import playerApi from "../server/players";
 import { PlayerId } from "../types/VizPlayer";
+import { AccountsDb } from "../server/db/AccountsDb";
 
 export async function onGetVideo(queueId: string, queueItem: QueueItem) {
   const { track, id: queueItemId } = queueItem;
@@ -73,7 +74,22 @@ export async function onUpdateQueueFromPlaylist() {
   const currentQueuePlaylist = playlists.find(
     (playlist) => playlist.updatesQueue
   );
+
   if (!currentQueuePlaylist) return;
+
+  // Every account associated with playlist must be logged in
+  const playlistsLoggedIn = QueuesDb.currentQueue.playlists.every(
+    (playlist) => AccountsDb.account(playlist.account.id)?.isLoggedIn
+  );
+
+  console.log(
+    QueuesDb.currentQueue.playlists.map(
+      (playlist) => playlist.account.displayName
+    )
+  );
+  console.log({ playlistsLoggedIn });
+
+  if (!playlistsLoggedIn) return;
 
   const { id, account } = currentQueuePlaylist;
   const latestAddedAt = Math.max(

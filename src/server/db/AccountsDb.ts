@@ -24,6 +24,14 @@ export const AccountsDb = {
     });
   },
 
+  async logout(accountId: string) {
+    await accountsDb.update((data) => {
+      data[accountId].isLoggedIn = false;
+      delete data[accountId].token;
+      delete data[accountId].refreshToken;
+    });
+  },
+
   async remove(accountId: string) {
     await accountsDb.update((data) => {
       delete data[accountId];

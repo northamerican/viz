@@ -132,12 +132,11 @@ export default class SpotifyPlayer implements VizPlayer {
   }
 
   async logout() {
-    // TODO isLoggedIn: false
-    AccountsDb.edit(this.#account.id, { isLoggedIn: false });
+    await AccountsDb.logout(this.#account.id);
   }
 
   async remove() {
-    AccountsDb.remove(this.#account.id);
+    await AccountsDb.remove(this.#account.id);
   }
 
   // TODO pagination

@@ -4,5 +4,10 @@ import { PlayerId } from "../types/VizPlayer";
 
 export async function onLogout(account: Account) {
   const player = new playerApi[<PlayerId>account.player](account.id);
-  player.logout();
+  await player.logout();
+}
+
+export async function onRemove(account: Account) {
+  const player = new playerApi[<PlayerId>account.player](account.id);
+  await player.remove();
 }

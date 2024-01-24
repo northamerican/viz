@@ -14,12 +14,14 @@ const handleLogin = async () => {
 
 onMounted(async () => {
   // TODO dynamic w logic for youtube, others
-  if (props.player.id !== "spotify") return;
-  const params = new URLSearchParams(document.location.search);
-  const code = params.get("code");
-  if (code) {
-    await onLogin({ playerId: props.player.id, code });
-    window.location.assign("/");
+  // Move this to accounts?
+  if (props.player.id === "spotify") {
+    const params = new URLSearchParams(document.location.search);
+    const code = params.get("code");
+    if (code) {
+      await onLogin({ playerId: props.player.id, code });
+      window.location.assign("/");
+    }
   }
 });
 </script>
