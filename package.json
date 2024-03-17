@@ -5,10 +5,10 @@
   "license": "compluter school of gabagool",
   "type": "module",
   "scripts": {
+    "server": "yarn tsx --env-file .env ./src/server/server.ts",
     "dev": "vite",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
-    "server": "yarn tsx --env-file .env ./src/server/server.ts",
     "lint": "eslint src --ext .ts,.vue --ignore-path .gitignore --fix src"
   },
   "dependencies": {

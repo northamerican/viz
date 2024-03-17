@@ -3,12 +3,20 @@
 # Viz - music video box
 Turn your playlists into a music video stream.
 
-### Tech stack
-- node
-- express
-- typescript
-- vite
-- vue
+## Usage
+- run `yarn server`
+- navigate to url
+
+## Development
+
+- run `yarn sever --local`
+
+## Tech stack
+- [node](https://nodejs.org/en)
+- [express](https://expressjs.com/)
+- [typescript](https://www.typescriptlang.org/)
+- [vite](https://vitejs.dev/)
+- [vue](https://vuejs.org/)
 - [tsx](https://github.com/privatenumber/tsx)
 - [ytdl](https://github.com/distubejs/ytdl-core)
 - [ffmpeg](https://github.com/eugeneware/ffmpeg-static)
