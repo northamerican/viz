@@ -33,7 +33,7 @@ const playQueue = async () => {
   await onStartQueue();
   const { videoEl } = store;
   videoEl.load();
-  videoEl.fastSeek(0);
+  videoEl.fastSeek ? videoEl.fastSeek(0) : (videoEl.currentTime = 0);
   videoEl.play();
   onSaveStore({ isPlaying: true });
 };
