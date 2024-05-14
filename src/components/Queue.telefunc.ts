@@ -1,4 +1,4 @@
-import { QueueItem } from "Viz";
+import type { QueueItem } from "Viz";
 import { readdirSync, rmSync } from "fs";
 import { VideosDb } from "../server/db/VideosDb";
 import { StoreDb } from "../server/db/StoreDb";

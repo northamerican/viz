@@ -3,7 +3,7 @@ import querystring from "node:querystring";
 import { AccountsDb } from "../db/AccountsDb";
 import { appUrl } from "../consts";
 import { VizPlayer } from "../../types/VizPlayer";
-import { TrackType } from "Viz";
+import type { TrackType } from "Viz";
 import players from "../../players";
 
 const clientId = process.env.SPOTIFY_CLIENT_ID;
@@ -29,9 +29,7 @@ export default class SpotifyPlayer implements VizPlayer {
     );
 
     this.#axios.interceptors.response.use(
-      (response) => {
-        return response;
-      },
+      (response) => response,
       async (error) => {
         const originalRequest = error.config;
 
@@ -131,6 +129,7 @@ export default class SpotifyPlayer implements VizPlayer {
     );
   }
 
+  // TODO Move these? dupes
   async logout() {
     await AccountsDb.logout(this.#account.id);
   }

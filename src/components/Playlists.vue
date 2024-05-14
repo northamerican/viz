@@ -3,7 +3,7 @@ import ListItem from "./ListItem.vue";
 import { computed, watch } from "vue";
 import { onLoadPlaylists, onLoadPlaylist } from "./Playlists.telefunc";
 import { store } from "../store";
-import { Account } from "Viz";
+import type { Account } from "Viz";
 
 const props = defineProps<{ account: Account }>();
 

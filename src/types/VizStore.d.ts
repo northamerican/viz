@@ -1,4 +1,4 @@
-import { Account, Playlist, Playlists, Queue } from "Viz";
+import type { Account, Playlist, Playlists, Queue } from "Viz";
 import { SourceId } from "./VizSource";
 
 export type VizStore = {

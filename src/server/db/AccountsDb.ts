@@ -1,6 +1,6 @@
 import { JSONFilePreset } from "lowdb/node";
 import { accountsDbPath } from "../consts";
-import { AccountDbItem } from "Viz";
+import type { AccountDbItem } from "Viz";
 
 type AccountsDbType = {
   [accountId: string]: AccountDbItem;

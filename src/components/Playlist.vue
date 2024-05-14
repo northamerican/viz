@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import type { Track } from "Viz";
+import type { Playlist, Track } from "Viz";
 import ListItem from "./ListItem.vue";
 import ActionsMenu from "./ActionsMenu.vue";
 import { onAddToQueue } from "./Playlist.telefunc";
 import { store } from "../store";
-import { Playlist } from "Viz";
 
 const props = defineProps<{ playlist: Playlist }>();
 

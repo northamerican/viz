@@ -1,4 +1,4 @@
-import { AccountDbItem, Playlist, PlaylistList } from "Viz";
+import type { AccountDbItem, Playlist, PlaylistList } from "Viz";
 import { AxiosInstance } from "axios";
 
 export interface VizPlayer {

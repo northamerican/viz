@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { store } from "../store";
 import { onLogout, onRemove } from "./Account.telefunc";
-import { Account } from "Viz";
+import type { Account } from "Viz";
 import ActionsMenu from "./ActionsMenu.vue";
 
 const props = defineProps<{ account: Account }>();

@@ -1,4 +1,4 @@
-import { Account } from "Viz";
+import type { Account } from "Viz";
 import playerApi from "../server/players";
 
 export async function onLoadPlaylists(account: Account) {
