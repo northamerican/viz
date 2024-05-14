@@ -9,7 +9,7 @@ Turn your playlists into a music video stream.
 
 ## Development
 
-- run `yarn sever --local`
+- run `yarn server --local`
 
 ## Tech stack
 - [node](https://nodejs.org/en)
