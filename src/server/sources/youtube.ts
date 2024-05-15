@@ -7,7 +7,12 @@ import ffmpegPath from "ffmpeg-static";
 import { VideosDb } from "../db/VideosDb.ts";
 import { hlsDir } from "../consts.ts";
 import { getSegmentDurations, durationTotal } from "../helpers.ts";
-import type { CreateSearchQuery, GetVideoUrl, DownloadVideo } from "VizSource";
+import type {
+  CreateSearchQuery,
+  GetVideoUrl,
+  DownloadVideo,
+} from "../../types/VizSource.d.ts";
+import { Track, TrackType } from "Viz";
 
 const maxVideoDuration = 12 * 60;
 
@@ -39,7 +44,10 @@ const getVideoUrl: GetVideoUrl = async (query: string) => {
     limit: 20,
   });
 
-  const { id: videoId, url } = filterVideo(items);
+  const video = filterVideo(items);
+  if (!video) return null;
+
+  const { id: videoId, url } = video;
 
   return { videoId, url };
 };

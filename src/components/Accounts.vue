@@ -1,13 +1,34 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
-import { store } from "../store";
 import Account from "./Account.vue";
 import LogInButton from "./LogInButton.vue";
 import ListItem from "./ListItem.vue";
 import players from "../players";
+import { onMounted } from "vue";
+import { store } from "../store";
+import { onReadToken } from "./Accounts.telefunc";
+import { tokenPath } from "../consts.ts";
+import type { PlayerId } from "../types/VizPlayer";
 
 onMounted(async () => {
-  await store.updateAccountsStore();
+  store.updateAccountsStore();
+
+  const readToken = document.location.pathname.includes(tokenPath());
+  if (readToken) {
+    // Get playerId by isolating it from pathname
+    const playerId = document.location.pathname
+      .replace(tokenPath(), "")
+      .replaceAll("/", "") as PlayerId;
+    const params = new URLSearchParams(document.location.search);
+    const code = params.get("code");
+    if (code) {
+      try {
+        await onReadToken({ playerId, code });
+        window.location.assign("/");
+      } catch (e) {
+        console.log(e);
+      }
+    }
+  }
 });
 </script>
 
@@ -26,5 +47,3 @@ onMounted(async () => {
     </div>
   </div>
 </template>
-
-<style></style>

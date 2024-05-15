@@ -149,6 +149,7 @@ onMounted(async () => {
         <div class="actions">
           {{ item.video?.downloading ? "⌛︎" : "" }}
           {{ item.video?.downloaded ? "✔" : "" }}
+          {{ item.error ? "X" : "" }}
           <ActionsMenu :options="actionsMenuOptions(item)" />
         </div>
       </ListItem>

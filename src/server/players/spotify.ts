@@ -5,10 +5,11 @@ import { appUrl } from "../consts";
 import { VizPlayer } from "../../types/VizPlayer";
 import type { TrackType } from "Viz";
 import players from "../../players";
+import { tokenPath } from "../../consts";
 
 const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
-const tokenUrl = "/token";
+const redirectUri = new URL(tokenPath(players.spotify.id), appUrl).href;
 
 export default class SpotifyPlayer implements VizPlayer {
   #account;
@@ -79,7 +80,7 @@ export default class SpotifyPlayer implements VizPlayer {
           : {
               grant_type: "authorization_code",
               code,
-              redirect_uri: new URL(tokenUrl, appUrl).href,
+              redirect_uri: redirectUri,
             },
         {
           headers: {
@@ -124,7 +125,7 @@ export default class SpotifyPlayer implements VizPlayer {
         response_type: "code",
         client_id: clientId,
         scope: scope,
-        redirect_uri: new URL(tokenUrl, appUrl).href,
+        redirect_uri: redirectUri,
       })
     );
   }
@@ -133,7 +134,6 @@ export default class SpotifyPlayer implements VizPlayer {
   async logout() {
     await AccountsDb.logout(this.#account.id);
   }
-
   async remove() {
     await AccountsDb.remove(this.#account.id);
   }

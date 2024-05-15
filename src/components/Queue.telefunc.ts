@@ -5,32 +5,44 @@ import { StoreDb } from "../server/db/StoreDb";
 import { QueuesDb } from "../server/db/QueuesDb";
 import { hlsDir } from "../server/consts";
 import playerApi from "../server/players";
-import { PlayerId } from "../types/VizPlayer";
 import { AccountsDb } from "../server/db/AccountsDb";
+import type { PlayerId } from "../types/VizPlayer";
 
 export async function onGetVideo(queueId: string, queueItem: QueueItem) {
   const { track, id: queueItemId } = queueItem;
-  const { artists, name } = track;
+  const { artists, name, type } = track;
   const artist = artists[0];
+
+  // TODO separate
+  if (type === "interstitial") {
+  }
 
   console.log(`Getting video for ${name} - ${artist}`);
   const { createSearchQuery, getVideoUrl } = StoreDb.source;
   const searchQuery = createSearchQuery({ artist, name });
-  const { videoId, url } = await getVideoUrl(searchQuery);
 
-  // TODO handle no video found
-  await VideosDb.addVideo({
-    id: videoId,
-    source: StoreDb.sourceId,
-    sourceUrl: url,
-    duration: 0,
-    downloaded: false,
-    downloading: true,
-    segmentDurations: [],
-  });
-  await QueuesDb.editItem(queueId, queueItemId, { videoId });
+  try {
+    const { videoId, url } = await getVideoUrl(searchQuery);
 
-  return { videoId, url };
+    await VideosDb.addVideo({
+      id: videoId,
+      source: StoreDb.sourceId,
+      sourceUrl: url,
+      duration: 0,
+      downloaded: false,
+      downloading: true,
+      segmentDurations: [],
+    });
+    await QueuesDb.editItem(queueId, queueItemId, { videoId });
+
+    return { videoId, url };
+  } catch {
+    await QueuesDb.editItem(queueId, queueItemId, { error: true });
+
+    console.log("no video found");
+
+    return null;
+  }
 }
 
 export async function onDownloadVideo(videoId: string, url: string) {
@@ -81,13 +93,6 @@ export async function onUpdateQueueFromPlaylist() {
   const playlistsLoggedIn = QueuesDb.currentQueue.playlists.every(
     (playlist) => AccountsDb.account(playlist.account.id)?.isLoggedIn
   );
-
-  console.log(
-    QueuesDb.currentQueue.playlists.map(
-      (playlist) => playlist.account.displayName
-    )
-  );
-  console.log({ playlistsLoggedIn });
 
   if (!playlistsLoggedIn) return;
 

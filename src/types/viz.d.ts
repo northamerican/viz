@@ -83,6 +83,7 @@ declare module "Viz" {
     videoId: string;
     video?: Video;
     removed: boolean;
+    error?: boolean;
   };
 
   export type QueuePlaylistReference = PlaylistMeta & {

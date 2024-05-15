@@ -1,13 +1,14 @@
 import { VizPlayerConstructable } from "../../types/VizPlayer";
 import spotify from "./spotify";
+import youtube from "./youtube";
 
 const playerApi: {
-  // [string: PlayerId]: VizPlayerConstructable;
+  // TODO [string: PlayerId]: VizPlayerConstructable;
   spotify: VizPlayerConstructable;
   youtube: VizPlayerConstructable;
 } = {
   spotify: spotify,
-  youtube: spotify,
+  youtube: youtube,
 };
 
 export default playerApi;

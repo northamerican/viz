@@ -37,11 +37,22 @@ const actionsMenuOptions = () => [
 </script>
 
 <template>
-  <a href="" @click.prevent="() => setAccount(account)">
-    <!-- :disabled="!account.isLoggedIn" -->
+  <a
+    href=""
+    @click.prevent="() => setAccount(account)"
+    :class="{ 'logged-out': !account.isLoggedIn }"
+  >
     {{ account.player }} - {{ account.displayName }}
   </a>
   <div class="actions">
     <ActionsMenu :options="actionsMenuOptions()" />
   </div>
 </template>
+
+<style>
+.logged-out {
+  pointer-events: none;
+  cursor: default;
+  color: #999;
+}
+</style>
