@@ -11,6 +11,8 @@ import type {
 import { v4 as uuidv4 } from "uuid";
 import { VideosDb } from "./VideosDb";
 
+// TODO remove need for queueId on methods targeting queue items
+
 type QueuesDbType = {
   state: QueueState;
   queues: Queue[];

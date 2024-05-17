@@ -54,8 +54,10 @@ const downloadVideo = async (queueItem: QueueItem) => {
 const queueDownload = async () => {
   if (isDownloadingQueue.value) {
     const queueItem = await onGetNextDownloadableQueueItem();
-    await downloadVideo(queueItem);
-    queueDownload();
+    if (queueItem) {
+      await downloadVideo(queueItem);
+      queueDownload();
+    }
   }
 };
 

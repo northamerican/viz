@@ -1,4 +1,4 @@
-import type { QueueItem } from "Viz";
+import type { QueueItem, TrackType } from "Viz";
 import { readdirSync, rmSync } from "fs";
 import { VideosDb } from "../server/db/VideosDb";
 import { StoreDb } from "../server/db/StoreDb";
@@ -8,22 +8,37 @@ import playerApi from "../server/players";
 import { AccountsDb } from "../server/db/AccountsDb";
 import type { PlayerId } from "../types/VizPlayer";
 
+type GetVideoId = {
+  [k in TrackType as string]: () => Promise<{
+    videoId: string;
+    url: string;
+  }>;
+};
+
 export async function onGetVideo(queueId: string, queueItem: QueueItem) {
   const { track, id: queueItemId } = queueItem;
   const { artists, name, type } = track;
   const artist = artists[0];
 
-  // TODO separate
-  if (type === "interstitial") {
-    console.log(`is interstitial. should get yt video ${track.videoId}`);
-  }
-
-  console.log(`Getting video for ${name} - ${artist}`);
-  const { createSearchQuery, getVideoUrl } = StoreDb.source;
-  const searchQuery = createSearchQuery({ artist, name });
-
   try {
-    const { videoId, url } = await getVideoUrl(searchQuery);
+    const getVideoId: GetVideoId = {
+      track: async () => {
+        console.log(`Getting video for ${name} - ${artist}`);
+        const { createSearchQuery, getVideoUrl } = StoreDb.source;
+        const searchQuery = createSearchQuery({ artist, name });
+        const { videoId, url } = await getVideoUrl(searchQuery);
+        return { videoId, url };
+      },
+      interstitial: async () => {
+        console.log(`Getting video ${queueItem.track.videoId}`);
+        return {
+          videoId: queueItem.track.videoId,
+          url: queueItem.track.playerUrl,
+        };
+      },
+    };
+
+    const { videoId, url } = await getVideoId[type]();
 
     await VideosDb.addVideo({
       id: videoId,
@@ -33,9 +48,10 @@ export async function onGetVideo(queueId: string, queueItem: QueueItem) {
     await QueuesDb.editItem(queueId, queueItemId, { videoId });
 
     return { videoId, url };
-  } catch {
+  } catch (e) {
+    const error = e instanceof Error ? e.message : String(e);
     await QueuesDb.editItem(queueId, queueItemId, {
-      error: `No video found for "${searchQuery}"`,
+      error,
     });
 
     return { videoId: null, url: null };
