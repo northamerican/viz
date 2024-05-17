@@ -1,8 +1,8 @@
 import { youtube } from "./youtube";
 
 const sources: {
-  // [sourceId: SourceId]: unknown; //VizSource;
-  youtube: unknown; // VizSource;
+  // [sourceId: string]: unknown; // VizSource;
+  youtube: typeof youtube;
 } = {
   youtube,
 };

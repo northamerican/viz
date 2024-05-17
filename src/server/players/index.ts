@@ -3,9 +3,7 @@ import spotify from "./spotify";
 import youtube from "./youtube";
 
 const playerApi: {
-  // TODO [string: PlayerId]: VizPlayerConstructable;
-  spotify: VizPlayerConstructable;
-  youtube: VizPlayerConstructable;
+  [playerId: string]: VizPlayerConstructable;
 } = {
   spotify: spotify,
   youtube: youtube,

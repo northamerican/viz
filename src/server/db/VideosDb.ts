@@ -28,8 +28,15 @@ export const VideosDb = {
     return this.videos[videoId];
   },
 
-  async addVideo(props: Video) {
-    this.videos[props.id] = props;
+  async addVideo(props: Pick<Video, "id" | "source" | "sourceUrl">) {
+    this.videos[props.id] = {
+      duration: 0,
+      segmentDurations: [],
+      downloaded: false,
+      downloading: true,
+      error: null,
+      ...props,
+    };
     await videosDb.write();
   },
 

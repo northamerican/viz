@@ -25,7 +25,14 @@ const deselectPlaylists = () => {
 
 const playlists = computed(() => store.view.playlists);
 
-watch(() => store.view.account, getPlaylists);
+watch(
+  () => store.view.account,
+  () => {
+    if (store.view.account) {
+      getPlaylists();
+    }
+  }
+);
 </script>
 
 <template>
@@ -33,7 +40,7 @@ watch(() => store.view.account, getPlaylists);
     <header>
       <h2>
         <button @click="deselectPlaylists">⇦</button>
-        {{ store.view.account.displayName }} - playlists
+        Playlists - {{ store.view.account.displayName }}
       </h2>
     </header>
     <div v-for="playlist in playlists.items" :key="playlist.id">

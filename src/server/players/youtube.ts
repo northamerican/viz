@@ -1,7 +1,7 @@
 import { AccountsDb } from "../db/AccountsDb";
 import { appUrl } from "../consts";
 import { VizPlayer } from "../../types/VizPlayer";
-import { TrackType } from "Viz";
+import { Playlist, TrackType } from "Viz";
 import players from "../../players";
 import { tokenPath } from "../../consts";
 import { google, youtube_v3 } from "googleapis";
@@ -44,6 +44,7 @@ export default class YouTubePlayer implements VizPlayer {
   }
 
   async login(code: string, refresh?: boolean) {
+    // TODO move to constructor
     const oauth2Client = new google.auth.OAuth2(
       clientId,
       clientSecret,
@@ -51,7 +52,7 @@ export default class YouTubePlayer implements VizPlayer {
     );
 
     if (refresh) {
-      return await oauth2Client.refreshAccessToken();
+      await oauth2Client.refreshAccessToken();
     }
 
     try {
@@ -70,19 +71,17 @@ export default class YouTubePlayer implements VizPlayer {
         isLoggedIn: true,
         refreshToken: tokens.refresh_token || this.#account.refreshToken,
       });
-
-      return tokens;
     } catch (error) {
       Promise.reject(error);
     }
   }
 
+  // TODO this is not called from anywhere
   async getRefreshToken() {
     return this.login(null, true);
   }
 
   static authorize() {
-    // TODO should this be called once? then re-used in login()?
     const oauth2Client = new google.auth.OAuth2(
       clientId,
       clientSecret,
@@ -143,7 +142,7 @@ export default class YouTubePlayer implements VizPlayer {
     }
   }
 
-  async getPlaylist(playlistId: string) {
+  async getPlaylist(playlistId: string): Promise<Playlist> {
     const maxResults = 50;
 
     const oauth2Client = new google.auth.OAuth2(
@@ -163,37 +162,34 @@ export default class YouTubePlayer implements VizPlayer {
       part: ["snippet"],
     });
     const playlistName = data.items[0].snippet.title;
-
     const allItems: youtube_v3.Schema$PlaylistItem[] = [];
 
     const fetchPlaylistItems = async (params = {}) => {
-      return new Promise<youtube_v3.Schema$PlaylistItem[]>(
-        (resolve, reject) => {
-          setTimeout(async () => {
-            const { data } = await youtubeApi.playlistItems.list({
-              playlistId,
-              auth: oauth2Client,
-              part: ["snippet"],
-              maxResults,
-              ...params,
-            });
-
-            const nextPageToken = data.nextPageToken;
-
-            allItems.push(...data.items);
-
-            if (nextPageToken) {
-              resolve(
-                fetchPlaylistItems({
-                  pageToken: nextPageToken,
-                })
-              );
-            }
-
-            resolve(allItems);
+      return new Promise<youtube_v3.Schema$PlaylistItem[]>((resolve) => {
+        setTimeout(async () => {
+          const { data } = await youtubeApi.playlistItems.list({
+            playlistId,
+            auth: oauth2Client,
+            part: ["snippet"],
+            maxResults,
+            ...params,
           });
-        }
-      );
+
+          const nextPageToken = data.nextPageToken;
+
+          allItems.push(...data.items);
+
+          if (nextPageToken) {
+            resolve(
+              fetchPlaylistItems({
+                pageToken: nextPageToken,
+              })
+            );
+          }
+
+          resolve(allItems);
+        });
+      });
     };
 
     try {
@@ -206,6 +202,7 @@ export default class YouTubePlayer implements VizPlayer {
         artists: [item.snippet.videoOwnerChannelTitle],
         name: item.snippet.title,
         playerUrl: `https://youtu.be/${item.snippet.resourceId.videoId}`,
+        videoId: item.snippet.resourceId.videoId,
         addedAt: new Date(item.snippet.publishedAt).getTime(),
         type: "interstitial" as TrackType,
       }));

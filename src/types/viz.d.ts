@@ -26,6 +26,7 @@ declare module "Viz" {
     name: string;
     player: PlayerId;
     playerUrl: string;
+    videoId?: string;
     addedAt: number;
     type: TrackType;
   };
@@ -62,9 +63,10 @@ declare module "Viz" {
     source: unknown; // TODO define
     sourceUrl: string;
     duration: number;
+    segmentDurations: number[];
     downloading: boolean;
     downloaded: boolean;
-    segmentDurations: number[];
+    error: string;
   };
 
   export type Videos = {
@@ -83,10 +85,14 @@ declare module "Viz" {
     videoId: string;
     video?: Video;
     removed: boolean;
-    error?: boolean;
+    error?: string;
   };
 
-  export type QueuePlaylistReference = PlaylistMeta & {
+  export type QueuePlaylistReference = {
+    id: string;
+    name: string;
+    player: PlayerId;
+    account: AccountBase; // TODO this has tokens in it. just store account id
     updatesQueue: boolean;
     type: TrackType;
   };

@@ -13,8 +13,16 @@
   padding: 0.5rem;
   min-height: 64px;
 
+  & .actions {
+    display: none;
+  }
+
   &:hover {
     background: rgba(0, 0, 0, 15%);
+
+    & .actions {
+      display: block;
+    }
   }
 }
 </style>

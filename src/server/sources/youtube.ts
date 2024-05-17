@@ -12,7 +12,6 @@ import type {
   GetVideoUrl,
   DownloadVideo,
 } from "../../types/VizSource.d.ts";
-import { Track, TrackType } from "Viz";
 
 const maxVideoDuration = 12 * 60;
 
@@ -45,7 +44,7 @@ const getVideoUrl: GetVideoUrl = async (query: string) => {
   });
 
   const video = filterVideo(items);
-  if (!video) return null;
+  if (!video) throw null;
 
   const { id: videoId, url } = video;
 
@@ -55,104 +54,128 @@ const getVideoUrl: GetVideoUrl = async (query: string) => {
 const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
   const hlsVideoDir = join(hlsDir, videoId);
   const videoFilePath = join(hlsVideoDir, `${videoId}.m3u8`);
+  const wroteToDbMsg = `Wrote ${videoId} segments to videos db in`;
 
   if (!fs.existsSync(hlsVideoDir)) {
     fs.mkdirSync(hlsVideoDir);
   }
 
   console.log(`Generating HLS files for video ${videoId}`);
-  const wroteToDbMsg = `Wrote ${videoId} segments to videos db in`;
   console.time(wroteToDbMsg);
 
-  const info = await ytdl.getInfo(url);
-  const audioStream = ytdl.downloadFromInfo(info, {
-    quality: "highestaudio",
-    filter: (format) => format.container === "mp4",
-  });
-  const videoStream = ytdl.downloadFromInfo(info, {
-    quality: "highestvideo",
-    filter: (format) => format.codecs.startsWith("avc1"),
-  });
-  const process = cp.spawn(
-    ffmpegPath,
-    [
-      "-loglevel",
-      "32",
-      //
-      "-i",
-      "pipe:3",
-      //
-      "-i",
-      "pipe:4",
-      // Map audio and video
-      "-map",
-      "0:a",
-      "-map",
-      "1:v",
-      // No conversion
-      "-c",
-      "copy",
-      // TODO is this needed?
-      "-movflags",
-      "frag_keyframe+empty_moov",
-      //
-      "-start_number",
-      "0",
-      "-hls_time",
-      "10",
-      "-hls_list_size",
-      "0 ",
-      "-f",
-      "hls",
-      videoFilePath,
-    ],
-    {
-      stdio: [
-        // stdin, stdout, stderr
-        "inherit",
-        "inherit",
-        "pipe",
-        // audio, video
-        "pipe",
-        "pipe",
-      ],
-    }
+  // Circumvent age-restricted videos
+  // TODO use only in second attempt, when video is blocked / video error?
+  const ytCookies = ["__Secure-1PSID", "__Secure-1PSIDTS", "LOGIN_INFO"].map(
+    (ytCookieName) => ({
+      name: ytCookieName,
+      secure: true,
+      value: process.env[ytCookieName],
+    })
   );
-  //@ts-expect-error nodejs dumb
-  audioStream.pipe(process.stdio[3]);
-  //@ts-expect-error nodejs dumb
-  videoStream.pipe(process.stdio[4]);
+  const agent = ytdl.createAgent(ytCookies);
 
-  // process.stdio[2].on("data", async () => {
-  //   // TODO could maybe just do this on 'close', ie the end of the video loaded ?
-  //   // For debugging
-  //   // console.log(data.toString())
-
-  //   // TODO remove this hack
-  //   // Data can be received before the creation of the m3u file
-  //   if (!fs.existsSync(videoFilePath)) return;
-
-  //   // TODO prob not necessary
-  //   await VideosDb.editVideo(videoId, {
-  //     segmentDurations: getSegmentDurations(videoFilePath),
-  //     duration: getSegmentDurations(videoFilePath).reduce(durationTotal, 0),
-  //   });
-  // });
-
-  return new Promise((resolve) => {
-    process.on("close", async () => {
-      await VideosDb.editVideo(videoId, {
-        segmentDurations: getSegmentDurations(videoFilePath),
-        duration: getSegmentDurations(videoFilePath).reduce(durationTotal, 0),
-        downloaded: true,
-        downloading: false,
-      });
-
-      console.timeEnd(wroteToDbMsg);
-
-      resolve({ videoId, url });
+  try {
+    const info = await ytdl.getInfo(url, { agent });
+    const audioStream = ytdl.downloadFromInfo(info, {
+      agent,
+      quality: "highestaudio",
+      filter: (format) => format.container === "mp4",
     });
-  });
+    const videoStream = ytdl.downloadFromInfo(info, {
+      agent,
+      quality: "highestvideo",
+      filter: (format) => format.codecs.startsWith("avc1"),
+    });
+
+    const process = cp.spawn(
+      ffmpegPath,
+      [
+        "-loglevel",
+        "32",
+        //
+        "-i",
+        "pipe:3",
+        //
+        "-i",
+        "pipe:4",
+        // Map audio and video
+        "-map",
+        "0:a",
+        "-map",
+        "1:v",
+        // No conversion
+        "-c",
+        "copy",
+        // TODO is this needed?
+        // "-movflags",
+        // "frag_keyframe+empty_moov",
+        //
+        "-start_number",
+        "0",
+        "-hls_time",
+        "10",
+        "-hls_list_size",
+        "0 ",
+        "-f",
+        "hls",
+        videoFilePath,
+      ],
+      {
+        stdio: [
+          // stdin, stdout, stderr
+          "inherit",
+          "inherit",
+          "pipe",
+          // audio, video
+          "pipe",
+          "pipe",
+        ],
+      }
+    );
+    //@ts-expect-error nodejs dumb
+    audioStream.pipe(process.stdio[3]);
+    //@ts-expect-error nodejs dumb
+    videoStream.pipe(process.stdio[4]);
+
+    // process.stdio[2].on("data", async () => {
+    //   // TODO could maybe just do this on 'close', ie the end of the video loaded ?
+    //   // For debugging
+    //   // console.log(data.toString())
+
+    //   // TODO remove this hack
+    //   // Data can be received before the creation of the m3u file
+    //   if (!fs.existsSync(videoFilePath)) return;
+
+    //   // TODO prob not necessary
+    //   await VideosDb.editVideo(videoId, {
+    //     segmentDurations: getSegmentDurations(videoFilePath),
+    //     duration: getSegmentDurations(videoFilePath).reduce(durationTotal, 0),
+    //   });
+    // });
+
+    return new Promise((resolve) => {
+      process.on("close", async () => {
+        await VideosDb.editVideo(videoId, {
+          segmentDurations: getSegmentDurations(videoFilePath),
+          duration: getSegmentDurations(videoFilePath).reduce(durationTotal, 0),
+          downloaded: true,
+          downloading: false,
+        });
+
+        console.timeEnd(wroteToDbMsg);
+        resolve({ videoId, url });
+      });
+    });
+  } catch (e) {
+    const error = e instanceof Error ? e.message : String(e);
+
+    await VideosDb.editVideo(videoId, {
+      downloading: false,
+      error,
+    });
+
+    return Promise.reject(error);
+  }
 };
 
 export const youtube = {

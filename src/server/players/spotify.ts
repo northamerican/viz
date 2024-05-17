@@ -105,8 +105,6 @@ export default class SpotifyPlayer implements VizPlayer {
         isLoggedIn: true,
         refreshToken: data.refresh_token || this.#account.refreshToken,
       });
-
-      return data;
     } catch (error) {
       Promise.reject(error);
     }

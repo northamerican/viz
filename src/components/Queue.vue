@@ -2,7 +2,7 @@
 import type { QueueItem, QueuePlaylistReference } from "Viz";
 import ListItem from "./ListItem.vue";
 import ActionsMenu from "./ActionsMenu.vue";
-import { onMounted } from "vue";
+import { onMounted, ref, watch } from "vue";
 import {
   onGetVideo,
   onDownloadVideo,
@@ -10,8 +10,8 @@ import {
   onDeleteVideos,
   onRemoveQueueItem,
   onStartQueue,
-  onDownloadNextVideoInQueue,
   onUpdateQueueFromPlaylist,
+  onGetNextDownloadableQueueItem,
 } from "./Queue.telefunc";
 import { store } from "../store";
 import players from "../players";
@@ -19,6 +19,8 @@ import { onSaveStore } from "../store.telefunc";
 import { onLoadPlaylist } from "./Playlists.telefunc";
 
 // TODO store should have queues / 1:1 copy of the queues json?
+
+const isDownloadingQueue = ref(false);
 
 const getPlaylist = async (playlistReference: QueuePlaylistReference) => {
   store.view.playlist = null;
@@ -38,19 +40,22 @@ const playQueue = async () => {
   onSaveStore({ isPlaying: true });
 };
 
-const queueDownload = async () => {
-  const res = await onDownloadNextVideoInQueue();
-  await store.updateQueueStore();
-  if (res) queueDownload();
-};
-
 const downloadVideo = async (queueItem: QueueItem) => {
   const { videoId, url } = await onGetVideo(store.queue.id, queueItem);
   await store.updateQueueStore();
+  if (!videoId) return;
   await onDownloadVideo(videoId, url);
   await store.updateQueueStore();
   if (store.videoEl.currentTime === 0) {
     playQueue();
+  }
+};
+
+const queueDownload = async () => {
+  if (isDownloadingQueue.value) {
+    const queueItem = await onGetNextDownloadableQueueItem();
+    await downloadVideo(queueItem);
+    queueDownload();
   }
 };
 
@@ -80,7 +85,6 @@ const actionsMenuOptions = (queueItem: QueueItem) => [
     action: () => {
       window.open(queueItem.video.sourceUrl, "_blank");
     },
-    // TODO label can read "[Video title] on Youtube...""
     label: "Go to YouTube Video...",
     disabled: !queueItem.video?.sourceUrl,
   },
@@ -95,48 +99,36 @@ const actionsMenuOptions = (queueItem: QueueItem) => [
 onMounted(async () => {
   await onUpdateQueueFromPlaylist();
   await store.updateQueueStore();
-
-  // TODO instead call queueDownload only on load, on item add.
-  // setInterval(queueDownload, 5000);
 });
+
+watch(isDownloadingQueue, queueDownload, { immediate: true });
+watch(() => store.queue?.items.length, queueDownload);
 </script>
 
 <template>
   <div v-if="store.queue">
     <header>
-      <h2>Queue</h2>
+      <h2>Queues</h2>
       <div>
         <button @click="deleteQueueAndVideos">X</button>
-        <button @click="queueDownload">⬇</button>
+        <!-- <button @click="queueDownload">⬇</button> -->
+        <label><input type="checkbox" v-model="isDownloadingQueue" />⬇</label>
         <button @click="playQueue">▶</button>
       </div>
     </header>
-    <ListItem
-      v-for="playlistReference in store.queue.playlists"
-      :key="playlistReference.id"
-    >
-      <div>
-        <strong
-          ><a href="" @click.prevent="getPlaylist(playlistReference)">{{
-            playlistReference.name
-          }}</a></strong
-        >&nbsp;
-        <small
-          >{{ playlistReference.type }}
-          {{ playlistReference.updatesQueue ? "- updates queue" : null }}</small
-        >
-        <br />
-        <span>
-          on {{ playlistReference.player }} -
-          {{ playlistReference.account.displayName }}
-        </span>
-      </div>
-    </ListItem>
     <div v-if="store.queue.items.length">
-      <hr />
       <ListItem v-for="item in store.queue.items" :key="item.id">
         <div class="track-info">
           <strong>{{ item.track.name }}</strong>
+          <span class="track-state">
+            <span v-if="item.video?.downloading">⌛︎</span>
+            <span v-if="item.video?.downloaded">✔</span>
+            <span
+              v-if="item.video?.error || item.error"
+              :title="item.video?.error || item.error"
+              >X</span
+            >
+          </span>
           <br />
           <span
             class="track-artist"
@@ -147,10 +139,29 @@ onMounted(async () => {
           </span>
         </div>
         <div class="actions">
-          {{ item.video?.downloading ? "⌛︎" : "" }}
-          {{ item.video?.downloaded ? "✔" : "" }}
-          {{ item.error ? "X" : "" }}
           <ActionsMenu :options="actionsMenuOptions(item)" />
+        </div>
+      </ListItem>
+
+      <hr />
+      <ListItem
+        v-for="playlistReference in store.queue.playlists"
+        :key="playlistReference.id"
+      >
+        <div>
+          <!-- {{ playlistReference.type }} -->
+          <span v-if="playlistReference.updatesQueue">updates from</span>
+          {{ playlistReference.player }} playlist
+          <br />
+
+          <a href="" @click.prevent="getPlaylist(playlistReference)">
+            <strong>{{ playlistReference.name }}</strong></a
+          >
+
+          by
+          {{ playlistReference.account.displayName }}
+
+          <br />
         </div>
       </ListItem>
     </div>
@@ -170,5 +181,9 @@ header {
   .track-artist + .track-artist::before {
     content: ", ";
   }
+}
+
+.track-state::before {
+  content: " ";
 }
 </style>

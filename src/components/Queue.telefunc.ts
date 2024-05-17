@@ -15,6 +15,7 @@ export async function onGetVideo(queueId: string, queueItem: QueueItem) {
 
   // TODO separate
   if (type === "interstitial") {
+    console.log(`is interstitial. should get yt video ${track.videoId}`);
   }
 
   console.log(`Getting video for ${name} - ${artist}`);
@@ -28,20 +29,16 @@ export async function onGetVideo(queueId: string, queueItem: QueueItem) {
       id: videoId,
       source: StoreDb.sourceId,
       sourceUrl: url,
-      duration: 0,
-      downloaded: false,
-      downloading: true,
-      segmentDurations: [],
     });
     await QueuesDb.editItem(queueId, queueItemId, { videoId });
 
     return { videoId, url };
   } catch {
-    await QueuesDb.editItem(queueId, queueItemId, { error: true });
+    await QueuesDb.editItem(queueId, queueItemId, {
+      error: `No video found for "${searchQuery}"`,
+    });
 
-    console.log("no video found");
-
-    return null;
+    return { videoId: null, url: null };
   }
 }
 
@@ -51,15 +48,10 @@ export async function onDownloadVideo(videoId: string, url: string) {
   return await downloadVideo({ videoId, url });
 }
 
-export async function onDownloadNextVideoInQueue() {
-  const queueId = QueuesDb.currentQueue.id;
+export async function onGetNextDownloadableQueueItem() {
   const queueItem = QueuesDb.nextDownloadableInQueue;
 
-  if (!queueItem) return false;
-
-  const { videoId, url } = await onGetVideo(queueId, queueItem);
-
-  return await onDownloadVideo(videoId, url);
+  return queueItem;
 }
 
 export async function onRemoveQueueItem(queueId: string, queueItemId: string) {

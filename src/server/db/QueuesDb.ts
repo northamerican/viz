@@ -84,8 +84,9 @@ export const QueuesDb = {
 
   get nextDownloadableInQueue(): QueueItem {
     const firstNotDownloaded = this.currentQueueWithVideos.items.find(
-      (item) => !item.video?.downloaded
+      (item) => !item.video?.downloaded && !item.video?.error && !item.error
     );
+    // Return QueueItem only if it's idle / not downloading.
     return firstNotDownloaded?.video?.downloading ? null : firstNotDownloaded;
   },
 

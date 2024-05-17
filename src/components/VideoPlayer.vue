@@ -6,6 +6,7 @@ import { onSaveStore } from "../store.telefunc";
 // import '../hlsjs.ts'
 
 const currentTime = ref(0);
+const currentTimeDisplay = ref(0);
 const isPlaying = ref(null);
 const totalDuration = computed(() => Math.round(store.queue?.totalDuration));
 
@@ -29,7 +30,8 @@ onMounted(async () => {
   });
 
   store.videoEl.addEventListener("timeupdate", () => {
-    currentTime.value = Math.round(store.videoEl?.currentTime);
+    currentTime.value = store.videoEl?.currentTime;
+    currentTimeDisplay.value = Math.round(store.videoEl?.currentTime);
   });
 
   await store.updateStore();
@@ -48,12 +50,13 @@ onMounted(async () => {
     />
     <div class="controls">
       <button @click="playPause">{{ isPlaying ? "⏸" : "▶" }}</button>
-      <small>{{ currentTime }}</small>
+      <small>{{ currentTimeDisplay }}</small>
       <input
         class="seeker"
         type="range"
         :value="currentTime"
         min="0"
+        step="0.1"
         :max="totalDuration"
         @input="seekTo"
       />

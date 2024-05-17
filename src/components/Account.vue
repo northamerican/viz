@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { store } from "../store";
-import { onLogout, onRemove } from "./Account.telefunc";
+import { onAuthorize, onLogout, onRemove } from "./Account.telefunc";
 import type { Account } from "Viz";
 import ActionsMenu from "./ActionsMenu.vue";
 
@@ -10,7 +10,10 @@ const setAccount = (account: Account) => {
   store.view.account = account;
 };
 
-const handleLogin = () => {};
+const handleLogin = async () => {
+  const redirectUri = await onAuthorize(props.account.player);
+  window.location.assign(redirectUri);
+};
 
 const handleLogout = async () => {
   await onLogout(props.account);
@@ -30,7 +33,7 @@ const openProfile = () => {
 const actionsMenuOptions = () => [
   props.account.isLoggedIn
     ? { action: handleLogout, label: "Log out" }
-    : { action: handleLogin, label: "Log in", disabled: true },
+    : { action: handleLogin, label: "Log in" },
   { action: handleRemove, label: "Remove" },
   { action: openProfile, label: "Open Profile..." },
 ];

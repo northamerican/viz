@@ -1,5 +1,6 @@
 import type { AccountDbItem, Playlist, PlaylistList } from "Viz";
 import { AxiosInstance } from "axios";
+import { OAuth2Client } from "google-auth-library";
 import { google } from "googleapis";
 
 export interface VizPlayer {
@@ -8,12 +9,9 @@ export interface VizPlayer {
   #oauth2Client?: google.auth.OAuth2;
 
   getProfile(
-    token: string
+    token: OAuth2Client | string
   ): Promise<{ id: string; displayName: string; profileUrl: string }>;
-  login(
-    code: string,
-    refresh?: boolean
-  ): Promise<{ access_token: string; refresh_token: string }>;
+  login(code: string, refresh?: boolean): Promise<void>;
   logout(): Promise<void>;
   remove(): Promise<void>;
   getPlaylist(playlistId: string): Promise<Playlist>;

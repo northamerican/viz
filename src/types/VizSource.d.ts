@@ -1,9 +1,6 @@
-import { TrackType } from "Viz";
-
 export type CreateSearchQuery = (track: {
   artist: string;
   name: string;
-  type: TrackType;
 }) => string;
 export type GetVideoUrl = (
   query: string
