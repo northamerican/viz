@@ -64,7 +64,6 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
   console.time(wroteToDbMsg);
 
   // Circumvent age-restricted videos
-  // TODO use only in second attempt, when video is blocked / video error?
   const ytCookies = ["__Secure-1PSID", "__Secure-1PSIDTS", "LOGIN_INFO"].map(
     (ytCookieName) => ({
       name: ytCookieName,
@@ -174,7 +173,7 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
       error,
     });
 
-    return Promise.reject(error);
+    return Promise.resolve({ videoId, url });
   }
 };
 
