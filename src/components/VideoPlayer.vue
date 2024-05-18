@@ -50,7 +50,9 @@ onMounted(async () => {
     />
     <div class="controls">
       <button @click="playPause">{{ isPlaying ? "⏸" : "▶" }}</button>
-      <small>{{ currentTimeDisplay }}</small>
+      <small class="time-display time-display--current">{{
+        currentTimeDisplay
+      }}</small>
       <input
         class="seeker"
         type="range"
@@ -60,7 +62,9 @@ onMounted(async () => {
         :max="totalDuration"
         @input="seekTo"
       />
-      <small>{{ totalDuration }}</small>
+      <small class="time-display time-display--total">{{
+        totalDuration
+      }}</small>
     </div>
   </section>
 </template>
@@ -72,7 +76,8 @@ onMounted(async () => {
 
   #video {
     width: auto;
-    max-height: 80vh;
+    height: 60vh;
+    max-height: 60vh;
   }
 }
 
@@ -84,6 +89,16 @@ onMounted(async () => {
   gap: 10px;
   .seeker {
     width: 400px;
+  }
+  .time-display {
+    display: block;
+    width: 4em;
+  }
+  .time-display--current {
+    text-align: right;
+  }
+  .time-display--total {
+    text-align: left;
   }
 }
 </style>

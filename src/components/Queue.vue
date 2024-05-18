@@ -112,9 +112,8 @@ watch(() => store.queue?.items.length, queueDownload);
     <header>
       <h2>Queues</h2>
       <div>
-        <button @click="deleteQueueAndVideos">X</button>
-        <!-- <button @click="queueDownload">⬇</button> -->
         <label><input type="checkbox" v-model="isDownloadingQueue" />⬇</label>
+        <button @click="deleteQueueAndVideos">X</button>
         <button @click="playQueue">▶</button>
       </div>
     </header>
