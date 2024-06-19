@@ -7,11 +7,10 @@ import type {
   Video,
   QueueState,
   QueuePlaylistReference,
+  QueueWithVideos,
 } from "Viz";
 import { v4 as uuidv4 } from "uuid";
 import { VideosDb } from "./VideosDb";
-
-// TODO remove need for queueId on methods targeting queue items
 
 type QueuesDbType = {
   state: QueueState;
@@ -56,6 +55,10 @@ export const QueuesDb = {
     return queuesDb.data.queues;
   },
 
+  get queuesWithVideos() {
+    return this.queues.map(({ id }) => this.getQueueWithVideos(id));
+  },
+
   get startTime() {
     return this.state.startTime;
   },
@@ -64,7 +67,7 @@ export const QueuesDb = {
     return this.getQueue(this.state.currentQueueId);
   },
 
-  get currentQueueWithVideos(): Queue {
+  get currentQueueWithVideos(): QueueWithVideos {
     return this.getQueueWithVideos(this.state.currentQueueId);
   },
 
@@ -96,7 +99,7 @@ export const QueuesDb = {
     return this.queues.find(({ id }) => id === queueId);
   },
 
-  getQueueWithVideos(queueId: string): Queue {
+  getQueueWithVideos(queueId: string): QueueWithVideos {
     const queue = this.getQueue(queueId);
     const itemsWithVideos = queue.items
       .filter((item) => !item.removed)
@@ -111,8 +114,10 @@ export const QueuesDb = {
     };
   },
 
-  getItem(queueId: string, queueItemId: string): QueueItem {
-    return this.getQueue(queueId).items.find(({ id }) => id === queueItemId);
+  getItem(queueItemId: string): QueueItem {
+    return this.queues
+      .flatMap(({ items }) => items)
+      .find(({ id }) => id === queueItemId);
   },
 
   getItemWithVideo(item: QueueItem): QueueItem {
@@ -165,24 +170,16 @@ export const QueuesDb = {
     await queuesDb.write();
   },
 
-  async removeItem(queueId: string, queueItemId: string) {
-    this.editItem(queueId, queueItemId, { removed: true });
+  async removeItem(queueItemId: string) {
+    this.editItem(queueItemId, { removed: true });
   },
 
-  async editItem(
-    queueId: string,
-    queueItemId: string,
-    props: Partial<QueueItem>
-  ) {
-    this.editItems(queueId, [queueItemId], props);
+  async editItem(queueItemId: string, props: Partial<QueueItem>) {
+    this.editItems([queueItemId], props);
   },
-  async editItems(
-    queueId: string,
-    queueItemIds: string[],
-    props: Partial<QueueItem>
-  ) {
+  async editItems(queueItemIds: string[], props: Partial<QueueItem>) {
     queueItemIds.forEach((queueItemId) => {
-      const queueItem = this.getItem(queueId, queueItemId);
+      const queueItem = this.getItem(queueItemId);
       Object.assign(queueItem, props);
     });
     await queuesDb.write();

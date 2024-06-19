@@ -3,11 +3,10 @@ import {
   onSaveStore,
   onUpdateStore,
   onUpdateAccountsStore,
-  onUpdateQueueStore,
+  onUpdateQueuesStore,
 } from "./store.telefunc";
 import { VizStore } from "./types/VizStore";
 
-// TODO add 'view'
 // const persistKeys = ["isPlaying", "sourceId"];
 
 export const store = reactive<VizStore>({
@@ -22,7 +21,7 @@ export const store = reactive<VizStore>({
     playlist: null,
     queue: null,
   },
-  queue: null, // TODO queues
+  queues: [],
   async saveStore() {
     // TODO
     // onSaveStore(
@@ -41,7 +40,7 @@ export const store = reactive<VizStore>({
   async updateAccountsStore() {
     this.accounts = await onUpdateAccountsStore();
   },
-  async updateQueueStore() {
-    this.queue = await onUpdateQueueStore();
+  async updateQueuesStore() {
+    this.queues = await onUpdateQueuesStore();
   },
 });

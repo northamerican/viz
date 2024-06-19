@@ -8,7 +8,10 @@ import { onSaveStore } from "../store.telefunc";
 const currentTime = ref(0);
 const currentTimeDisplay = ref(0);
 const isPlaying = ref(null);
-const totalDuration = computed(() => Math.round(store.queue?.totalDuration));
+// TODO current queue, not queues[0]
+const totalDuration = computed(() =>
+  Math.round(store.queues[0]?.totalDuration)
+);
 
 const seekTo = (e: Event) =>
   store.videoEl.fastSeek(+(e.target as HTMLInputElement).value);
@@ -63,7 +66,7 @@ onMounted(async () => {
         @input="seekTo"
       />
       <small class="time-display time-display--total">{{
-        totalDuration
+        totalDuration || "-"
       }}</small>
     </div>
   </section>

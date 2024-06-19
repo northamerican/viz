@@ -104,6 +104,10 @@ declare module "Viz" {
     playlists: QueuePlaylistReference[];
   };
 
+  export type QueueWithVideos = Queue & {
+    items: Required<QueueItem, "video">[];
+  };
+
   // export type QueuesList = {
   //   queues: []
   //   selected: Queue

@@ -12,7 +12,7 @@ const addToQueue = async (tracks: Track[]) => {
   const queueItems = tracks.map((track) => {
     return { track, videoId: null, removed: false, type: "track" };
   });
-  await onAddToQueue(store.queue?.id, queueItems, {
+  await onAddToQueue(store.view.queue?.id, queueItems, {
     id,
     name,
     player,
@@ -20,7 +20,7 @@ const addToQueue = async (tracks: Track[]) => {
     updatesQueue: true,
     type: "track",
   });
-  store.updateQueueStore();
+  store.updateQueuesStore();
 };
 
 const deselectPlaylist = () => {

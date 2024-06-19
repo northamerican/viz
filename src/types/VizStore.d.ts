@@ -12,11 +12,11 @@ export type VizStore = {
     playlist: Playlist;
     queue: Queue;
   };
-  queue: Queue;
+  queues: Queue[];
   saveStore: () => Promise<void>;
   updateStore: () => Promise<void>;
   updateAccountsStore: () => Promise<void>;
-  updateQueueStore: () => Promise<void>;
+  updateQueuesStore: () => Promise<void>;
 };
 
 export type PersistedVizStore = Pick<VizStore, "sourceId" | "isPlaying">;

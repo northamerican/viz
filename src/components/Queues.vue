@@ -12,7 +12,7 @@ import {
   onStartQueue,
   onUpdateQueueFromPlaylist,
   onGetNextDownloadableQueueItem,
-} from "./Queue.telefunc";
+} from "./Queues.telefunc";
 import { store } from "../store";
 import players from "../players";
 import { onSaveStore } from "../store.telefunc";
@@ -41,11 +41,11 @@ const playQueue = async () => {
 };
 
 const downloadVideo = async (queueItem: QueueItem) => {
-  const { videoId, url } = await onGetVideo(store.queue.id, queueItem);
-  await store.updateQueueStore();
+  const { videoId, url } = await onGetVideo(queueItem);
+  await store.updateQueuesStore();
   if (!videoId) return;
   await onDownloadVideo(videoId, url);
-  await store.updateQueueStore();
+  await store.updateQueuesStore();
   if (store.videoEl.currentTime === 0) {
     playQueue();
   }
@@ -64,14 +64,14 @@ const queueDownload = async () => {
 const deleteQueueAndVideos = async () => {
   const { videoEl } = store;
   await Promise.all([onDeleteQueues(), onDeleteVideos()]);
-  await store.updateQueueStore();
+  await store.updateQueuesStore();
   videoEl.pause();
   videoEl.load();
 };
 
 const removeItem = async (queueItem: QueueItem) => {
-  await onRemoveQueueItem(store.queue.id, queueItem.id);
-  store.updateQueueStore();
+  await onRemoveQueueItem(queueItem.id);
+  store.updateQueuesStore();
 };
 
 const actionsMenuOptions = (queueItem: QueueItem) => [
@@ -100,25 +100,30 @@ const actionsMenuOptions = (queueItem: QueueItem) => [
 
 onMounted(async () => {
   await onUpdateQueueFromPlaylist();
-  await store.updateQueueStore();
+  await store.updateQueuesStore();
 });
 
 watch(isDownloadingQueue, queueDownload, { immediate: true });
-watch(() => store.queue?.items.length, queueDownload);
+// watch(() => store.queues?.items.length, queueDownload);
 </script>
 
 <template>
-  <div v-if="store.queue">
-    <header>
-      <h2>Queues</h2>
-      <div>
-        <label><input type="checkbox" v-model="isDownloadingQueue" />⬇</label>
-        <button @click="deleteQueueAndVideos">X</button>
-        <button @click="playQueue">▶</button>
-      </div>
-    </header>
-    <div v-if="store.queue.items.length">
-      <ListItem v-for="item in store.queue.items" :key="item.id">
+  <header>
+    <h2>Queues</h2>
+    <div>
+      <label><input type="checkbox" v-model="isDownloadingQueue" />⬇</label>
+      <button @click="deleteQueueAndVideos">X</button>
+      <button @click="playQueue">▶</button>
+    </div>
+  </header>
+
+  <ol>
+    <li v-for="(queue, i) in store.queues" :key="i">Queue {{ i + 1 }}</li>
+  </ol>
+
+  <div v-for="(queue, i) in store.queues" :key="i">
+    <div v-if="queue.items.length">
+      <ListItem v-for="item in queue.items" :key="item.id">
         <div class="track-info">
           <strong>{{ item.track.name }}</strong>
           <span class="track-state">
@@ -143,10 +148,9 @@ watch(() => store.queue?.items.length, queueDownload);
           <ActionsMenu :options="actionsMenuOptions(item)" />
         </div>
       </ListItem>
-
       <hr />
       <ListItem
-        v-for="playlistReference in store.queue.playlists"
+        v-for="playlistReference in queue.playlists"
         :key="playlistReference.id"
       >
         <div>
@@ -166,7 +170,7 @@ watch(() => store.queue?.items.length, queueDownload);
         </div>
       </ListItem>
     </div>
-    <p v-else>Nothing queued.</p>
+    <div v-else>No items in queue.</div>
   </div>
 </template>
 

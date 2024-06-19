@@ -15,7 +15,7 @@ type GetVideoId = {
   }>;
 };
 
-export async function onGetVideo(queueId: string, queueItem: QueueItem) {
+export async function onGetVideo(queueItem: QueueItem) {
   const { track, id: queueItemId } = queueItem;
   const { artists, name, type } = track;
   const artist = artists[0];
@@ -45,12 +45,12 @@ export async function onGetVideo(queueId: string, queueItem: QueueItem) {
       source: StoreDb.sourceId,
       sourceUrl: url,
     });
-    await QueuesDb.editItem(queueId, queueItemId, { videoId });
+    await QueuesDb.editItem(queueItemId, { videoId });
 
     return { videoId, url };
   } catch (e) {
     const error = e instanceof Error ? e.message : String(e);
-    await QueuesDb.editItem(queueId, queueItemId, {
+    await QueuesDb.editItem(queueItemId, {
       error,
     });
 
@@ -70,8 +70,8 @@ export async function onGetNextDownloadableQueueItem() {
   return queueItem;
 }
 
-export async function onRemoveQueueItem(queueId: string, queueItemId: string) {
-  await QueuesDb.removeItem(queueId, queueItemId);
+export async function onRemoveQueueItem(queueItemId: string) {
+  await QueuesDb.removeItem(queueItemId);
 }
 
 export async function onDeleteVideos() {

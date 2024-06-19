@@ -4,7 +4,7 @@ import Accounts from "./components/Accounts.vue";
 import VideoPlayer from "./components/VideoPlayer.vue";
 import Playlist from "./components/Playlist.vue";
 import Playlists from "./components/Playlists.vue";
-import Queue from "./components/Queue.vue";
+import Queues from "./components/Queues.vue";
 import { store } from "./store";
 
 const libraryView = computed(
@@ -26,6 +26,7 @@ const libraryView = computed(
 
     <main>
       <VideoPlayer />
+      <!-- TODO <Library /> -->
       <section class="library">
         <Accounts v-show="libraryView('account')" />
         <Playlists
@@ -37,7 +38,7 @@ const libraryView = computed(
           :playlist="store.view.playlist"
         />
         <div>
-          <Queue />
+          <Queues />
         </div>
       </section>
     </main>
