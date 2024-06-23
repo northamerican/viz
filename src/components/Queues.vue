@@ -117,13 +117,17 @@ watch(isDownloadingQueue, queueDownload, { immediate: true });
     </div>
   </header>
 
-  <ol>
+  <ul>
     <li v-for="(queue, i) in store.queues" :key="i">Queue {{ i + 1 }}</li>
-  </ol>
+  </ul>
 
   <div v-for="(queue, i) in store.queues" :key="i">
     <div v-if="queue.items.length">
       <ListItem v-for="item in queue.items" :key="item.id">
+        <span class="track-type">
+          <span v-if="item.track.type === 'track'">🎵</span>
+          <span v-if="item.track.type === 'interstitial'">🎬</span>
+        </span>
         <div class="track-info">
           <strong>{{ item.track.name }}</strong>
           <span class="track-state">
@@ -154,8 +158,8 @@ watch(isDownloadingQueue, queueDownload, { immediate: true });
         :key="playlistReference.id"
       >
         <div>
-          <!-- {{ playlistReference.type }} -->
-          <span v-if="playlistReference.updatesQueue">updates from</span>
+          <strong>{{ playlistReference.type }}s&nbsp;</strong>
+          <span v-if="playlistReference.updatesQueue">update from</span>
           {{ playlistReference.player }} playlist
           <br />
 
@@ -181,14 +185,17 @@ header {
   align-items: center;
   margin-inline: 0.5rem;
 }
+.track-type {
+  margin-right: 0.5em;
+}
 
 .track-info {
   .track-artist + .track-artist::before {
     content: ", ";
   }
-}
 
-.track-state::before {
-  content: " ";
+  .track-state::before {
+    content: " ";
+  }
 }
 </style>

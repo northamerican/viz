@@ -92,7 +92,7 @@ declare module "Viz" {
     id: string;
     name: string;
     player: PlayerId;
-    account: AccountBase; // TODO this has tokens in it. just store account id
+    account: Pick<AccountBase, "id" | "displayName" | "profileUrl" | "player">;
     updatesQueue: boolean;
     type: TrackType;
   };

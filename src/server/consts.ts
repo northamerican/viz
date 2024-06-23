@@ -1,5 +1,10 @@
+import { getLocalIp } from "./helpers";
+
+const localIp = getLocalIp();
+if (!localIp) throw "Unable to determine local IP";
+
 const remotePort = +process.env.REMOTE_PORT;
-const remoteHost = process.env.REMOTE_HOST;
+const remoteHost = localIp;
 const localPort = +process.env.LOCAL_PORT;
 const localHost = process.env.LOCAL_HOST;
 const isLocal = process.argv.includes("--local");

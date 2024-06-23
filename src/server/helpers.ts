@@ -1,4 +1,19 @@
 import fs from "fs";
+import os from "os";
+
+export function getLocalIp() {
+  return Object.values(os.networkInterfaces()).reduce(
+    (r, list) =>
+      r.concat(
+        list.reduce(
+          (rr, i) =>
+            rr.concat((i.family === "IPv4" && !i.internal && i.address) || []),
+          []
+        )
+      ),
+    []
+  )[0];
+}
 
 export function getSegmentDurations(filePath: fs.PathOrFileDescriptor) {
   return fs
