@@ -4,12 +4,12 @@
 Turn your playlists into a music video stream.
 
 ## Usage
-- run `yarn server`
-- navigate to url
+- Run `yarn server`
+- Navigate to url with Safari browser
 
 ## Development
 
-- run `yarn server --local`
+- Run `yarn server --local`
 
 ## Tech stack
 - [node](https://nodejs.org/en)
