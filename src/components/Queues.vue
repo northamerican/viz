@@ -21,6 +21,7 @@ import { onLoadPlaylist } from "./Playlists.telefunc";
 // TODO store should have queues / 1:1 copy of the queues json?
 
 const isDownloadingQueue = ref(false);
+const isUpdatingQueue = ref(false);
 
 const getPlaylist = async (playlistReference: QueuePlaylistReference) => {
   store.view.playlist = null;
@@ -51,13 +52,20 @@ const downloadVideo = async (queueItem: QueueItem) => {
   }
 };
 
-const queueDownload = async () => {
+const downloadQueue = async () => {
   if (isDownloadingQueue.value) {
     const queueItem = await onGetNextDownloadableQueueItem();
     if (queueItem) {
       await downloadVideo(queueItem);
-      queueDownload();
+      downloadQueue();
     }
+  }
+};
+
+const updateQueueFromPlaylist = async () => {
+  if (isUpdatingQueue.value) {
+    await onUpdateQueueFromPlaylist();
+    await store.updateQueuesStore();
   }
 };
 
@@ -99,27 +107,27 @@ const actionsMenuOptions = (queueItem: QueueItem) => [
 ];
 
 onMounted(async () => {
-  await onUpdateQueueFromPlaylist();
-  await store.updateQueuesStore();
+  store.updateQueuesStore();
 });
 
-watch(isDownloadingQueue, queueDownload, { immediate: true });
-// watch(() => store.queues?.items.length, queueDownload);
+watch(isDownloadingQueue, downloadQueue, { immediate: true });
+watch(isUpdatingQueue, updateQueueFromPlaylist, { immediate: true });
 </script>
 
 <template>
   <header>
     <h2>Queues</h2>
     <div>
-      <label><input type="checkbox" v-model="isDownloadingQueue" />⬇</label>
+      <label><input type="checkbox" v-model="isDownloadingQueue" />⬇️</label>
+      <label><input type="checkbox" v-model="isUpdatingQueue" />🔄</label>
       <button @click="deleteQueueAndVideos">X</button>
       <button @click="playQueue">▶</button>
     </div>
   </header>
 
-  <ul>
-    <li v-for="(queue, i) in store.queues" :key="i">Queue {{ i + 1 }}</li>
-  </ul>
+  <div v-for="(_, i) in store.queues" :key="i">
+    <h3>Queue {{ i + 1 }}</h3>
+  </div>
 
   <div v-for="(queue, i) in store.queues" :key="i">
     <div v-if="queue.items.length">
@@ -153,6 +161,7 @@ watch(isDownloadingQueue, queueDownload, { immediate: true });
         </div>
       </ListItem>
       <hr />
+      <h3>Sources</h3>
       <ListItem
         v-for="playlistReference in queue.playlists"
         :key="playlistReference.id"
