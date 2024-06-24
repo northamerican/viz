@@ -110,6 +110,7 @@ export default class SpotifyPlayer implements VizPlayer {
     }
   }
 
+  // TODO remove - just put the body of this fn where it is used
   async getRefreshToken() {
     return this.login(null, true);
   }
