@@ -14,9 +14,9 @@ export const appUrl = `http://${appHost}:${appPort}/`;
 
 export const projectRoot = new URL(import.meta.url + "/../../..").pathname;
 export const hlsDir = `${projectRoot}public/hls/`;
-export const tsPath = (
-  videoId = ":videoId",
-  segmentIndex: string | number = ":segmentIndex"
+export const hlsSegmentPath = (
+  videoId: string,
+  segmentIndex: number | string
 ) => `/hls/${videoId}/${videoId}${segmentIndex}.ts`;
 
 const dbDir = `${projectRoot}src/server/db/data/`;

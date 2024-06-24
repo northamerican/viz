@@ -29,7 +29,6 @@ const queuesDbDefault: QueuesDbType = {
   queues: [
     {
       id: defaultUuid,
-      totalDuration: null,
       items: [],
       playlists: [],
     },

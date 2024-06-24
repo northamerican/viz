@@ -1,69 +1,52 @@
-import { tsPath } from "./consts";
+import { hlsSegmentPath } from "./consts";
 import { QueuesDb } from "./db/QueuesDb";
 import { VideosDb } from "./db/VideosDb";
 
-type M3u8Template = (args: {
-  startTime: number;
-  now: number;
-  longestSegmentDuration: number;
-  mediaSequence?: number;
-}) => string;
-const m3u8Template: M3u8Template = ({
-  startTime,
-  now,
-  longestSegmentDuration,
-  mediaSequence = 0,
-}) => `#EXTM3U
-#EXT-X-VERSION:3
-#EXT-X-TARGETDURATION:${longestSegmentDuration}
-#EXT-X-MEDIA-SEQUENCE:${mediaSequence}
-#EXT-X-START:TIME-OFFSET=${(now - startTime) / 1000}`;
+// TODO append onto cached string if needed due to performance
 
-// TODO check performance of this fn and see if caching is needed when there's lots of clips
-
-const streamWindowTimeAfter = 45000;
+// Include segments within this many ms ahead of the current stream play position
+const streamBufferTime = 45000;
 
 export async function vizM3u8() {
   await Promise.all([QueuesDb.read(), VideosDb.read()]);
 
   let totalDuration = 0;
-  let mediaSequence = Infinity;
+  let tsSegments = "";
 
+  const { currentQueueSegmentInfo, startTime } = QueuesDb;
   const now = Date.now();
-  const { currentQueueSegmentInfo } = QueuesDb;
+  const startTimeOffset = (now - startTime) / 1000;
+  // TODO probably not needed if ffmpeg is capping segments to x seconds
   const longestSegmentDuration = Math.ceil(
     Math.max(...currentQueueSegmentInfo.map(({ duration }) => duration))
   );
-  const tsSegments = currentQueueSegmentInfo
-    .map(({ videoId, duration, segmentIndex }, playlistSegmentIndex) => {
-      const timeOffset = QueuesDb.startTime + 1000 * totalDuration;
-      totalDuration += duration;
 
-      const latestSegmentTime = now + streamWindowTimeAfter;
-      const excludeSegment = latestSegmentTime < timeOffset;
+  const m3uHeaders = `#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-TARGETDURATION:${longestSegmentDuration}
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-START:TIME-OFFSET=${startTimeOffset}`;
 
-      if (excludeSegment) return "";
+  const vizIntro = `\n#EXT-X-DISCONTINUITY
+#EXTINF:1.970000
+/hls-static/viz-intro.ts`;
 
-      // Lowest segment index indicates the first sequence
-      mediaSequence = Math.min(mediaSequence, playlistSegmentIndex);
+  for (const { videoId, duration, segmentIndex } of currentQueueSegmentInfo) {
+    const timeOffset = QueuesDb.startTime + 1000 * totalDuration;
+    totalDuration += duration;
 
-      const discontinuity = segmentIndex === 0 ? "\n#EXT-X-DISCONTINUITY" : "";
-      const infDuration = `#EXTINF:${duration.toFixed(6)}`;
-      const tsUrl = tsPath(videoId, segmentIndex);
+    const latestSegmentTime = now + streamBufferTime;
+    const excludeSegment = latestSegmentTime < timeOffset;
+    if (excludeSegment) break;
 
-      return [discontinuity, infDuration, tsUrl].join("\n");
-    })
-    .join("");
+    const discontinuity = segmentIndex === 0 ? "\n#EXT-X-DISCONTINUITY" : "";
+    const infDuration = `#EXTINF:${duration.toFixed(6)}`;
+    const tsUrl = hlsSegmentPath(videoId, segmentIndex);
+
+    tsSegments += [discontinuity, infDuration, tsUrl].join("\n");
+  }
 
   // TODO append endless stream of Viz logo at the end until something new is queued
 
-  return [
-    m3u8Template({
-      startTime: QueuesDb.startTime,
-      now,
-      longestSegmentDuration,
-      mediaSequence,
-    }),
-    tsSegments,
-  ].join("\n");
+  return [m3uHeaders, vizIntro, tsSegments].join("\n");
 }
