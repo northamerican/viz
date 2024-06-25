@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { QueueItem, QueuePlaylistReference } from "Viz";
+import type { QueueItem, QueuePlaylistReference, Track } from "Viz";
 import ListItem from "./ListItem.vue";
 import ActionsMenu from "./ActionsMenu.vue";
 import { onMounted, ref, watch } from "vue";
@@ -19,9 +19,12 @@ import { onSaveStore } from "../store.telefunc";
 import { onLoadPlaylist } from "./Playlists.telefunc";
 
 // TODO store should have queues / 1:1 copy of the queues json?
+// TODO split into Queue.vue
 
-const isDownloadingQueue = ref(false);
+const isDownloadingQueue = ref(true);
 const isUpdatingQueue = ref(false);
+
+const isInterstitial = (track: Track) => track.type === "interstitial";
 
 const getPlaylist = async (playlistReference: QueuePlaylistReference) => {
   store.view.playlist = null;
@@ -110,6 +113,7 @@ onMounted(async () => {
   store.updateQueuesStore();
 });
 
+watch(() => store.queues[0]?.items.length, downloadQueue);
 watch(isDownloadingQueue, downloadQueue, { immediate: true });
 watch(isUpdatingQueue, updateQueueFromPlaylist, { immediate: true });
 </script>
@@ -131,29 +135,35 @@ watch(isUpdatingQueue, updateQueueFromPlaylist, { immediate: true });
 
   <div v-for="(queue, i) in store.queues" :key="i">
     <div v-if="queue.items.length">
-      <ListItem v-for="item in queue.items" :key="item.id">
+      <ListItem
+        v-for="item in queue.items"
+        :key="item.id"
+        :class="{ compact: isInterstitial(item.track) }"
+      >
         <span class="track-type">
-          <span v-if="item.track.type === 'track'">🎵</span>
-          <span v-if="item.track.type === 'interstitial'">🎬</span>
+          <span v-if="isInterstitial(item.track)">🎬</span>
+          <span v-else>🎵</span>
         </span>
         <div class="track-info">
           <strong>{{ item.track.name }}</strong>
           <span class="track-state">
             <span v-if="item.video?.downloading">⌛︎</span>
-            <span v-if="item.video?.downloaded">✔</span>
             <span
-              v-if="item.video?.error || item.error"
+              v-else-if="item.video?.error || item.error"
               :title="item.video?.error || item.error"
-              >X</span
+              >❌</span
             >
+            <span v-else-if="!item.video?.downloaded">❓</span>
           </span>
           <br />
-          <span
-            class="track-artist"
-            v-for="artist in item.track.artists"
-            :key="artist"
-          >
-            {{ artist }}
+          <span v-if="!isInterstitial(item.track)">
+            <span
+              class="track-artist"
+              v-for="artist in item.track.artists"
+              :key="artist"
+            >
+              {{ artist }}
+            </span>
           </span>
         </div>
         <div class="actions">

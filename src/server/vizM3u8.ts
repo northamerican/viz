@@ -27,10 +27,6 @@ export async function vizM3u8() {
 #EXT-X-MEDIA-SEQUENCE:0
 #EXT-X-START:TIME-OFFSET=${startTimeOffset}`;
 
-  const vizIntro = `\n#EXT-X-DISCONTINUITY
-#EXTINF:1.970000
-/hls-static/viz-intro.ts`;
-
   for (const { videoId, duration, segmentIndex } of currentQueueSegmentInfo) {
     const timeOffset = QueuesDb.startTime + 1000 * totalDuration;
     totalDuration += duration;
@@ -48,5 +44,5 @@ export async function vizM3u8() {
 
   // TODO append endless stream of Viz logo at the end until something new is queued
 
-  return [m3uHeaders, vizIntro, tsSegments].join("\n");
+  return [m3uHeaders, tsSegments].join("\n");
 }

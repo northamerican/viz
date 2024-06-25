@@ -87,6 +87,7 @@ declare module "Viz" {
     removed: boolean;
     error?: string;
   };
+  export type NewQueueItem = Omit<QueueItem, "id">;
 
   export type QueuePlaylistReference = {
     id: string;
@@ -100,11 +101,11 @@ declare module "Viz" {
   export type Queue = {
     id: string;
     items: QueueItem[];
-    totalDuration: number;
     playlists: QueuePlaylistReference[];
   };
 
   export type QueueWithVideos = Queue & {
+    totalDuration: number;
     items: Required<QueueItem, "video">[];
   };
 

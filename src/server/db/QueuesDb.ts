@@ -8,9 +8,11 @@ import type {
   QueueState,
   QueuePlaylistReference,
   QueueWithVideos,
+  NewQueueItem,
 } from "Viz";
 import { v4 as uuidv4 } from "uuid";
 import { VideosDb } from "./VideosDb";
+import { vizIntroQueueItem } from "./fixtures/queues";
 
 type QueuesDbType = {
   state: QueueState;
@@ -29,7 +31,7 @@ const queuesDbDefault: QueuesDbType = {
   queues: [
     {
       id: defaultUuid,
-      items: [],
+      items: [vizIntroQueueItem],
       playlists: [],
     },
   ],
@@ -159,7 +161,7 @@ export const QueuesDb = {
   async addItem(queueId: string, props: QueueItem) {
     this.addItems(queueId, [props]);
   },
-  async addItems(queueId: string, items: Omit<QueueItem, "id">[]) {
+  async addItems(queueId: string, items: NewQueueItem[]) {
     this.getQueue(queueId).items.push(
       ...items.map((props) => ({
         ...props,

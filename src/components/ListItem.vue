@@ -13,6 +13,10 @@
   padding: 0.5rem;
   min-height: 64px;
 
+  &.compact {
+    min-height: 40px;
+  }
+
   & .actions {
     display: none;
   }

@@ -1,9 +1,9 @@
-import type { QueueItem, QueuePlaylistReference } from "Viz";
+import type { NewQueueItem, QueuePlaylistReference } from "Viz";
 import { QueuesDb } from "../server/db/QueuesDb";
 
 export async function onAddToQueue(
   queueId: string = QueuesDb.currentQueue.id,
-  queueItems: Omit<QueueItem, "id">[],
+  queueItems: NewQueueItem[],
   queuePlaylistReference: QueuePlaylistReference
 ) {
   await QueuesDb.addItems(queueId, queueItems);
