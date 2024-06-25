@@ -77,7 +77,6 @@ declare module "Viz" {
     currentQueueId: string;
     isPlaying: boolean;
     startTime: number;
-    seekOffsetTime: number;
   };
   export type QueueItem = {
     id: string;

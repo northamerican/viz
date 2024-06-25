@@ -12,7 +12,7 @@ export type VizStore = {
     playlist: Playlist;
     queue: Queue;
   };
-  queues: Queue[];
+  queues: QueueWithVideos[];
   saveStore: () => Promise<void>;
   updateStore: () => Promise<void>;
   updateAccountsStore: () => Promise<void>;

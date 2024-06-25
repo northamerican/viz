@@ -20,18 +20,18 @@ type QueuesDbType = {
 };
 
 const defaultUuid = uuidv4();
+const queueItemsDefault = [vizIntroQueueItem];
 const queuesDbDefault: QueuesDbType = {
   // TODO get rid of these, or move em to inside queues
   state: {
     currentQueueId: defaultUuid,
     isPlaying: true,
     startTime: Date.now(),
-    seekOffsetTime: 0,
   },
   queues: [
     {
       id: defaultUuid,
-      items: [vizIntroQueueItem],
+      items: queueItemsDefault,
       playlists: [],
     },
   ],
@@ -134,12 +134,20 @@ export const QueuesDb = {
     });
   },
 
-  // async editQueue(queueId: string, props: Omit<Partial<Queue>, "items">) {
+  // async editQueue(queueId: string, props: Omit<Partial<Queue>, "id">) {
   //   await queuesDb.update(() => {
-  //     const queue = this.getQueue(queueId);
-  //     Object.assign(queue, props);
+  //     Object.assign(this.getQueue(queueId), props);
   //   });
   // },
+
+  async clearQueue(queueId: string) {
+    await queuesDb.update(() => {
+      Object.assign(this.getQueue(queueId), {
+        items: queueItemsDefault,
+        playlists: [],
+      });
+    });
+  },
 
   async addPlaylist(queueId: string, newPlaylist: QueuePlaylistReference) {
     await queuesDb.update(() => {
