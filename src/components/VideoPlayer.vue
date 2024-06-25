@@ -8,9 +8,8 @@ import { onSaveStore } from "../store.telefunc";
 const currentTime = ref(0);
 const currentTimeDisplay = ref(0);
 const isPlaying = ref(null);
-// TODO current queue, not queues[0]
 const totalDuration = computed(() =>
-  Math.round(store.queues[0]?.totalDuration)
+  Math.round(store.queues.find(({ active }) => active)?.totalDuration)
 );
 
 const seekTo = (e: Event) =>
@@ -45,7 +44,7 @@ onMounted(async () => {
   <section class="player">
     <video
       id="video"
-      :ref="(el) => (store.videoEl = el as HTMLMediaElement)"
+      :ref="(el: HTMLMediaElement) => (store.videoEl = el)"
       :src="m3u8Path"
       controls
       playsinline

@@ -73,11 +73,6 @@ declare module "Viz" {
     [id: string]: Video;
   };
 
-  export type QueueState = {
-    currentQueueId: string;
-    isPlaying: boolean;
-    startTime: number;
-  };
   export type QueueItem = {
     id: string;
     track: Track;
@@ -99,6 +94,9 @@ declare module "Viz" {
 
   export type Queue = {
     id: string;
+    name: string;
+    active: boolean;
+    startTime: number;
     items: QueueItem[];
     playlists: QueuePlaylistReference[];
   };

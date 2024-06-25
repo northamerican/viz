@@ -2,7 +2,7 @@ import type { NewQueueItem, QueuePlaylistReference } from "Viz";
 import { QueuesDb } from "../server/db/QueuesDb";
 
 export async function onAddToQueue(
-  queueId: string = QueuesDb.currentQueue.id,
+  queueId: string = QueuesDb.activeQueue.id,
   queueItems: NewQueueItem[],
   queuePlaylistReference: QueuePlaylistReference
 ) {

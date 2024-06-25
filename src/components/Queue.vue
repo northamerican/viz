@@ -7,7 +7,7 @@ import {
   onGetVideo,
   onDownloadVideo,
   onRemoveQueueItem,
-  onStartQueue,
+  onPlayQueue,
   onUpdateQueueFromPlaylist,
   onGetNextDownloadableQueueItem,
   onClearQueue,
@@ -18,6 +18,7 @@ import { onSaveStore } from "../store.telefunc";
 import { onLoadPlaylist } from "./Playlists.telefunc";
 
 const props = defineProps<{ queue: Queue }>();
+const hasAutoInterstitialInsertion = ref(false);
 const isDownloadingQueue = ref(true);
 const isUpdatingQueue = ref(false);
 
@@ -38,7 +39,7 @@ const removeItem = async (queueItem: QueueItem) => {
 };
 
 const playQueue = async () => {
-  await onStartQueue();
+  await onPlayQueue(props.queue.id);
   const { videoEl } = store;
   videoEl.load();
   videoEl.fastSeek ? videoEl.fastSeek(0) : (videoEl.currentTime = 0);
@@ -67,19 +68,19 @@ const downloadQueue = async () => {
   }
 };
 
-const updateQueueFromPlaylist = async () => {
-  if (isUpdatingQueue.value) {
-    await onUpdateQueueFromPlaylist();
-    await store.updateQueuesStore();
-  }
-};
-
 const clearQueue = async () => {
   const { videoEl } = store;
   await onClearQueue(props.queue.id);
   await store.updateQueuesStore();
   videoEl.pause();
   videoEl.load();
+};
+
+const updateQueueFromPlaylist = async () => {
+  if (isUpdatingQueue.value) {
+    await onUpdateQueueFromPlaylist();
+    await store.updateQueuesStore();
+  }
 };
 
 const actionsMenuOptions = (queueItem: QueueItem) => [
@@ -113,6 +114,10 @@ watch(isUpdatingQueue, updateQueueFromPlaylist, { immediate: true });
 
 <template>
   <div class="queue-controls">
+    <label>
+      <input type="checkbox" v-model="hasAutoInterstitialInsertion" />Add
+      Interstitals
+    </label>
     <label
       ><input type="checkbox" v-model="isDownloadingQueue" />Get Automatically
     </label>
@@ -197,6 +202,7 @@ header {
   justify-content: flex-end;
   gap: 0.5rem;
 }
+
 .queue-item {
   cursor: default;
 }

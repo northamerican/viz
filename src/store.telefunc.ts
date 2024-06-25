@@ -14,6 +14,7 @@ export async function onUpdateStore() {
   return StoreDb.data;
 }
 
+// Return Queues for use in the view
 export async function onUpdateQueuesStore() {
   return QueuesDb.queuesWithVideos;
 }
@@ -21,11 +22,11 @@ export async function onUpdateQueuesStore() {
 // Return accounts for use in the view
 export async function onUpdateAccountsStore() {
   return Object.values(AccountsDb.accounts).map(
-    ({ id, player, isLoggedIn, displayName, profileUrl }) => ({
+    ({ id, displayName, player, isLoggedIn, profileUrl }) => ({
       id,
+      displayName,
       player,
       isLoggedIn,
-      displayName,
       profileUrl,
       playlists: null,
     })

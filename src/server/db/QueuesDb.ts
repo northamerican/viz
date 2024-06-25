@@ -5,7 +5,6 @@ import type {
   QueueItem,
   SegmentInfo,
   Video,
-  QueueState,
   QueuePlaylistReference,
   QueueWithVideos,
   NewQueueItem,
@@ -15,22 +14,18 @@ import { VideosDb } from "./VideosDb";
 import { vizIntroQueueItem } from "./fixtures/queues";
 
 type QueuesDbType = {
-  state: QueueState;
   queues: Queue[];
 };
 
 const defaultUuid = uuidv4();
 const queueItemsDefault = [vizIntroQueueItem];
 const queuesDbDefault: QueuesDbType = {
-  // TODO get rid of these, or move em to inside queues
-  state: {
-    currentQueueId: defaultUuid,
-    isPlaying: true,
-    startTime: Date.now(),
-  },
   queues: [
     {
       id: defaultUuid,
+      name: "Queue 1",
+      active: true,
+      startTime: Date.now(),
       items: queueItemsDefault,
       playlists: [],
     },
@@ -48,10 +43,6 @@ export const QueuesDb = {
     await queuesDb.read();
   },
 
-  get state() {
-    return queuesDb.data.state;
-  },
-
   get queues() {
     return queuesDb.data.queues;
   },
@@ -60,26 +51,19 @@ export const QueuesDb = {
     return this.queues.map(({ id }) => this.getQueueWithVideos(id));
   },
 
-  get startTime() {
-    return this.state.startTime;
+  get activeQueue(): Queue {
+    return this.queues.find(({ active }) => active);
   },
 
-  get currentQueue(): Queue {
-    return this.getQueue(this.state.currentQueueId);
+  get activeQueueWithVideos(): QueueWithVideos {
+    return this.getQueueWithVideos(this.activeQueue.id);
   },
 
-  get currentQueueWithVideos(): QueueWithVideos {
-    return this.getQueueWithVideos(this.state.currentQueueId);
-  },
-
-  get currentQueueVideos(): Video[] {
-    return this.currentQueueWithVideos.items.flatMap(
+  get activeQueueSegmentInfo(): SegmentInfo[] {
+    const activeQueueVideos = this.activeQueueWithVideos.items.flatMap(
       (item) => item.video ?? []
-    );
-  },
-
-  get currentQueueSegmentInfo(): SegmentInfo[] {
-    return this.currentQueueVideos.flatMap(({ segmentDurations, id }) => {
+    ) as Video[];
+    return activeQueueVideos.flatMap(({ segmentDurations, id }) => {
       return segmentDurations.map((duration, segmentIndex) => ({
         segmentIndex,
         videoId: id,
@@ -89,7 +73,7 @@ export const QueuesDb = {
   },
 
   get nextDownloadableInQueue(): QueueItem {
-    const firstNotDownloaded = this.currentQueueWithVideos.items.find(
+    const firstNotDownloaded = this.activeQueueWithVideos.items.find(
       (item) => !item.video?.downloaded && !item.video?.error && !item.error
     );
     // Return QueueItem only if it's idle / not downloading.
@@ -128,17 +112,17 @@ export const QueuesDb = {
     };
   },
 
-  async setStartTime(timestamp: number) {
-    await queuesDb.update((data) => {
-      data.state.startTime = timestamp;
+  async playQueue(queueId: string) {
+    await queuesDb.update(() => {
+      this.queues.forEach((queue) => {
+        const isTargetQueue = queueId === queue.id;
+        queue.active = isTargetQueue;
+        if (isTargetQueue) {
+          queue.startTime = Date.now();
+        }
+      });
     });
   },
-
-  // async editQueue(queueId: string, props: Omit<Partial<Queue>, "id">) {
-  //   await queuesDb.update(() => {
-  //     Object.assign(this.getQueue(queueId), props);
-  //   });
-  // },
 
   async clearQueue(queueId: string) {
     await queuesDb.update(() => {

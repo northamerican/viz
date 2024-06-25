@@ -13,12 +13,13 @@ export async function vizM3u8() {
   let totalDuration = 0;
   let tsSegments = "";
 
-  const { currentQueueSegmentInfo, startTime } = QueuesDb;
+  const { activeQueueSegmentInfo, activeQueue } = QueuesDb;
+  const { startTime } = activeQueue;
   const now = Date.now();
   const startTimeOffset = (now - startTime) / 1000;
   // TODO probably not needed if ffmpeg is capping segments to x seconds
   const longestSegmentDuration = Math.ceil(
-    Math.max(...currentQueueSegmentInfo.map(({ duration }) => duration))
+    Math.max(...activeQueueSegmentInfo.map(({ duration }) => duration))
   );
 
   const m3uHeaders = `#EXTM3U
@@ -27,8 +28,8 @@ export async function vizM3u8() {
 #EXT-X-MEDIA-SEQUENCE:0
 #EXT-X-START:TIME-OFFSET=${startTimeOffset}`;
 
-  for (const { videoId, duration, segmentIndex } of currentQueueSegmentInfo) {
-    const timeOffset = QueuesDb.startTime + 1000 * totalDuration;
+  for (const { videoId, duration, segmentIndex } of activeQueueSegmentInfo) {
+    const timeOffset = startTime + 1000 * totalDuration;
     totalDuration += duration;
 
     const latestSegmentTime = now + streamBufferTime;

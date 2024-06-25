@@ -74,28 +74,28 @@ export async function onClearQueue(queueId: string) {
   await QueuesDb.clearQueue(queueId);
 }
 
-export async function onStartQueue() {
-  await QueuesDb.setStartTime(Date.now());
+export async function onPlayQueue(queueId: string) {
+  await QueuesDb.playQueue(queueId);
 }
 
 export async function onUpdateQueueFromPlaylist() {
-  const { playlists } = QueuesDb.currentQueue;
-  const currentQueuePlaylist = playlists.find(
+  const { playlists } = QueuesDb.activeQueue;
+  const activeQueuePlaylist = playlists.find(
     (playlist) => playlist.updatesQueue
   );
 
-  if (!currentQueuePlaylist) return;
+  if (!activeQueuePlaylist) return;
 
   // Every account associated with playlist must be logged in
-  const playlistsLoggedIn = QueuesDb.currentQueue.playlists.every(
+  const playlistsLoggedIn = QueuesDb.activeQueue.playlists.every(
     (playlist) => AccountsDb.account(playlist.account.id)?.isLoggedIn
   );
 
   if (!playlistsLoggedIn) return;
 
-  const { id, account } = currentQueuePlaylist;
+  const { id, account } = activeQueuePlaylist;
   const latestAddedAt = Math.max(
-    ...QueuesDb.currentQueue.items.map((item) => item.track.addedAt)
+    ...QueuesDb.activeQueue.items.map((item) => item.track.addedAt)
   );
   const player = new playerApi[<PlayerId>account.player](account.id);
   const playlist = await player.getPlaylist(id);
@@ -107,5 +107,5 @@ export async function onUpdateQueueFromPlaylist() {
     return { track, videoId: null, removed: false };
   });
 
-  await QueuesDb.addItems(QueuesDb.currentQueue.id, newItems);
+  await QueuesDb.addItems(QueuesDb.activeQueue.id, newItems);
 }
