@@ -162,7 +162,7 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
         });
 
         console.timeEnd(wroteToDbMsg);
-        resolve({ videoId, url });
+        resolve();
       });
     });
   } catch (e) {
@@ -173,7 +173,7 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
       error,
     });
 
-    return Promise.resolve({ videoId, url });
+    return Promise.resolve();
   }
 };
 

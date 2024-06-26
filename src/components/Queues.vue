@@ -14,7 +14,7 @@ onMounted(async () => {
   </header>
 
   <div v-for="queue in store.queues" :key="queue.id">
-    <h3>Queue {{ queue.name }} <small v-if="queue.active">▶️</small></h3>
+    <h3>{{ queue.name }} <small v-if="queue.active">▶️</small></h3>
   </div>
   <div v-for="queue in store.queues" :key="queue.id">
     <Queue :queue="queue" v-if="queue.active" />

@@ -136,9 +136,8 @@ export const QueuesDb = {
   async addPlaylist(queueId: string, newPlaylist: QueuePlaylistReference) {
     await queuesDb.update(() => {
       const queue = this.getQueue(queueId);
-      const newPlaylistType = newPlaylist.type;
       const existingPlaylistOfType = queue.playlists.find(
-        (playlist) => playlist.type === newPlaylistType
+        (playlist) => playlist.type === newPlaylist.type
       );
       if (existingPlaylistOfType) {
         queue.playlists = queue.playlists.map((playlist) =>
@@ -147,6 +146,18 @@ export const QueuesDb = {
       } else {
         queue.playlists.push(newPlaylist);
       }
+    });
+  },
+
+  async editPlaylist(
+    queueId: string,
+    playlistId: string,
+    props: Pick<QueuePlaylistReference, "updatesQueue">
+  ) {
+    await queuesDb.update(() => {
+      const queue = this.getQueue(queueId);
+      const playlist = queue.playlists.find(({ id }) => playlistId === id);
+      Object.assign(playlist, props);
     });
   },
 

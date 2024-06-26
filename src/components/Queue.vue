@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import type { Queue, QueueItem, QueuePlaylistReference, Track } from "Viz";
+import type {
+  Queue,
+  QueueItem,
+  QueuePlaylistReference,
+  Track,
+  TrackType,
+} from "Viz";
 import ListItem from "./ListItem.vue";
 import ActionsMenu from "./ActionsMenu.vue";
 import { ref, watch } from "vue";
@@ -11,6 +17,7 @@ import {
   onUpdateQueueFromPlaylist,
   onGetNextDownloadableQueueItem,
   onClearQueue,
+  onUpdatePlaylistReference,
 } from "./Queue.telefunc";
 import { store } from "../store";
 import players from "../players";
@@ -18,11 +25,13 @@ import { onSaveStore } from "../store.telefunc";
 import { onLoadPlaylist } from "./Playlists.telefunc";
 
 const props = defineProps<{ queue: Queue }>();
-const hasAutoInterstitialInsertion = ref(false);
 const isDownloadingQueue = ref(true);
-const isUpdatingQueue = ref(false);
+
+// TODO separate queue items, sources
 
 const isInterstitial = (track: Track) => track.type === "interstitial";
+const trackTypeIcon = (type: TrackType) =>
+  type === "interstitial" ? "🎬" : "🎵";
 
 const getPlaylist = async (playlistReference: QueuePlaylistReference) => {
   store.view.playlist = null;
@@ -31,6 +40,16 @@ const getPlaylist = async (playlistReference: QueuePlaylistReference) => {
     playlistReference.id
   );
   store.view.playlist = playlist;
+};
+
+const updatePlaylist = async (
+  playlistReference: QueuePlaylistReference,
+  { target }: { target: HTMLInputElement }
+) => {
+  const checked = target.checked;
+  await onUpdatePlaylistReference(props.queue.id, playlistReference.id, {
+    updatesQueue: checked,
+  });
 };
 
 const removeItem = async (queueItem: QueueItem) => {
@@ -77,10 +96,8 @@ const clearQueue = async () => {
 };
 
 const updateQueueFromPlaylist = async () => {
-  if (isUpdatingQueue.value) {
-    await onUpdateQueueFromPlaylist();
-    await store.updateQueuesStore();
-  }
+  await onUpdateQueueFromPlaylist(props.queue.id);
+  await store.updateQueuesStore();
 };
 
 const actionsMenuOptions = (queueItem: QueueItem) => [
@@ -108,21 +125,14 @@ const actionsMenuOptions = (queueItem: QueueItem) => [
 ];
 
 watch(() => props.queue.items.length, downloadQueue);
+watch(props.queue.playlists, updateQueueFromPlaylist, { immediate: true });
 watch(isDownloadingQueue, downloadQueue, { immediate: true });
-watch(isUpdatingQueue, updateQueueFromPlaylist, { immediate: true });
 </script>
 
 <template>
   <div class="queue-controls">
-    <label>
-      <input type="checkbox" v-model="hasAutoInterstitialInsertion" />Add
-      Interstitals
-    </label>
     <label
       ><input type="checkbox" v-model="isDownloadingQueue" />Get Automatically
-    </label>
-    <label
-      ><input type="checkbox" v-model="isUpdatingQueue" />Update Queue
     </label>
     <button @click="clearQueue">Clear Queue</button>
     <button @click="playQueue">Play</button>
@@ -133,10 +143,7 @@ watch(isUpdatingQueue, updateQueueFromPlaylist, { immediate: true });
       :key="item.id"
       :class="{ compact: isInterstitial(item.track) }"
     >
-      <span class="track-type">
-        <span v-if="isInterstitial(item.track)">🎬</span>
-        <span v-else>🎵</span>
-      </span>
+      <span class="track-type" v-text="trackTypeIcon(item.track.type)" />
       <div class="track-info">
         <strong>{{ item.track.name }}</strong>
         <span class="track-state">
@@ -169,12 +176,8 @@ watch(isUpdatingQueue, updateQueueFromPlaylist, { immediate: true });
       v-for="playlistReference in props.queue.playlists"
       :key="playlistReference.id"
     >
+      <span class="track-type" v-text="trackTypeIcon(playlistReference.type)" />
       <div>
-        <strong>{{ playlistReference.type }}s&nbsp;</strong>
-        <span v-if="playlistReference.updatesQueue">update from</span>
-        {{ playlistReference.player }} playlist
-        <br />
-
         <a href="" @click.prevent="getPlaylist(playlistReference)">
           <strong>{{ playlistReference.name }}</strong></a
         >
@@ -183,6 +186,13 @@ watch(isUpdatingQueue, updateQueueFromPlaylist, { immediate: true });
         {{ playlistReference.account.displayName }}
 
         <br />
+        <label>
+          <input
+            type="checkbox"
+            v-model="playlistReference.updatesQueue"
+            @change="updatePlaylist(playlistReference, $event)"
+          />Updates Queue</label
+        >
       </div>
     </ListItem>
   </div>
