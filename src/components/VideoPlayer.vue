@@ -3,11 +3,14 @@ import { computed, onMounted, ref } from "vue";
 import { store } from "../store";
 import { m3u8Path } from "../consts";
 import { onSaveStore } from "../store.telefunc";
+import { onGetTvState, onToggleTv } from "./VideoPlayer.telefunc";
 // import '../hlsjs.ts'
 
 const currentTime = ref(0);
 const currentTimeDisplay = ref(0);
 const isPlaying = ref(null);
+const tvState = ref(null);
+const airPlayButton = ref(null);
 const totalDuration = computed(() =>
   Math.round(store.queues.find(({ active }) => active)?.totalDuration)
 );
@@ -18,6 +21,10 @@ const seekTo = (e: Event) =>
 const playPause = () => {
   const { videoEl } = store;
   videoEl.paused ? videoEl.play() : videoEl.pause();
+};
+
+const toggleTv = async () => {
+  tvState.value = await onToggleTv();
 };
 
 onMounted(async () => {
@@ -36,6 +43,21 @@ onMounted(async () => {
     currentTimeDisplay.value = Math.round(store.videoEl?.currentTime);
   });
 
+  // @ts-expect-error WebKit vendor specific
+  if (window.WebKitPlaybackTargetAvailabilityEvent) {
+    store.videoEl.addEventListener(
+      "webkitplaybacktargetavailabilitychanged",
+      (event) =>
+        // @ts-expect-error WebKit vendor specific
+        (airPlayButton.value.hidden = event.availability === "not-available")
+    );
+    airPlayButton.value.addEventListener("click", () =>
+      // @ts-expect-error WebKit vendor specific
+      store.videoEl.webkitShowPlaybackTargetPicker()
+    );
+  }
+
+  tvState.value = await onGetTvState();
   await store.updateStore();
 });
 </script>
@@ -51,6 +73,10 @@ onMounted(async () => {
       :autoplay="store.isPlaying"
     />
     <div class="controls">
+      <button @click="toggleTv" v-if="typeof tvState === 'boolean'">
+        {{ tvState ? "🌝" : "🌚" }}
+      </button>
+      <button ref="airPlayButton" hidden>AirPlay</button>
       <button @click="playPause">{{ isPlaying ? "⏸" : "▶" }}</button>
       <small class="time-display time-display--current">{{
         currentTimeDisplay
