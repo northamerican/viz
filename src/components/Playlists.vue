@@ -57,7 +57,7 @@ watch(
   <p v-else>Loading...</p>
 </template>
 
-<style>
+<style scoped>
 /* TODO a (anchor) instead of strong? */
 .name {
   cursor: pointer;

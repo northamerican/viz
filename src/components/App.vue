@@ -1,76 +1,13 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import Accounts from "./Accounts.vue";
 import VideoPlayer from "./VideoPlayer.vue";
-import Playlist from "./Playlist.vue";
-import Playlists from "./Playlists.vue";
-import Queues from "./Queues.vue";
-import { store } from "../store";
-import { onDeleteVideos } from "./App.telefunc";
-
-const libraryView = computed(
-  () => (isView: string) =>
-    isView ===
-    (store.view.playlist
-      ? "playlist"
-      : store.view.playlists
-        ? "playlists"
-        : "account")
-);
+import Library from "./Library.vue";
+import Settings from "./Settings.vue";
 </script>
 
 <template>
-  <div>
-    <nav>
-      <h1 class="logo"></h1>
-    </nav>
-
-    <main>
-      <VideoPlayer />
-      <!-- TODO <Library /> -->
-      <section class="library">
-        <Accounts v-show="libraryView('account')" />
-        <Playlists
-          v-show="libraryView('playlists')"
-          :account="store.view.account"
-        />
-        <Playlist
-          v-show="libraryView('playlist')"
-          :playlist="store.view.playlist"
-        />
-        <div>
-          <Queues />
-        </div>
-      </section>
-      <section>
-        <details>
-          <summary>Settings</summary>
-          <button @click="onDeleteVideos">Delete Videos</button>
-        </details>
-      </section>
-    </main>
-  </div>
+  <main>
+    <VideoPlayer />
+    <Library />
+    <Settings />
+  </main>
 </template>
-
-<style scoped>
-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 50px;
-
-  h1 {
-    margin: 0;
-  }
-}
-
-.library {
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-
-  > * {
-    flex: 0 50%;
-  }
-}
-</style>

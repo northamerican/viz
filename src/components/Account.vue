@@ -52,7 +52,7 @@ const actionsMenuOptions = () => [
   </div>
 </template>
 
-<style>
+<style scoped>
 .logged-out {
   pointer-events: none;
   cursor: default;

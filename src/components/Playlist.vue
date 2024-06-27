@@ -69,7 +69,7 @@ const actionsMenuOptions = (track: Track) => [
   </div>
 </template>
 
-<style>
+<style scoped>
 header {
   display: flex;
   justify-content: space-between;

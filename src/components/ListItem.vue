@@ -6,7 +6,7 @@
   </div>
 </template>
 
-<style>
+<style scoped>
 .list-item {
   display: flex;
   align-items: center;

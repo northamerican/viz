@@ -43,7 +43,7 @@ onUnmounted(() => {
   </dialog>
 </template>
 
-<style>
+<style scoped>
 dialog {
   display: flex;
   justify-content: center;

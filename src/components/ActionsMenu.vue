@@ -33,7 +33,7 @@ const onChange = (event: Event) => {
   </select>
 </template>
 
-<style>
+<style scoped>
 select {
   width: 1rem;
   font-size: 1rem;

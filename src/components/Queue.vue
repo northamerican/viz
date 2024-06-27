@@ -218,7 +218,7 @@ watch(isDownloadingQueue, downloadQueue, { immediate: true });
   <QueueItemDialog :item="dialogQueueItem" :on-close="closeQueueItemDialog" />
 </template>
 
-<style>
+<style scoped>
 header {
   display: flex;
   justify-content: space-between;
