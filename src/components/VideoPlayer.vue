@@ -73,10 +73,6 @@ onMounted(async () => {
       :autoplay="store.isPlaying"
     />
     <div class="controls">
-      <button @click="toggleTv" v-if="typeof tvState === 'boolean'">
-        {{ tvState ? "🌝" : "🌚" }}
-      </button>
-      <button ref="airPlayButton" hidden>AirPlay</button>
       <button @click="playPause">{{ isPlaying ? "⏸" : "▶" }}</button>
       <small class="time-display time-display--current">{{
         currentTimeDisplay
@@ -93,6 +89,10 @@ onMounted(async () => {
       <small class="time-display time-display--total">{{
         totalDuration || "-"
       }}</small>
+      <button ref="airPlayButton" hidden>AirPlay</button>
+      <button @click="toggleTv" v-if="typeof tvState === 'boolean'">
+        {{ tvState ? "🌝" : "🌚" }}
+      </button>
     </div>
   </section>
 </template>
