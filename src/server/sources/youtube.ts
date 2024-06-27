@@ -12,8 +12,7 @@ import type {
   GetVideoUrl,
   DownloadVideo,
 } from "../../types/VizSource.d.ts";
-
-const maxVideoDuration = 12 * 60;
+import { maxVideoDuration } from "../../consts.ts";
 
 function durationToSeconds(duration: string) {
   return duration.split(":").reduce((acc, time) => 60 * acc + +time, 0);
@@ -22,17 +21,17 @@ function durationToSeconds(duration: string) {
 const createSearchQuery: CreateSearchQuery = (track) => {
   const { artist, name } = track;
   // TODO logic here, removing text beyond a dash or inside parens (ex: rework, remix?, remaster,)
-  return `${artist} ${name} music video`;
+  return `${artist} ${name}`;
 };
 
-const filterVideo = (items: ytsr.Item[]): ytsr.Video | null => {
-  const filterItems = items.filter(
+const filterVideos = (items: ytsr.Item[]): ytsr.Video[] | null => {
+  const filteredItems = items.filter(
     //@ts-expect-error ytsr is wrong
     ({ duration }) => duration && durationToSeconds(duration) < maxVideoDuration
     // TODO logic here, filtering out unwanted videos
   );
 
-  return (filterItems[0] as ytsr.Video) || null;
+  return filteredItems.length ? (filteredItems as ytsr.Video[]) : null;
 };
 
 const getVideoUrl: GetVideoUrl = async (query: string) => {
@@ -43,12 +42,16 @@ const getVideoUrl: GetVideoUrl = async (query: string) => {
     limit: 20,
   });
 
-  const video = filterVideo(items);
+  const videos = filterVideos(items);
+  const video = videos[0];
   if (!video) throw null;
 
   const { id: videoId, url } = video;
-
-  return { videoId, url };
+  return {
+    videoId,
+    url,
+    alternateVideos: videos.map(({ id }) => id).slice(1),
+  };
 };
 
 const downloadVideo: DownloadVideo = async ({ videoId, url }) => {

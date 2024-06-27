@@ -28,7 +28,9 @@ export const VideosDb = {
     return this.videos[videoId];
   },
 
-  async addVideo(props: Pick<Video, "id" | "source" | "sourceUrl">) {
+  async addVideo(
+    props: Pick<Video, "id" | "source" | "sourceUrl" | "alternateVideos">
+  ) {
     this.videos[props.id] = {
       duration: 0,
       segmentDurations: [],

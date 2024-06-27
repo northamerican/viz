@@ -5,11 +5,13 @@ import { QueuesDb } from "../server/db/QueuesDb";
 import playerApi from "../server/players";
 import { AccountsDb } from "../server/db/AccountsDb";
 import type { PlayerId } from "../types/VizPlayer";
+import { interstitalEveryTracksCount } from "../consts";
 
 type GetVideoId = {
   [k in TrackType as string]: () => Promise<{
     videoId: string;
     url: string;
+    alternateVideos: string[];
   }>;
 };
 
@@ -24,24 +26,27 @@ export async function onGetVideo(queueItem: QueueItem) {
         console.log(`Getting video for ${name} - ${artist}`);
         const { createSearchQuery, getVideoUrl } = StoreDb.source;
         const searchQuery = createSearchQuery({ artist, name });
-        const { videoId, url } = await getVideoUrl(searchQuery);
-        return { videoId, url };
+        const { videoId, url, alternateVideos } =
+          await getVideoUrl(searchQuery);
+        return { videoId, url, alternateVideos };
       },
       interstitial: async () => {
         console.log(`Getting video ${queueItem.track.videoId}`);
         return {
           videoId: queueItem.track.videoId,
           url: queueItem.track.playerUrl,
+          alternateVideos: null,
         };
       },
     };
 
-    const { videoId, url } = await getVideoId[type]();
+    const { videoId, url, alternateVideos } = await getVideoId[type]();
 
     await VideosDb.addVideo({
       id: videoId,
       source: StoreDb.sourceId,
       sourceUrl: url,
+      alternateVideos,
     });
     await QueuesDb.editItem(queueItemId, { videoId });
 
@@ -162,16 +167,13 @@ export async function onUpdateQueueFromPlaylist(queueId: string) {
   }));
 
   // Insert interstitials between new tracks
-  // TODO make this configurable
-  const interstitalAfterEveryTracksCount = 2;
-
   const lastInterstitialCount =
     queueItems.length -
     1 -
     queueItems.findLastIndex((item) => item.track.type === "interstitial");
 
   const shouldPrependInterstitial =
-    lastInterstitialCount >= interstitalAfterEveryTracksCount;
+    lastInterstitialCount >= interstitalEveryTracksCount;
 
   const newQueueItems = [];
   // Insert interstitial at the beginning if the queue is due for one
@@ -183,7 +185,7 @@ export async function onUpdateQueueFromPlaylist(queueId: string) {
     ...newTrackQueueItems.flatMap((newTrackQueueItem, i) => {
       const hasAvailableInterstitial = newInterstitialQueueItems.length;
       const shouldInsertInterstitial =
-        (i + 1) % interstitalAfterEveryTracksCount === 0;
+        (i + 1) % interstitalEveryTracksCount === 0;
 
       return hasAvailableInterstitial && shouldInsertInterstitial
         ? [newTrackQueueItem, newInterstitialQueueItems.shift()]

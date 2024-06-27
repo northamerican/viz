@@ -11,6 +11,7 @@ const currentTimeDisplay = ref(0);
 const isPlaying = ref<boolean>(null);
 const tvState = ref<boolean>(null);
 const airPlayButton = ref<HTMLButtonElement>(null);
+
 const totalDuration = computed(() =>
   Math.round(store.queues.find(({ active }) => active)?.totalDuration)
 );
@@ -90,7 +91,7 @@ onMounted(async () => {
         totalDuration || "-"
       }}</small>
       <button ref="airPlayButton" hidden>AirPlay</button>
-      <button @click="toggleTv" v-if="typeof tvState === 'boolean'">
+      <button @click="toggleTv" v-if="tvState !== null">
         {{ tvState ? "🌝" : "🌚" }}
       </button>
     </div>

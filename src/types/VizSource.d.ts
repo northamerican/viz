@@ -4,7 +4,7 @@ export type CreateSearchQuery = (track: {
 }) => string;
 export type GetVideoUrl = (
   query: string
-) => Promise<{ videoId: string; url: string }>;
+) => Promise<{ videoId: string; url: string; alternateVideos: string[] }>;
 export type DownloadVideo = ({ videoId: string, url: string }) => Promise<void>;
 
 export type SourceId = "youtube";

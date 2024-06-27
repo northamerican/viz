@@ -64,6 +64,7 @@ declare module "Viz" {
     sourceUrl: string;
     duration: number;
     segmentDurations: number[];
+    alternateVideos: string[];
     downloading: boolean;
     downloaded: boolean;
     error: string;
