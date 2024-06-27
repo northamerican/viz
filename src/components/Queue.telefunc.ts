@@ -100,6 +100,7 @@ async function getPlaylist(playlist: QueuePlaylistReference) {
 
 export async function onUpdateQueueFromPlaylist(queueId: string) {
   const { items, playlists } = QueuesDb.getQueue(queueId);
+  const queueItems = items.filter((item) => !item.removed);
   const tracksPlaylistReference = playlists.find(
     (playlist) => playlist.type === "track" && playlist.updatesQueue
   );
@@ -111,9 +112,9 @@ export async function onUpdateQueueFromPlaylist(queueId: string) {
   if (!tracksPlaylist) return;
 
   // Only add tracks that are newly added to the playlist
-  // TODO could also check if the tracks originates from the same playlist
-  const queueTrackItems = items.filter(
-    (item) => item.track.type === "track" && !item.removed
+  // TODO could also check if the tracks originate from the same playlist
+  const queueTrackItems = queueItems.filter(
+    (item) => item.track.type === "track"
   );
   const latestAddedAt = Math.max(
     ...queueTrackItems.map((item) => item.track.addedAt)
@@ -121,6 +122,9 @@ export async function onUpdateQueueFromPlaylist(queueId: string) {
   const newTracks = tracksPlaylist.tracks.filter(
     (track) => track.addedAt > latestAddedAt
   );
+
+  if (!newTracks.length) return;
+
   const newTrackQueueItems = newTracks.map((track) => ({
     track,
     videoId: null,
@@ -143,12 +147,13 @@ export async function onUpdateQueueFromPlaylist(queueId: string) {
     return QueuesDb.addItems(queueId, newTrackQueueItems);
 
   // Get random interstitials from playlist not already in queue
-  const queueTrackIds = items.map((item) => item.track.id);
+  const queueTrackIds = queueItems.map((item) => item.track.id);
   const newInterstitials = interstitialsPlaylist.tracks.filter(
     (track) => !queueTrackIds.includes(track.id)
   );
 
-  if (!newInterstitials) return QueuesDb.addItems(queueId, newTrackQueueItems);
+  if (!newInterstitials.length)
+    return QueuesDb.addItems(queueId, newTrackQueueItems);
 
   const newInterstitialQueueItems = newInterstitials.map((track) => ({
     track,
@@ -159,13 +164,32 @@ export async function onUpdateQueueFromPlaylist(queueId: string) {
   // Insert interstitials between new tracks
   // TODO make this configurable
   const interstitalAfterEveryTracksCount = 2;
-  const newQueueItems = newTrackQueueItems
-    .flatMap((newTrackQueueItem, i) =>
-      (i + 1) % interstitalAfterEveryTracksCount === 0
+
+  const lastInterstitialCount =
+    queueItems.length -
+    1 -
+    queueItems.findLastIndex((item) => item.track.type === "interstitial");
+
+  const shouldPrependInterstitial =
+    lastInterstitialCount >= interstitalAfterEveryTracksCount;
+
+  const newQueueItems = [];
+  // Insert interstitial at the beginning if the queue is due for one
+  if (shouldPrependInterstitial) {
+    newQueueItems.push(newInterstitialQueueItems.shift());
+  }
+
+  newQueueItems.push(
+    ...newTrackQueueItems.flatMap((newTrackQueueItem, i) => {
+      const hasAvailableInterstitial = newInterstitialQueueItems.length;
+      const shouldInsertInterstitial =
+        (i + 1) % interstitalAfterEveryTracksCount === 0;
+
+      return hasAvailableInterstitial && shouldInsertInterstitial
         ? [newTrackQueueItem, newInterstitialQueueItems.shift()]
-        : newTrackQueueItem
-    )
-    .filter(Boolean);
+        : newTrackQueueItem;
+    })
+  );
 
   await QueuesDb.addItems(queueId, newQueueItems);
 }
