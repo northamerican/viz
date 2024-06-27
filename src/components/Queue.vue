@@ -102,11 +102,11 @@ const updateQueueFromPlaylist = async () => {
   await store.updateQueuesStore();
 };
 
-const openDialog = (queueItem: QueueItem) => {
+const openQueueItemDialog = (queueItem: QueueItem) => {
   dialogQueueItem.value = queueItem;
 };
 
-const closeDialog = () => {
+const closeQueueItemDialog = () => {
   dialogQueueItem.value = null;
 };
 
@@ -117,8 +117,9 @@ const actionsMenuOptions = (queueItem: QueueItem) => [
   //   disabled: queueItem.video?.downloaded,
   // },
   {
-    action: () => openDialog(queueItem),
+    action: () => openQueueItemDialog(queueItem),
     label: "Replace Video...",
+    disabled: !queueItem.video,
   },
   { action: () => removeItem(queueItem), label: "Remove from Queue" },
   {},
@@ -158,7 +159,11 @@ watch(isDownloadingQueue, downloadQueue, { immediate: true });
     >
       <span class="track-type" v-text="trackTypeIcon(item.track.type)" />
       <div class="track-info">
-        <strong>{{ item.track.name }}</strong>
+        <strong
+          :class="['track-name', { clickable: item.video }]"
+          @click="openQueueItemDialog(item)"
+          >{{ item.track.name }}</strong
+        >
         <span class="track-state">
           <span v-if="item.video?.downloading">⌛︎</span>
           <span
@@ -210,7 +215,7 @@ watch(isDownloadingQueue, downloadQueue, { immediate: true });
     </ListItem>
   </div>
   <div v-else>No items in queue.</div>
-  <QueueItemDialog :item="dialogQueueItem" :on-close="closeDialog" />
+  <QueueItemDialog :item="dialogQueueItem" :on-close="closeQueueItemDialog" />
 </template>
 
 <style>

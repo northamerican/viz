@@ -45,3 +45,7 @@ a {
 .actions {
   margin-left: auto;
 }
+
+.clickable {
+  cursor: pointer;
+}
