@@ -1,11 +1,13 @@
 :root {
+  --primary: #eeeeee;
+  --background: #242424;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
-  color: #eeeeee;
-  background-color: #242424;
+  color: var(--primary);
+  background-color: var(--background);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;

@@ -8,6 +8,7 @@ import type {
 } from "Viz";
 import ListItem from "./ListItem.vue";
 import ActionsMenu from "./ActionsMenu.vue";
+import QueueItemDialog from "./QueueItemDialog.vue";
 import { ref, watch } from "vue";
 import {
   onGetVideo,
@@ -26,6 +27,7 @@ import { onLoadPlaylist } from "./Playlists.telefunc";
 
 const props = defineProps<{ queue: Queue }>();
 const isDownloadingQueue = ref(true);
+const dialogQueueItem = ref<QueueItem>(null);
 
 // TODO separate queue items, sources
 
@@ -100,14 +102,25 @@ const updateQueueFromPlaylist = async () => {
   await store.updateQueuesStore();
 };
 
+const openDialog = (queueItem: QueueItem) => {
+  dialogQueueItem.value = queueItem;
+};
+
+const closeDialog = () => {
+  dialogQueueItem.value = null;
+};
+
 const actionsMenuOptions = (queueItem: QueueItem) => [
+  // {
+  //   action: () => downloadVideo(queueItem),
+  //   label: "Get Video",
+  //   disabled: queueItem.video?.downloaded,
+  // },
   {
-    action: () => downloadVideo(queueItem),
-    label: "Get Video",
-    disabled: queueItem.video?.downloaded,
+    action: () => openDialog(queueItem),
+    label: "Replace Video...",
   },
   { action: () => removeItem(queueItem), label: "Remove from Queue" },
-  { action: () => {}, label: "Replace Video...", disabled: true },
   {},
   {
     action: () => {
@@ -197,6 +210,7 @@ watch(isDownloadingQueue, downloadQueue, { immediate: true });
     </ListItem>
   </div>
   <div v-else>No items in queue.</div>
+  <QueueItemDialog :item="dialogQueueItem" :on-close="closeDialog" />
 </template>
 
 <style>

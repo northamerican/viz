@@ -8,9 +8,9 @@ import { onGetTvState, onToggleTv } from "./VideoPlayer.telefunc";
 
 const currentTime = ref(0);
 const currentTimeDisplay = ref(0);
-const isPlaying = ref(null);
-const tvState = ref(null);
-const airPlayButton = ref(null);
+const isPlaying = ref<boolean>(null);
+const tvState = ref<boolean>(null);
+const airPlayButton = ref<HTMLButtonElement>(null);
 const totalDuration = computed(() =>
   Math.round(store.queues.find(({ active }) => active)?.totalDuration)
 );
