@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { QueueItem } from "Viz";
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, ref } from "vue";
 import YouTubeVideoEmbed from "./YouTubeVideoEmbed.vue";
 
 const props = defineProps<{ item: QueueItem; onClose: () => void }>();
@@ -8,18 +8,6 @@ const dialogEl = ref<HTMLDialogElement>(null);
 const alternateVideos = computed(
   () => props.item.video.alternateVideos?.slice(0, 5)
 );
-
-const escapeClose = (e: KeyboardEvent) => {
-  if (props.item && e.code === "Escape") {
-    props.onClose();
-  }
-};
-onMounted(() => {
-  window.addEventListener("keypress", escapeClose);
-});
-onUnmounted(() => {
-  window.removeEventListener("keypress", escapeClose);
-});
 </script>
 
 <template>
