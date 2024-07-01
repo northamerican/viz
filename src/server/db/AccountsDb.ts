@@ -1,6 +1,6 @@
 import { JSONFilePreset } from "lowdb/node";
 import { accountsDbPath } from "../consts";
-import type { AccountDbItem } from "Viz";
+import type { Account, AccountDbItem } from "Viz";
 
 type AccountsDbType = {
   [accountId: string]: AccountDbItem;
@@ -12,6 +12,19 @@ await accountsDb.read();
 export const AccountsDb = {
   get accounts() {
     return accountsDb.data;
+  },
+
+  get accountsAsArray(): Account[] {
+    return Object.values(this.accounts).map(
+      ({ id, displayName, player, isLoggedIn, profileUrl }) => ({
+        id,
+        displayName,
+        player,
+        isLoggedIn,
+        profileUrl,
+        playlists: null,
+      })
+    );
   },
 
   account(accountId: string) {

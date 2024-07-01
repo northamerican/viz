@@ -2,14 +2,13 @@
 import { computed, onMounted, ref } from "vue";
 import { store } from "../store";
 import { m3u8Path } from "../consts";
-import { onSaveStore } from "../store.telefunc";
 import { onGetTvState, onToggleTv } from "./VideoPlayer.telefunc";
 // import '../hlsjs.ts'
 
 const currentTime = ref(0);
 const currentTimeDisplay = ref(0);
-const isPlaying = ref<boolean>(null);
 const tvState = ref<boolean>(null);
+const isPlaying = ref<boolean>(false);
 const airPlayButton = ref<HTMLButtonElement>(null);
 
 const totalDuration = computed(() =>
@@ -21,7 +20,7 @@ const seekTo = (e: Event) =>
 
 const playPause = () => {
   const { videoEl } = store;
-  videoEl.paused ? videoEl.play() : videoEl.pause();
+  isPlaying.value ? videoEl.pause() : videoEl.play();
 };
 
 const toggleTv = async () => {
@@ -31,12 +30,10 @@ const toggleTv = async () => {
 onMounted(async () => {
   store.videoEl.addEventListener("pause", () => {
     isPlaying.value = false;
-    onSaveStore({ isPlaying: false });
   });
 
   store.videoEl.addEventListener("play", () => {
     isPlaying.value = true;
-    onSaveStore({ isPlaying: true });
   });
 
   store.videoEl.addEventListener("timeupdate", () => {
@@ -59,7 +56,6 @@ onMounted(async () => {
   }
 
   tvState.value = await onGetTvState();
-  await store.updateStore();
 });
 </script>
 
@@ -67,11 +63,10 @@ onMounted(async () => {
   <section class="player">
     <video
       id="video"
-      :ref="(el: HTMLMediaElement) => (store.videoEl = el)"
+      :ref="(el) => (store.videoEl = el as HTMLMediaElement)"
       :src="m3u8Path"
       controls
       playsinline
-      :autoplay="store.isPlaying"
     />
     <div class="controls">
       <button @click="playPause">{{ isPlaying ? "⏸" : "▶" }}</button>

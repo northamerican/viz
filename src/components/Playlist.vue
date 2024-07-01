@@ -25,7 +25,7 @@ const addToQueue = async (tracks: Track[]) => {
     updatesQueue: true,
     type: tracks[0].type,
   });
-  store.updateQueuesStore();
+  store.updateQueues();
 };
 
 const deselectPlaylist = () => {

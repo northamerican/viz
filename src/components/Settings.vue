@@ -1,11 +1,24 @@
 <script setup lang="ts">
-import { onDeleteVideos } from "./Settings.telefunc";
+import { onMounted } from "vue";
+import { store } from "../store";
+import { onDeleteVideos, onSaveSettings } from "./Settings.telefunc";
+
+onMounted(() => {
+  store.updateSettings();
+});
 </script>
 
 <template>
   <section>
     <details>
       <summary>Settings</summary>
+      <label
+        ><input
+          type="checkbox"
+          v-model="store.settings.downloadQueueItems"
+          @change="() => onSaveSettings(store.settings)"
+        />Download Queue Items</label
+      >
       <div>
         <label>
           Receiver Aspect Ratio

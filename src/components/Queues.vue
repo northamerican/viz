@@ -4,7 +4,7 @@ import { store } from "../store";
 import Queue from "./Queue.vue";
 
 onMounted(async () => {
-  await store.updateQueuesStore();
+  await store.updateQueues();
 });
 </script>
 
@@ -13,9 +13,9 @@ onMounted(async () => {
     <h2>Queues</h2>
   </header>
 
-  <div v-for="queue in store.queues" :key="queue.id">
-    <h3>{{ queue.name }} <small v-if="queue.active">▶️</small></h3>
-  </div>
+  <nav v-for="queue in store.queues" :key="queue.id">
+    <h3 :class="['queue-name', { active: queue.active }]">{{ queue.name }}</h3>
+  </nav>
   <div v-for="queue in store.queues" :key="queue.id">
     <Queue :queue="queue" v-if="queue.active" />
   </div>
@@ -27,5 +27,10 @@ header {
   justify-content: space-between;
   align-items: center;
   margin-inline: 0.5rem;
+}
+.queue-name {
+  &.active {
+    text-decoration: underline;
+  }
 }
 </style>

@@ -22,11 +22,9 @@ import {
 } from "./Queue.telefunc";
 import { store } from "../store";
 import players from "../players";
-import { onSaveStore } from "../store.telefunc";
 import { onLoadPlaylist } from "./Playlists.telefunc";
 
 const props = defineProps<{ queue: Queue }>();
-const isDownloadingQueue = ref(true);
 const dialogQueueItem = ref<QueueItem>(null);
 
 // TODO separate queue items, sources
@@ -46,9 +44,9 @@ const getPlaylist = async (playlistReference: QueuePlaylistReference) => {
 
 const updatePlaylist = async (
   playlistReference: QueuePlaylistReference,
-  { target }: { target: HTMLInputElement }
+  event: Event
 ) => {
-  const checked = target.checked;
+  const checked = (event.target as HTMLInputElement).checked;
   await onUpdatePlaylistReference(props.queue.id, playlistReference.id, {
     updatesQueue: checked,
   });
@@ -56,7 +54,7 @@ const updatePlaylist = async (
 
 const removeItem = async (queueItem: QueueItem) => {
   await onRemoveQueueItem(queueItem.id);
-  store.updateQueuesStore();
+  store.updateQueues();
 };
 
 const playQueue = async () => {
@@ -65,22 +63,21 @@ const playQueue = async () => {
   videoEl.load();
   videoEl.fastSeek ? videoEl.fastSeek(0) : (videoEl.currentTime = 0);
   videoEl.play();
-  onSaveStore({ isPlaying: true });
 };
 
 const downloadVideo = async (queueItem: QueueItem) => {
   const { videoId, url } = await onGetVideo(queueItem);
-  await store.updateQueuesStore();
+  await store.updateQueues();
   if (!videoId) return;
   await onDownloadVideo(videoId, url);
-  await store.updateQueuesStore();
+  await store.updateQueues();
   if (store.videoEl.currentTime === 0) {
     playQueue();
   }
 };
 
 const downloadQueue = async () => {
-  if (isDownloadingQueue.value) {
+  if (store.settings.downloadQueueItems) {
     const queueItem = await onGetNextDownloadableQueueItem();
     if (queueItem) {
       await downloadVideo(queueItem);
@@ -92,14 +89,14 @@ const downloadQueue = async () => {
 const clearQueue = async () => {
   const { videoEl } = store;
   await onClearQueue(props.queue.id);
-  await store.updateQueuesStore();
+  await store.updateQueues();
   videoEl.pause();
   videoEl.load();
 };
 
 const updateQueueFromPlaylist = async () => {
   await onUpdateQueueFromPlaylist(props.queue.id);
-  await store.updateQueuesStore();
+  await store.updateQueues();
 };
 
 const openQueueItemDialog = (queueItem: QueueItem) => {
@@ -140,16 +137,16 @@ const actionsMenuOptions = (queueItem: QueueItem) => [
 
 watch(() => props.queue.items.length, downloadQueue);
 watch(props.queue.playlists, updateQueueFromPlaylist, { immediate: true });
-watch(isDownloadingQueue, downloadQueue, { immediate: true });
+watch(() => store.settings.downloadQueueItems, downloadQueue, {
+  immediate: true,
+});
+// TODO watch for completion of downloading queue item on mount
 </script>
 
 <template>
   <div class="queue-controls">
-    <label
-      ><input type="checkbox" v-model="isDownloadingQueue" />Get Automatically
-    </label>
-    <button @click="clearQueue">Clear Queue</button>
-    <button @click="playQueue">Play</button>
+    <button @click="clearQueue">🚫 Clear</button>
+    <button @click="playQueue">▶ Play</button>
   </div>
   <div class="queue-item" v-if="props.queue.items.length">
     <ListItem

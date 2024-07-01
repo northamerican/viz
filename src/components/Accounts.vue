@@ -10,7 +10,7 @@ import { tokenPath } from "../consts.ts";
 import type { PlayerId } from "../types/VizPlayer";
 
 onMounted(async () => {
-  store.updateAccountsStore();
+  store.updateAccounts();
 
   const readToken = document.location.pathname.includes(tokenPath());
   if (readToken) {

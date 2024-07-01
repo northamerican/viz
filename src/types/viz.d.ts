@@ -13,6 +13,7 @@ declare module "Viz" {
     playlists: Playlists;
   };
 
+  /** Account with tokens */
   export type AccountDbItem = AccountBase & {
     token: string;
     refreshToken?: string;
@@ -106,9 +107,4 @@ declare module "Viz" {
     totalDuration: number;
     items: Required<QueueItem, "video">[];
   };
-
-  // export type QueuesList = {
-  //   queues: []
-  //   selected: Queue
-  // }
 }

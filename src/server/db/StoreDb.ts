@@ -1,13 +1,15 @@
 import { JSONFilePreset } from "lowdb/node";
 import { storeDbPath } from "../consts";
 import sources from "../sources";
-import { PersistedVizStore, VizStore } from "../../types/VizStore";
-
-type VizStoreDbType = Pick<VizStore, "sourceId" | "isPlaying">;
+import { VizStoreDbType } from "../../types/VizStore";
+import { store } from "../../store";
 
 const storeDbDefault: VizStoreDbType = {
-  sourceId: "youtube",
-  isPlaying: false,
+  // TODO view:
+  settings: {
+    sourceId: "youtube",
+    downloadQueueItems: true,
+  },
 };
 
 const storeDb = await JSONFilePreset<VizStoreDbType>(
@@ -21,7 +23,7 @@ export const StoreDb = {
     await storeDb.read();
   },
 
-  async update(newData: Partial<PersistedVizStore>) {
+  async update(newData: Partial<VizStoreDbType>) {
     await storeDb.update((data) => {
       Object.assign(data, newData);
     });
@@ -30,9 +32,12 @@ export const StoreDb = {
   get data() {
     return storeDb.data;
   },
+  get settings() {
+    return storeDb.data.settings;
+  },
 
   get sourceId() {
-    return storeDb.data.sourceId;
+    return this.settings.sourceId;
   },
   get source() {
     return sources[this.sourceId];

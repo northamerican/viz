@@ -17,12 +17,12 @@ const handleLogin = async () => {
 
 const handleLogout = async () => {
   await onLogout(props.account);
-  store.updateAccountsStore();
+  store.updateAccounts();
 };
 
 const handleRemove = async () => {
   await onRemove(props.account);
-  store.updateAccountsStore();
+  store.updateAccounts();
 };
 
 const openProfile = () => {
@@ -35,7 +35,7 @@ const actionsMenuOptions = () => [
     ? { action: handleLogout, label: "Log out" }
     : { action: handleLogin, label: "Log in" },
   { action: handleRemove, label: "Remove" },
-  { action: openProfile, label: "Open Profile..." },
+  { action: openProfile, label: "Go to Profile..." },
 ];
 </script>
 

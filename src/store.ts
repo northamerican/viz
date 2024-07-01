@@ -1,19 +1,15 @@
 import { reactive } from "vue";
 import {
-  onSaveStore,
-  onUpdateStore,
-  onUpdateAccountsStore,
-  onUpdateQueuesStore,
+  onGetAccountsAsArray,
+  onGetQueuesWithVideos,
+  onGetSettings,
 } from "./store.telefunc";
 import { VizStore } from "./types/VizStore";
 
-// const persistKeys = ["isPlaying", "sourceId"];
-
 export const store = reactive<VizStore>({
   videoEl: null,
-  isPlaying: false,
-  sourceId: "youtube",
   accounts: [],
+  queues: [],
   view: {
     // Library
     account: null,
@@ -21,27 +17,19 @@ export const store = reactive<VizStore>({
     playlist: null,
     queue: null,
   },
-  queues: [],
-  // TODO rename these and export each one individually outside of const store
-  async saveStore() {
-    // TODO
-    // onSaveStore(
-    //   Object.fromEntries(
-    //     persistKeys.map((key) => [key, store[key]])
-    //   ) as PersistedVizStore
-    // );
-    onSaveStore({
-      isPlaying: store.isPlaying,
-      sourceId: store.sourceId,
-    });
+
+  settings: {
+    sourceId: "youtube",
+    downloadQueueItems: true,
   },
-  async updateStore() {
-    Object.assign(this, await onUpdateStore());
+
+  async updateSettings() {
+    this.settings = await onGetSettings();
   },
-  async updateAccountsStore() {
-    this.accounts = await onUpdateAccountsStore();
+  async updateAccounts() {
+    this.accounts = await onGetAccountsAsArray();
   },
-  async updateQueuesStore() {
-    this.queues = await onUpdateQueuesStore();
+  async updateQueues() {
+    this.queues = await onGetQueuesWithVideos();
   },
 });

@@ -1,34 +1,15 @@
 import { AccountsDb } from "./server/db/AccountsDb";
 import { QueuesDb } from "./server/db/QueuesDb";
 import { StoreDb } from "./server/db/StoreDb";
-import { PersistedVizStore } from "./types/VizStore";
 
-// Update the store db
-// TODO should this just sync any persist data from store?
-export async function onSaveStore(storeData: Partial<PersistedVizStore>) {
-  return StoreDb.update(storeData);
+export async function onGetSettings() {
+  return StoreDb.settings;
 }
 
-// Return the store for use in the view
-export async function onUpdateStore() {
-  return StoreDb.data;
-}
-
-// Return Queues for use in the view
-export async function onUpdateQueuesStore() {
+export async function onGetQueuesWithVideos() {
   return QueuesDb.queuesWithVideos;
 }
 
-// Return accounts for use in the view
-export async function onUpdateAccountsStore() {
-  return Object.values(AccountsDb.accounts).map(
-    ({ id, displayName, player, isLoggedIn, profileUrl }) => ({
-      id,
-      displayName,
-      player,
-      isLoggedIn,
-      profileUrl,
-      playlists: null,
-    })
-  );
+export async function onGetAccountsAsArray() {
+  return AccountsDb.accountsAsArray;
 }
