@@ -31,15 +31,21 @@ body {
 
 #app {
   width: 100vw;
-  height: 100vh;
-  max-height: 100vh;
-  padding-inline: 1rem;
+  min-height: 100vh;
+  padding: 1rem;
 }
 
 a {
   font-weight: 500;
   color: #eeeeee;
   text-decoration: inherit;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-inline: 0.5rem;
 }
 
 .actions {

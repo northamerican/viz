@@ -22,12 +22,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-inline: 0.5rem;
-}
 .queue-name {
   &.active {
     text-decoration: underline;

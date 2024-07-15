@@ -70,13 +70,6 @@ const actionsMenuOptions = (track: Track) => [
 </template>
 
 <style scoped>
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-inline: 0.5rem;
-}
-
 .info {
   .track-artist + .track-artist::before {
     content: ", ";

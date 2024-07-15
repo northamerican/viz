@@ -4,6 +4,7 @@ import { join } from "path";
 import ytsr from "ytsr";
 import ytdl from "@distube/ytdl-core";
 import ffmpegPath from "ffmpeg-static";
+// import maxBy from "lodash.maxby";
 import { VideosDb } from "../db/VideosDb.ts";
 import { hlsDir } from "../consts.ts";
 import { getSegmentDurations, durationTotal } from "../helpers.ts";
@@ -13,6 +14,7 @@ import type {
   DownloadVideo,
 } from "../../types/VizSource.d.ts";
 import { maxVideoDuration } from "../../consts.ts";
+import { StoreDb } from "../db/StoreDb.ts";
 
 function durationToSeconds(duration: string) {
   return duration.split(":").reduce((acc, time) => 60 * acc + +time, 0);
@@ -56,14 +58,18 @@ const getVideoUrl: GetVideoUrl = async (query: string) => {
 
 const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
   const hlsVideoDir = join(hlsDir, videoId);
-  const videoFilePath = join(hlsVideoDir, `${videoId}.m3u8`);
+  const videoFilePath = join(hlsVideoDir, `${videoId}.mp4`);
+  const m3u8FilePath = join(hlsVideoDir, `${videoId}.m3u8`);
   const wroteToDbMsg = `Wrote ${videoId} segments to videos db in`;
+  const { aspectRatioCorrectionFactor } = StoreDb;
+  const { maxQuality } = StoreDb.settings;
+  const ffmpegThreadQueueSize = "512";
 
   if (!fs.existsSync(hlsVideoDir)) {
     fs.mkdirSync(hlsVideoDir);
   }
 
-  console.log(`Generating HLS files for video ${videoId}`);
+  console.log(`Downloading video ${videoId}...`);
   console.time(wroteToDbMsg);
 
   // Circumvent age-restricted videos
@@ -77,49 +83,53 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
   const agent = ytdl.createAgent(ytCookies);
 
   try {
-    const info = await ytdl.getInfo(url, { agent });
-    const audioStream = ytdl.downloadFromInfo(info, {
+    const videoInfo = await ytdl.getInfo(url, { agent });
+    const audioStream = ytdl.downloadFromInfo(videoInfo, {
       agent,
       quality: "highestaudio",
       filter: (format) => format.container === "mp4",
     });
-    const videoStream = ytdl.downloadFromInfo(info, {
+    const videoStream = ytdl.downloadFromInfo(videoInfo, {
       agent,
       quality: "highestvideo",
-      filter: (format) => format.codecs.startsWith("avc1"),
+      filter: (format) => {
+        return format.codecs.startsWith("avc1") && format.height <= maxQuality;
+      },
     });
 
-    const process = cp.spawn(
+    // const { width, height } = maxBy(videoInfo.formats, "width");
+    // const videoAspectRatio = width / height;
+
+    const muxingProcess = cp.spawn(
       ffmpegPath,
       [
         "-loglevel",
         "32",
-        //
+
+        "-thread_queue_size",
+        ffmpegThreadQueueSize,
         "-i",
         "pipe:3",
-        //
+
+        "-thread_queue_size",
+        ffmpegThreadQueueSize,
         "-i",
         "pipe:4",
+
         // Map audio and video
         "-map",
         "0:a",
         "-map",
         "1:v",
-        // No conversion
         "-c",
         "copy",
-        // TODO is this needed?
-        // "-movflags",
-        // "frag_keyframe+empty_moov",
-        //
-        "-start_number",
-        "0",
-        "-hls_time",
-        "10",
-        "-hls_list_size",
-        "0 ",
+
+        // Overwrite file
+        "-y",
+        // Output
         "-f",
-        "hls",
+        // "hls",
+        "mp4",
         videoFilePath,
       ],
       {
@@ -135,41 +145,71 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
       }
     );
     //@ts-expect-error nodejs dumb
-    audioStream.pipe(process.stdio[3]);
+    audioStream.pipe(muxingProcess.stdio[3]);
     //@ts-expect-error nodejs dumb
-    videoStream.pipe(process.stdio[4]);
+    videoStream.pipe(muxingProcess.stdio[4]);
 
-    // process.stdio[2].on("data", async () => {
-    //   // TODO could maybe just do this on 'close', ie the end of the video loaded ?
-    //   // For debugging
-    //   // console.log(data.toString())
-
-    //   // TODO remove this hack
-    //   // Data can be received before the creation of the m3u file
-    //   if (!fs.existsSync(videoFilePath)) return;
-
-    //   // TODO prob not necessary
-    //   await VideosDb.editVideo(videoId, {
-    //     segmentDurations: getSegmentDurations(videoFilePath),
-    //     duration: getSegmentDurations(videoFilePath).reduce(durationTotal, 0),
-    //   });
-    // });
+    // For debugging
+    muxingProcess.stdio[2].on("data", async (data) => {
+      console.log(data.toString());
+    });
 
     return new Promise((resolve) => {
-      process.on("close", async () => {
-        await VideosDb.editVideo(videoId, {
-          segmentDurations: getSegmentDurations(videoFilePath),
-          duration: getSegmentDurations(videoFilePath).reduce(durationTotal, 0),
-          downloaded: true,
-          downloading: false,
+      muxingProcess.on("close", async () => {
+        // const videoFilter = `[1:v]scale=2*round((iw*${aspectRatioCorrectionFactor})/2):ih,setsar=1[v]`;
+        const videoFilter = `scale=2*round((iw*${aspectRatioCorrectionFactor})/2):ih,setsar=1`;
+        // TODO crop/scale videos wider that 16:9
+
+        console.log("Converting...");
+        const filterProcess = cp.spawn(ffmpegPath, [
+          "-loglevel",
+          "48",
+
+          "-thread_queue_size",
+          ffmpegThreadQueueSize,
+
+          "-i",
+          videoFilePath,
+
+          "-filter_complex",
+          videoFilter,
+
+          "-start_number",
+          "0",
+          "-hls_time",
+          "10",
+          "-hls_list_size",
+          "0 ",
+
+          "-f",
+          "hls",
+          m3u8FilePath,
+        ]);
+
+        // For debugging
+        filterProcess.stdio[2].on("data", async (data) => {
+          console.log(data.toString());
         });
 
-        console.timeEnd(wroteToDbMsg);
-        resolve();
+        filterProcess.on("close", async () => {
+          await VideosDb.editVideo(videoId, {
+            segmentDurations: getSegmentDurations(m3u8FilePath),
+            duration: getSegmentDurations(m3u8FilePath).reduce(
+              durationTotal,
+              0
+            ),
+            downloaded: true,
+            downloading: false,
+          });
+
+          console.timeEnd(wroteToDbMsg);
+          resolve();
+        });
       });
     });
   } catch (e) {
     const error = e instanceof Error ? e.message : String(e);
+    console.error(error);
 
     await VideosDb.editVideo(videoId, {
       downloading: false,

@@ -26,7 +26,6 @@ const handleRemove = async () => {
 };
 
 const openProfile = () => {
-  console.log(props.account.profileUrl);
   window.open(props.account.profileUrl);
 };
 

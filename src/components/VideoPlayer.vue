@@ -100,8 +100,8 @@ onMounted(async () => {
 
   #video {
     width: auto;
-    height: 60vh;
-    max-height: 60vh;
+    height: 40vh;
+    max-height: 40vh;
   }
 }
 
