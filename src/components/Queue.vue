@@ -15,7 +15,8 @@ import {
   onDownloadVideo,
   onRemoveQueueItem,
   onPlayQueue,
-  onUpdateQueueFromPlaylist,
+  onGetNextDownloadingInQueue,
+  onUpdateQueueFromPlaylists,
   onGetNextDownloadableQueueItem,
   onClearQueue,
   onUpdatePlaylistReference,
@@ -76,11 +77,21 @@ const downloadVideo = async (queueItem: QueueItem) => {
   }
 };
 
+const checkForDownloadingQueueItem = async () => {
+  // Recursively check for downloading queue item completion
+  if (await onGetNextDownloadingInQueue()) {
+    return setTimeout(checkForDownloadingQueueItem, 250);
+  }
+  // Update queue on completion
+  await store.updateQueues();
+};
+
 const downloadQueue = async () => {
   if (store.settings.downloadQueueItems) {
     const queueItem = await onGetNextDownloadableQueueItem();
     if (queueItem) {
       await downloadVideo(queueItem);
+      // Recursive function
       downloadQueue();
     }
   }
@@ -95,7 +106,7 @@ const clearQueue = async () => {
 };
 
 const updateQueueFromPlaylist = async () => {
-  await onUpdateQueueFromPlaylist(props.queue.id);
+  await onUpdateQueueFromPlaylists(props.queue.id);
   await store.updateQueues();
 };
 
@@ -108,11 +119,11 @@ const closeQueueItemDialog = () => {
 };
 
 const actionsMenuOptions = (queueItem: QueueItem) => [
-  // {
-  //   action: () => downloadVideo(queueItem),
-  //   label: "Get Video",
-  //   disabled: queueItem.video?.downloaded,
-  // },
+  {
+    action: () => downloadVideo(queueItem),
+    label: "Get Video",
+    disabled: queueItem.video?.downloaded,
+  },
   {
     action: () => openQueueItemDialog(queueItem),
     label: "Replace Video...",
@@ -135,12 +146,18 @@ const actionsMenuOptions = (queueItem: QueueItem) => [
   },
 ];
 
+// Download queue items when they are added
 watch(() => props.queue.items.length, downloadQueue);
-watch(props.queue.playlists, updateQueueFromPlaylist, { immediate: true });
+// Add new items from the queue's playlists
+watch(props.queue.playlists, updateQueueFromPlaylist, {
+  immediate: true,
+});
+// Watch for undowloaded queue items
 watch(() => store.settings.downloadQueueItems, downloadQueue, {
   immediate: true,
 });
-// TODO watch for completion of downloading queue item on mount
+// Check for completion of downloading queue item on init
+checkForDownloadingQueueItem();
 </script>
 
 <template>

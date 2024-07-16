@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import {
+  displayAspectRatios,
+  maxQualityOptions,
+  receiverAspectRatios,
+} from "../consts";
 import { store } from "../store";
 import { onDeleteVideos, onSaveSettings } from "./Settings.telefunc";
-
-onMounted(() => {
-  store.updateSettings();
-});
 </script>
 
 <template>
@@ -19,20 +19,59 @@ onMounted(() => {
           @change="() => onSaveSettings(store.settings)"
         />Download Queue Items</label
       >
+
       <div>
         <label>
-          Receiver Aspect Ratio
-          <select name="receiverRatio">
-            <option value="16:9">16:9</option>
+          Maximum video download quality
+          <select
+            name="maxQuality"
+            v-model="store.settings.maxQuality"
+            @change="() => onSaveSettings(store.settings)"
+          >
+            <option
+              v-for="quality in maxQualityOptions"
+              :value="quality.value"
+              :key="quality.label"
+            >
+              {{ quality.label }}
+            </option>
+          </select>
+        </label>
+      </div>
+
+      <div>
+        <label>
+          Receiver aspect ratio
+          <select
+            name="receiverRatio"
+            v-model="store.settings.receiverAspectRatio"
+            @change="() => onSaveSettings(store.settings)"
+          >
+            <option
+              v-for="ratio in receiverAspectRatios"
+              :value="ratio.value"
+              :key="ratio.label"
+            >
+              {{ ratio.label }}
+            </option>
           </select>
         </label>
       </div>
       <div>
         <label>
-          Display Aspect Ratio
-          <select name="receiverRatio">
-            <option value="16:9">16:9</option>
-            <option value="4:3">4:3</option>
+          Display aspect ratio
+          <select
+            name="displayRatio"
+            v-model="store.settings.displayAspectRatio"
+            @change="() => onSaveSettings(store.settings)"
+          >
+            <option
+              v-for="ratio in displayAspectRatios"
+              :value="ratio.value"
+              :key="ratio.label"
+            >
+              {{ ratio.label }}
+            </option>
           </select>
         </label>
       </div>

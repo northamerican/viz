@@ -39,6 +39,7 @@ export default class YouTubePlayer implements VizPlayer {
         profileUrl: `https://www.youtube.com/${channelInfo.snippet.customUrl}`,
       };
     } catch (error) {
+      console.error(error);
       return Promise.reject(error);
     }
   }
@@ -72,6 +73,7 @@ export default class YouTubePlayer implements VizPlayer {
         refreshToken: tokens.refresh_token || this.#account.refreshToken,
       });
     } catch (error) {
+      console.error(error);
       Promise.reject(error);
     }
   }
@@ -138,6 +140,7 @@ export default class YouTubePlayer implements VizPlayer {
         })),
       };
     } catch (error) {
+      console.error(error);
       return Promise.reject(error);
     }
   }
@@ -215,6 +218,7 @@ export default class YouTubePlayer implements VizPlayer {
         account: this.#account,
       };
     } catch (error) {
+      console.error(error);
       return Promise.reject(error);
     }
   }

@@ -53,6 +53,8 @@ export async function onGetVideo(queueItem: QueueItem) {
     return { videoId, url };
   } catch (e) {
     const error = e instanceof Error ? e.message : String(e);
+    console.error(error);
+
     await QueuesDb.editItem(queueItemId, {
       error,
     });
@@ -64,6 +66,11 @@ export async function onGetVideo(queueItem: QueueItem) {
 export async function onDownloadVideo(videoId: string, url: string) {
   const { downloadVideo } = StoreDb.source;
   return await downloadVideo({ videoId, url });
+}
+
+export async function onGetNextDownloadingInQueue() {
+  const queueItem = QueuesDb.nextDownloadingInQueue;
+  return queueItem;
 }
 
 export async function onGetNextDownloadableQueueItem() {
@@ -103,7 +110,7 @@ async function getPlaylist(playlist: QueuePlaylistReference) {
   return player.getPlaylist(id);
 }
 
-export async function onUpdateQueueFromPlaylist(queueId: string) {
+export async function onUpdateQueueFromPlaylists(queueId: string) {
   const { items, playlists } = QueuesDb.getQueue(queueId);
   const queueItems = items.filter((item) => !item.removed);
   const tracksPlaylistReference = playlists.find(

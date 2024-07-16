@@ -72,6 +72,12 @@ export const QueuesDb = {
     });
   },
 
+  get nextDownloadingInQueue(): QueueItem {
+    return this.activeQueueWithVideos.items.find(
+      (item) => item.video?.downloading && !item.video?.error && !item.error
+    );
+  },
+
   get nextDownloadableInQueue(): QueueItem {
     const firstNotDownloaded = this.activeQueueWithVideos.items.find(
       (item) => !item.video?.downloaded && !item.video?.error && !item.error

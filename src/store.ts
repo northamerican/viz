@@ -19,8 +19,11 @@ export const store = reactive<VizStore>({
   },
 
   settings: {
-    sourceId: "youtube",
-    downloadQueueItems: true,
+    sourceId: null,
+    downloadQueueItems: null,
+    maxQuality: null,
+    receiverAspectRatio: null,
+    displayAspectRatio: null,
   },
 
   async updateSettings() {

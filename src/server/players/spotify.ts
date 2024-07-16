@@ -63,6 +63,7 @@ export default class SpotifyPlayer implements VizPlayer {
         profileUrl: data.external_urls.spotify,
       };
     } catch (error) {
+      console.error(error);
       return Promise.reject(error);
     }
   }
@@ -106,6 +107,7 @@ export default class SpotifyPlayer implements VizPlayer {
         refreshToken: data.refresh_token || this.#account.refreshToken,
       });
     } catch (error) {
+      console.error(error);
       Promise.reject(error);
     }
   }
@@ -160,6 +162,7 @@ export default class SpotifyPlayer implements VizPlayer {
         })),
       };
     } catch (error) {
+      console.error(error);
       return Promise.reject(error);
     }
   }
@@ -220,6 +223,7 @@ export default class SpotifyPlayer implements VizPlayer {
         account: this.#account,
       };
     } catch (error) {
+      console.error(error);
       return Promise.reject(error);
     }
   }
