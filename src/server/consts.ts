@@ -18,6 +18,7 @@ export const hlsSegmentPath = (
   videoId: string,
   segmentIndex: number | string
 ) => `/hls/${videoId}/${videoId}${segmentIndex}.ts`;
+// export const mp4Path = (videoId: string) => `/hls/${videoId}/${videoId}.mp4`;
 
 const dbDir = `${projectRoot}src/server/db/data/`;
 export const accountsDbPath = `${dbDir}accounts.json`;

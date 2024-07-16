@@ -1,7 +1,8 @@
 import express from "express";
 import compression from "compression";
 import { appHost, appPort, projectRoot, appUrl } from "./consts";
-import { m3u8Path } from "../consts";
+import { m3u8Path, mp4Path } from "../consts";
+import path from "path";
 
 const app = express();
 
@@ -23,6 +24,18 @@ app.get(m3u8Path, compression({ filter: () => true }), async (_, res) => {
 
   return res.type("application/vnd.apple.mpegurl").send(m3u8);
 });
+
+// app.use("/static", express.static(path.join(__dirname, "public")));
+app.use("/hls", express.static("../../public/hls/"));
+
+// app.get(
+//   `${mp4Path}/:id`,
+//   compression({ filter: () => true }),
+//   async (req, res) => {
+//     console.log(express.static("../../public/hls/"));
+//     return res.type("application/vnd.apple.mpegurl").send(m3u8);
+//   }
+// );
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(`${projectRoot}/dist/client`));

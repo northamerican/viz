@@ -2,6 +2,7 @@
 import type { QueueItem } from "Viz";
 import { computed, ref } from "vue";
 import YouTubeVideoEmbed from "./YouTubeVideoEmbed.vue";
+import { mp4Path } from "../server/consts";
 
 const props = defineProps<{ item: QueueItem; onClose: () => void }>();
 const dialogEl = ref<HTMLDialogElement>(null);
@@ -16,7 +17,12 @@ const alternateVideos = computed(
       <div>
         <button @click="props.onClose">X</button>
       </div>
-      <YouTubeVideoEmbed :video-id="props.item.videoId" />
+      <!-- <YouTubeVideoEmbed :video-id="props.item.videoId" /> -->
+      <video
+        :src="`/hls/${props.item.videoId}/${props.item.videoId}.mp4`"
+        controls
+        playsinline
+      ></video>
       <hr v-if="alternateVideos" />
       <div
         class="replace-video-option"
@@ -51,6 +57,11 @@ dialog {
   flex-direction: column;
   max-height: 50vh;
   overflow-y: scroll;
+  position: relative;
+}
+
+video {
+  height: 100%;
 }
 
 .replace-video-option {

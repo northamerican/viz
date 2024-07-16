@@ -77,8 +77,9 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
   const agent = ytdl.createAgent(ytCookies);
 
   try {
-    const info = await ytdl.getInfo(url, { agent });
-    const audioStream = ytdl.downloadFromInfo(info, {
+    const videoInfo = await ytdl.getInfo(url, { agent });
+    console.log({ videoInfo });
+    const audioStream = ytdl.downloadFromInfo(videoInfo, {
       agent,
       quality: "highestaudio",
       filter: (format) => format.container === "mp4",
