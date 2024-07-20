@@ -23,7 +23,7 @@ function durationToSeconds(duration: string) {
 const createSearchQuery: CreateSearchQuery = (track) => {
   const { artist, name } = track;
   // TODO logic here, removing text beyond a dash or inside parens (ex: rework, remix?, remaster,)
-  return `${artist} ${name}`;
+  return `${artist} ${name} music video`;
 };
 
 const filterVideos = (items: ytsr.Item[]): ytsr.Video[] | null => {
