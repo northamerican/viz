@@ -25,7 +25,7 @@ onMounted(async () => {
         await onReadToken({ playerId, code });
         window.location.assign("/");
       } catch (e) {
-        console.log(e);
+        console.error(e);
       }
     }
   }

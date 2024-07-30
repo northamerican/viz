@@ -59,16 +59,47 @@ declare module "Viz" {
     duration: number;
   };
 
+  export type AlternateVideo = {
+    name: string;
+    author: string;
+    id: string;
+    thumbnail: {
+      url: string;
+      width: number;
+      height: number;
+    };
+  };
+
+  export type VideoThumbnail = {
+    url: string;
+    width: number;
+    height: number;
+  };
+
   export type Video = {
     id: string;
-    source: unknown; // TODO define
+    source: "youtube";
     sourceUrl: string;
     duration: number;
     segmentDurations: number[];
-    alternateVideos: string[];
+    alternateVideos: AlternateVideo[];
+    thumbnail: VideoThumbnail;
     downloading: boolean;
     downloaded: boolean;
     error: string;
+    pid?: number;
+  };
+
+  export type AddVideoProps = Pick<
+    Video,
+    "id" | "source" | "sourceUrl" | "thumbnail" | "alternateVideos"
+  >;
+
+  export type VideoInfo = {
+    videoId: string;
+    url: string;
+    thumbnail: VideoThumbnail;
+    alternateVideos: Video["alternateVideos"];
   };
 
   export type Videos = {
@@ -82,8 +113,11 @@ declare module "Viz" {
     video?: Video;
     removed: boolean;
     error?: string;
+    playlistId: string;
   };
   export type NewQueueItem = Omit<QueueItem, "id">;
+
+  export type QueueItemWithVideo = Required<QueueItem, "video">;
 
   export type QueuePlaylistReference = {
     id: string;
@@ -105,6 +139,6 @@ declare module "Viz" {
 
   export type QueueWithVideos = Queue & {
     totalDuration: number;
-    items: Required<QueueItem, "video">[];
+    items: QueueItemWithVideo[];
   };
 }

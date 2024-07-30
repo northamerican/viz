@@ -17,16 +17,15 @@ type QueuesDbType = {
   queues: Queue[];
 };
 
-const defaultUuid = uuidv4();
-const queueItemsDefault = [vizIntroQueueItem];
+const queueItemsDefault = () => structuredClone([vizIntroQueueItem]);
 const queuesDbDefault: QueuesDbType = {
   queues: [
     {
-      id: defaultUuid,
+      id: uuidv4(),
       name: "Queue 1",
       active: true,
       startTime: Date.now(),
-      items: queueItemsDefault,
+      items: queueItemsDefault(),
       playlists: [],
     },
   ],
@@ -131,9 +130,11 @@ export const QueuesDb = {
   },
 
   async clearQueue(queueId: string) {
+    VideosDb.killAllVideoProcesses(); // TODO for this queue only
     await queuesDb.update(() => {
       Object.assign(this.getQueue(queueId), {
-        items: queueItemsDefault,
+        startTime: Date.now(),
+        items: queueItemsDefault(),
         playlists: [],
       });
     });
@@ -182,6 +183,8 @@ export const QueuesDb = {
 
   async removeItem(queueItemId: string) {
     this.editItem(queueItemId, { removed: true });
+    const { videoId } = this.getItem(queueItemId);
+    VideosDb.killVideoProcess(videoId);
   },
 
   async editItem(queueItemId: string, props: Partial<QueueItem>) {

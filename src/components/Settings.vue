@@ -6,6 +6,11 @@ import {
 } from "../consts";
 import { store } from "../store";
 import { onDeleteVideos, onSaveSettings } from "./Settings.telefunc";
+import { onMounted } from "vue";
+
+onMounted(() => {
+  store.updateSettings();
+});
 </script>
 
 <template>

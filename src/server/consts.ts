@@ -3,14 +3,12 @@ import { getLocalIp } from "./helpers";
 const localIp = getLocalIp();
 if (!localIp) throw "Unable to determine local IP";
 
-const remotePort = +process.env.REMOTE_PORT;
-const remoteHost = localIp;
-const localPort = +process.env.LOCAL_PORT;
-const localHost = process.env.LOCAL_HOST;
 const isLocal = process.argv.includes("--local");
-export const appPort = isLocal ? localPort : remotePort;
+const remoteHost = localIp;
+const localHost = process.env.LOCALHOST;
+export const port = +process.env.PORT;
 export const appHost = isLocal ? localHost : remoteHost;
-export const appUrl = `http://${appHost}:${appPort}/`;
+export const appUrl = `http://${appHost}:${port}/`;
 
 export const projectRoot = new URL(import.meta.url + "/../../..").pathname;
 export const hlsDir = `${projectRoot}public/hls/`;
@@ -18,7 +16,6 @@ export const hlsSegmentPath = (
   videoId: string,
   segmentIndex: number | string
 ) => `/hls/${videoId}/${videoId}${segmentIndex}.ts`;
-// export const mp4Path = (videoId: string) => `/hls/${videoId}/${videoId}.mp4`;
 
 const dbDir = `${projectRoot}src/server/db/data/`;
 export const accountsDbPath = `${dbDir}accounts.json`;

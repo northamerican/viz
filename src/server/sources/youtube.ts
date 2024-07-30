@@ -1,20 +1,25 @@
 import cp from "child_process";
 import fs from "fs";
 import { join } from "path";
-import ytsr from "ytsr";
+import ytsr from "ytsr"; // TODO deprecated lol
 import ytdl from "@distube/ytdl-core";
 import ffmpegPath from "ffmpeg-static";
 // import maxBy from "lodash.maxby";
 import { VideosDb } from "../db/VideosDb.ts";
 import { hlsDir } from "../consts.ts";
-import { getSegmentDurations, durationTotal } from "../helpers.ts";
+import {
+  getSegmentDurations,
+  durationTotal,
+  durationToSeconds,
+} from "../helpers.ts";
 import type {
   CreateSearchQuery,
-  GetVideoUrl,
+  GetVideoInfo,
   DownloadVideo,
 } from "../../types/VizSource.d.ts";
 import { maxVideoDuration } from "../../consts.ts";
 import { StoreDb } from "../db/StoreDb.ts";
+import maxBy from "lodash.maxby";
 
 function durationToSeconds(duration: string) {
   return duration.split(":").reduce((acc, time) => 60 * acc + +time, 0);
@@ -36,7 +41,9 @@ const filterVideos = (items: ytsr.Item[]): ytsr.Video[] | null => {
   return filteredItems.length ? (filteredItems as ytsr.Video[]) : null;
 };
 
-const getVideoUrl: GetVideoUrl = async (query: string) => {
+const baseUrl = "https://youtu.be/";
+
+const getVideoInfo: GetVideoInfo = async (query: string) => {
   const filters1 = await ytsr.getFilters(query);
   const filter1 = filters1.get("Type").get("Video");
   const { items } = await ytsr(filter1.url, {
@@ -49,11 +56,31 @@ const getVideoUrl: GetVideoUrl = async (query: string) => {
   if (!video) throw null;
 
   const { id: videoId, url } = video;
+  const thumbnail = maxBy(videos[0].thumbnails, "width");
+  const alternateVideos = videos
+    .slice(1)
+    .map(({ id, title, author, thumbnails }) => ({
+      id,
+      name: title,
+      author: author.name,
+      thumbnail: maxBy(thumbnails, "width"),
+    }));
+
   return {
     videoId,
     url,
-    alternateVideos: videos.map(({ id }) => id).slice(1),
+    thumbnail,
+    alternateVideos,
   };
+};
+
+const cancelDownload = async (videoId: string) => {
+  console.log(`User cancelled download of video ${videoId}.`);
+  return await VideosDb.editVideo(videoId, {
+    downloading: false,
+    error: null,
+    pid: null,
+  });
 };
 
 const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
@@ -149,18 +176,28 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
     //@ts-expect-error nodejs dumb
     videoStream.pipe(muxingProcess.stdio[4]);
 
+    await VideosDb.editVideo(videoId, {
+      pid: muxingProcess.pid,
+    });
+
     // For debugging
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     muxingProcess.stdio[2].on("data", async (data) => {
-      console.log(data.toString());
+      //   console.log(data.toString());
     });
 
     return new Promise((resolve) => {
-      muxingProcess.on("close", async () => {
+      muxingProcess.on("close", async (code) => {
+        if (code === 255) {
+          await cancelDownload(videoId);
+          return resolve();
+        }
+
         // const videoFilter = `[1:v]scale=2*round((iw*${aspectRatioCorrectionFactor})/2):ih,setsar=1[v]`;
         const videoFilter = `scale=2*round((iw*${aspectRatioCorrectionFactor})/2):ih,setsar=1`;
-        // TODO crop/scale videos wider that 16:9
+        // TODO crop/scale videos wider than 16:9
 
-        console.log("Converting...");
+        console.log(`Processing video ${videoId}...`);
         const filterProcess = cp.spawn(ffmpegPath, [
           "-loglevel",
           "48",
@@ -186,12 +223,36 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
           m3u8FilePath,
         ]);
 
-        // For debugging
-        filterProcess.stdio[2].on("data", async (data) => {
-          console.log(data.toString());
+        await VideosDb.editVideo(videoId, {
+          pid: filterProcess.pid,
         });
 
-        filterProcess.on("close", async () => {
+        const filterProcessAddSegments = setInterval(() => {
+          try {
+            VideosDb.editVideo(videoId, {
+              segmentDurations: getSegmentDurations(m3u8FilePath),
+              duration: getSegmentDurations(m3u8FilePath).reduce(
+                durationTotal,
+                0
+              ),
+            });
+          } catch {
+            //
+          }
+        }, 2000);
+
+        // For debugging
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        filterProcess.stdio[2].on("data", async (data) => {
+          // console.log(data.toString());
+        });
+        filterProcess.on("close", async (code) => {
+          clearInterval(filterProcessAddSegments);
+          if (code === 255) {
+            await cancelDownload(videoId);
+            return resolve();
+          }
+
           await VideosDb.editVideo(videoId, {
             segmentDurations: getSegmentDurations(m3u8FilePath),
             duration: getSegmentDurations(m3u8FilePath).reduce(
@@ -200,8 +261,10 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
             ),
             downloaded: true,
             downloading: false,
+            pid: null,
           });
 
+          // TODO process.uptime() (maybe before close?)
           console.timeEnd(wroteToDbMsg);
           resolve();
         });
@@ -214,6 +277,7 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
     await VideosDb.editVideo(videoId, {
       downloading: false,
       error,
+      pid: null,
     });
 
     return Promise.resolve();
@@ -221,7 +285,8 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
 };
 
 export const youtube = {
+  baseUrl,
   createSearchQuery,
-  getVideoUrl,
+  getVideoInfo,
   downloadVideo,
 };

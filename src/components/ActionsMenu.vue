@@ -8,7 +8,7 @@ type Options = Partial<{
 }>[];
 
 const props = defineProps<{ options: Options }>();
-const select = ref(null);
+const select = ref<HTMLSelectElement>(null);
 
 const onChange = (event: Event) => {
   const optionIndex = +(event.target as HTMLInputElement).value;

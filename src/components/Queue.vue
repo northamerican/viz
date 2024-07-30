@@ -9,7 +9,7 @@ import type {
 import ListItem from "./ListItem.vue";
 import ActionsMenu from "./ActionsMenu.vue";
 import QueueItemDialog from "./QueueItemDialog.vue";
-import { ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import {
   onGetVideo,
   onDownloadVideo,
@@ -24,6 +24,8 @@ import {
 import { store } from "../store";
 import players from "../players";
 import { onLoadPlaylist } from "./Playlists.telefunc";
+import { newTracksInterval, updateQueuesInterval } from "../consts";
+import { trackArtistsJoin } from "../server/helpers";
 
 const props = defineProps<{ queue: Queue }>();
 const dialogQueueItem = ref<QueueItem>(null);
@@ -122,11 +124,11 @@ const actionsMenuOptions = (queueItem: QueueItem) => [
   {
     action: () => downloadVideo(queueItem),
     label: "Get Video",
-    disabled: queueItem.video?.downloaded,
+    disabled: queueItem.video?.downloaded || queueItem.video?.downloading,
   },
   {
     action: () => openQueueItemDialog(queueItem),
-    label: "Replace Video...",
+    label: "Get Info...",
     disabled: !queueItem.video,
   },
   { action: () => removeItem(queueItem), label: "Remove from Queue" },
@@ -146,18 +148,27 @@ const actionsMenuOptions = (queueItem: QueueItem) => [
   },
 ];
 
-// Download queue items when they are added
-watch(() => props.queue.items.length, downloadQueue);
-// Add new items from the queue's playlists
-watch(props.queue.playlists, updateQueueFromPlaylist, {
-  immediate: true,
+onMounted(() => {
+  // Download queue items when they are added
+  watch(() => props.queue.items.length, downloadQueue);
+  // Watch for undownloaded queue items
+  watch(() => store.settings.downloadQueueItems, downloadQueue, {
+    immediate: true,
+  });
+  // Add new items from the queue's playlists
+  // When a playlist is added
+  watch(() => props.queue.playlists.length, updateQueueFromPlaylist, {
+    immediate: true,
+  });
+  // At a regular interval
+  setInterval(updateQueueFromPlaylist, newTracksInterval);
+
+  // Update queue at regular interval
+  setInterval(store.updateQueues, updateQueuesInterval);
+
+  // Check for completion of downloading queue item on init
+  checkForDownloadingQueueItem();
 });
-// Watch for undowloaded queue items
-watch(() => store.settings.downloadQueueItems, downloadQueue, {
-  immediate: true,
-});
-// Check for completion of downloading queue item on init
-checkForDownloadingQueueItem();
 </script>
 
 <template>
@@ -175,7 +186,7 @@ checkForDownloadingQueueItem();
       <div class="track-info">
         <strong
           :class="['track-name', { clickable: item.video }]"
-          @click="openQueueItemDialog(item)"
+          @click="item.video ? openQueueItemDialog(item) : null"
           >{{ item.track.name }}</strong
         >
         <span class="track-state">
@@ -189,13 +200,7 @@ checkForDownloadingQueueItem();
         </span>
         <br />
         <span v-if="!isInterstitial(item.track)">
-          <span
-            class="track-artist"
-            v-for="artist in item.track.artists"
-            :key="artist"
-          >
-            {{ artist }}
-          </span>
+          {{ trackArtistsJoin(item.track.artists) }}
         </span>
       </div>
       <div class="actions">
@@ -255,10 +260,6 @@ header {
 }
 
 .track-info {
-  .track-artist + .track-artist::before {
-    content: ", ";
-  }
-
   .track-state::before {
     content: " ";
   }

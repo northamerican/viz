@@ -1,8 +1,12 @@
 import express from "express";
 import compression from "compression";
-import { appHost, appPort, projectRoot, appUrl } from "./consts";
-import { m3u8Path, mp4Path } from "../consts";
-import path from "path";
+import { appHost, port, projectRoot, appUrl, hlsDir } from "./consts";
+import { m3u8Path } from "../consts";
+import { VideosDb } from "./db/VideosDb";
+
+// Init
+// console.log("clear downloading");
+// VideosDb.clearDownloading();
 
 const app = express();
 
@@ -25,17 +29,7 @@ app.get(m3u8Path, compression({ filter: () => true }), async (_, res) => {
   return res.type("application/vnd.apple.mpegurl").send(m3u8);
 });
 
-// app.use("/static", express.static(path.join(__dirname, "public")));
-app.use("/hls", express.static("../../public/hls/"));
-
-// app.get(
-//   `${mp4Path}/:id`,
-//   compression({ filter: () => true }),
-//   async (req, res) => {
-//     console.log(express.static("../../public/hls/"));
-//     return res.type("application/vnd.apple.mpegurl").send(m3u8);
-//   }
-// );
+app.use("/hls", express.static(hlsDir));
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(`${projectRoot}/dist/client`));
@@ -49,4 +43,4 @@ if (process.env.NODE_ENV === "production") {
   app.use(viteDevMiddleware);
 }
 
-app.listen(appPort, appHost, () => console.log(`viz running at ${appUrl}`));
+app.listen(port, appHost, () => console.log(`viz running at ${appUrl}`));

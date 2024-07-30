@@ -1,6 +1,7 @@
 import { JSONFilePreset } from "lowdb/node";
 import { videosDbPath } from "../consts";
-import type { Video, Videos } from "Viz";
+import type { AddVideoProps, Video, Videos } from "Viz";
+import { processExists } from "process-exists";
 
 type VideosDbType = {
   videos: Videos;
@@ -28,9 +29,30 @@ export const VideosDb = {
     return this.videos[videoId];
   },
 
-  async addVideo(
-    props: Pick<Video, "id" | "source" | "sourceUrl" | "alternateVideos">
-  ) {
+  async killVideoProcess(videoId: string) {
+    const { pid } = this.getVideo(videoId);
+    if (pid && (await processExists(pid))) {
+      process.kill(pid, "SIGTERM");
+    }
+  },
+
+  killAllVideoProcesses() {
+    Object.values(this.videos)
+      .filter((video) => video.pid)
+      .map((video) => this.killVideoProcess(video.id));
+  },
+
+  async clearDownloading() {
+    Object.values(this.videos).forEach((video) => {
+      Object.assign(video, {
+        downloading: false,
+        pid: null,
+      });
+    });
+    await videosDb.write();
+  },
+
+  async addVideo(props: AddVideoProps) {
     this.videos[props.id] = {
       duration: 0,
       segmentDurations: [],

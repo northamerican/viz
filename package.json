@@ -22,6 +22,7 @@
     "hls.js": "^1.4.14",
     "lodash.maxby": "^4.6.0",
     "lowdb": "^7.0.1",
+    "process-exists": "^5.0.0",
     "telefunc": "^0.1.67",
     "tsx": "^4.7.0",
     "uuid": "^9.0.1",

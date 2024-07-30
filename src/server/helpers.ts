@@ -2,17 +2,9 @@ import fs from "fs";
 import os from "os";
 
 export function getLocalIp() {
-  return Object.values(os.networkInterfaces()).reduce(
-    (r, list) =>
-      r.concat(
-        list.reduce(
-          (rr, i) =>
-            rr.concat((i.family === "IPv4" && !i.internal && i.address) || []),
-          []
-        )
-      ),
-    []
-  )[0];
+  return Object.values(os.networkInterfaces())
+    .flat()
+    .find(({ family, internal }) => family === "IPv4" && !internal).address;
 }
 
 export function getSegmentDurations(filePath: fs.PathOrFileDescriptor) {
@@ -24,6 +16,14 @@ export function getSegmentDurations(filePath: fs.PathOrFileDescriptor) {
     .map((extInfDuration) => +extInfDuration.match(/#EXTINF:([\d.]+),/)[1]);
 }
 
+export function durationToSeconds(duration: string) {
+  return duration.split(":").reduce((acc, time) => 60 * acc + +time, 0);
+}
+
 export function durationTotal(total: number, duration: number) {
   return total + duration;
+}
+
+export function trackArtistsJoin(artists: string[]) {
+  return artists.join(", ");
 }

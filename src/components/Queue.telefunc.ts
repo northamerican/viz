@@ -1,4 +1,9 @@
-import type { QueueItem, QueuePlaylistReference, TrackType } from "Viz";
+import type {
+  QueueItem,
+  QueuePlaylistReference,
+  TrackType,
+  VideoInfo,
+} from "Viz";
 import { VideosDb } from "../server/db/VideosDb";
 import { StoreDb } from "../server/db/StoreDb";
 import { QueuesDb } from "../server/db/QueuesDb";
@@ -7,12 +12,8 @@ import { AccountsDb } from "../server/db/AccountsDb";
 import type { PlayerId } from "../types/VizPlayer";
 import { interstitalEveryTracksCount } from "../consts";
 
-type GetVideoId = {
-  [k in TrackType as string]: () => Promise<{
-    videoId: string;
-    url: string;
-    alternateVideos: string[];
-  }>;
+type GetVideoInfo = {
+  [k in TrackType as string]: () => Promise<VideoInfo>;
 };
 
 export async function onGetVideo(queueItem: QueueItem) {
@@ -21,31 +22,35 @@ export async function onGetVideo(queueItem: QueueItem) {
   const artist = artists[0];
 
   try {
-    const getVideoId: GetVideoId = {
+    const getVideoInfo: GetVideoInfo = {
       track: async () => {
         console.log(`Getting video for ${name} - ${artist}`);
-        const { createSearchQuery, getVideoUrl } = StoreDb.source;
+        const { createSearchQuery, getVideoInfo } = StoreDb.source;
         const searchQuery = createSearchQuery({ artist, name });
-        const { videoId, url, alternateVideos } =
-          await getVideoUrl(searchQuery);
-        return { videoId, url, alternateVideos };
+        const { videoId, url, thumbnail, alternateVideos } =
+          await getVideoInfo(searchQuery);
+        return { videoId, url, thumbnail, alternateVideos };
       },
       interstitial: async () => {
         console.log(`Getting video ${queueItem.track.videoId}`);
         return {
           videoId: queueItem.track.videoId,
           url: queueItem.track.playerUrl,
+          // TODO thumb via getVideoInfo-like method
+          thumbnail: null,
           alternateVideos: null,
         };
       },
     };
 
-    const { videoId, url, alternateVideos } = await getVideoId[type]();
+    const { videoId, url, thumbnail, alternateVideos } =
+      await getVideoInfo[type]();
 
     await VideosDb.addVideo({
       id: videoId,
       source: StoreDb.sourceId,
       sourceUrl: url,
+      thumbnail,
       alternateVideos,
     });
     await QueuesDb.editItem(queueItemId, { videoId });
@@ -110,37 +115,48 @@ async function getPlaylist(playlist: QueuePlaylistReference) {
   return player.getPlaylist(id);
 }
 
-export async function onUpdateQueueFromPlaylists(queueId: string) {
+// TODO allow specifying playlist
+export async function onGetNewTracks(queueId: string) {
   const { items, playlists } = QueuesDb.getQueue(queueId);
-  const queueItems = items.filter((item) => !item.removed);
   const tracksPlaylistReference = playlists.find(
     (playlist) => playlist.type === "track" && playlist.updatesQueue
   );
-
   if (!tracksPlaylistReference) return;
 
   const tracksPlaylist = await getPlaylist(tracksPlaylistReference);
-
   if (!tracksPlaylist) return;
 
-  // Only add tracks that are newly added to the playlist
-  // TODO could also check if the tracks originate from the same playlist
+  // Only get tracks that are newly added to the playlist
+  const queueItems = items.filter((item) => !item.removed);
   const queueTrackItems = queueItems.filter(
-    (item) => item.track.type === "track"
+    (item) => item.playlistId === tracksPlaylistReference.id
   );
   const latestAddedAt = Math.max(
     ...queueTrackItems.map((item) => item.track.addedAt)
   );
   const newTracks = tracksPlaylist.tracks.filter(
-    (track) => track.addedAt > latestAddedAt
+    (track) => track.addedAt >= latestAddedAt
   );
 
-  if (!newTracks.length) return;
+  return newTracks;
+}
+
+// TODO allow / update from multiple playlists
+export async function onUpdateQueueFromPlaylists(queueId: string) {
+  const newTracks = await onGetNewTracks(queueId);
+
+  if (!newTracks?.length) return;
+
+  const { items, playlists } = QueuesDb.getQueue(queueId);
+  const tracksPlaylistReference = playlists.find(
+    (playlist) => playlist.type === "track" && playlist.updatesQueue
+  );
 
   const newTrackQueueItems = newTracks.map((track) => ({
     track,
     videoId: null,
     removed: false,
+    playlistId: tracksPlaylistReference.id,
   }));
 
   // Include interstitials
@@ -158,7 +174,8 @@ export async function onUpdateQueueFromPlaylists(queueId: string) {
   if (!interstitialsPlaylist)
     return QueuesDb.addItems(queueId, newTrackQueueItems);
 
-  // Get random interstitials from playlist not already in queue
+  // Get interstitials from playlist not already in queue
+  const queueItems = items.filter((item) => !item.removed);
   const queueTrackIds = queueItems.map((item) => item.track.id);
   const newInterstitials = interstitialsPlaylist.tracks.filter(
     (track) => !queueTrackIds.includes(track.id)
@@ -171,6 +188,7 @@ export async function onUpdateQueueFromPlaylists(queueId: string) {
     track,
     videoId: null,
     removed: false,
+    playlistId: interstitialsPlaylistReference.id,
   }));
 
   // Insert interstitials between new tracks

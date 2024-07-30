@@ -15,4 +15,5 @@ export const vizIntroQueueItem: QueueItem = {
   },
   videoId: null,
   removed: false,
+  playlistId: null,
 };

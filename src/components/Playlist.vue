@@ -10,7 +10,12 @@ const props = defineProps<{ playlist: Playlist }>();
 const addToQueue = async (tracks: Track[]) => {
   const { id, name, player, account } = props.playlist;
   const queueItems = tracks.map((track) => {
-    return { track, videoId: null, removed: false };
+    return {
+      track,
+      videoId: null,
+      removed: false,
+      playlistId: props.playlist.id,
+    };
   });
   await onAddToQueue(store.view.queue?.id, queueItems, {
     id,
@@ -22,7 +27,7 @@ const addToQueue = async (tracks: Track[]) => {
       profileUrl: account.profileUrl,
       player: account.player,
     },
-    updatesQueue: true,
+    updatesQueue: false,
     type: tracks[0].type,
   });
   store.updateQueues();
