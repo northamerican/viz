@@ -22,9 +22,7 @@ import { StoreDb } from "../db/StoreDb.ts";
 import maxBy from "lodash.maxby";
 // import chrome from "chrome-cookies-secure";
 
-function durationToSeconds(duration: string) {
-  return duration.split(":").reduce((acc, time) => 60 * acc + +time, 0);
-}
+const baseUrl = "https://youtu.be/";
 
 const createSearchQuery: CreateSearchQuery = (track) => {
   const { artist, name } = track;
@@ -41,8 +39,6 @@ const filterVideos = (items: ytsr.Item[]): ytsr.Video[] | null => {
 
   return filteredItems.length ? (filteredItems as ytsr.Video[]) : null;
 };
-
-const baseUrl = "https://youtu.be/";
 
 const getVideoInfo: GetVideoInfo = async (query: string) => {
   const filters1 = await ytsr.getFilters(query);
