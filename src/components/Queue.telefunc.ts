@@ -73,11 +73,6 @@ export async function onDownloadVideo(videoId: string, url: string) {
   return await downloadVideo({ videoId, url });
 }
 
-export async function onGetNextDownloadingInQueue() {
-  const queueItem = QueuesDb.nextDownloadingInQueue;
-  return queueItem;
-}
-
 export async function onGetNextDownloadableQueueItem() {
   const queueItem = QueuesDb.nextDownloadableInQueue;
   return queueItem;
@@ -104,8 +99,9 @@ export async function onUpdatePlaylistReference(
 }
 
 async function getPlaylist(playlist: QueuePlaylistReference) {
-  const playlistAccountLoggedIn = AccountsDb.account(playlist.account.id)
-    ?.isLoggedIn;
+  const playlistAccountLoggedIn = AccountsDb.account(
+    playlist.account.id
+  )?.isLoggedIn;
 
   if (!playlistAccountLoggedIn) return;
 
@@ -118,24 +114,27 @@ async function getPlaylist(playlist: QueuePlaylistReference) {
 // TODO allow specifying playlist
 export async function onGetNewTracks(queueId: string) {
   const { items, playlists } = QueuesDb.getQueue(queueId);
-  const tracksPlaylistReference = playlists.find(
+  const playlistReference = playlists.find(
     (playlist) => playlist.type === "track" && playlist.updatesQueue
   );
-  if (!tracksPlaylistReference) return;
+  if (!playlistReference) return;
 
-  const tracksPlaylist = await getPlaylist(tracksPlaylistReference);
-  if (!tracksPlaylist) return;
+  const playlist = await getPlaylist(playlistReference);
+  if (!playlist) return;
 
   // Only get tracks that are newly added to the playlist
   const queueItems = items.filter((item) => !item.removed);
   const queueTrackItems = queueItems.filter(
-    (item) => item.playlistId === tracksPlaylistReference.id
+    (item) => item.playlistId === playlistReference.id
   );
   const latestAddedAt = Math.max(
     ...queueTrackItems.map((item) => item.track.addedAt)
   );
-  const newTracks = tracksPlaylist.tracks.filter(
-    (track) => track.addedAt >= latestAddedAt
+  const newTracks = playlist.tracks.filter(
+    // TODO larger or equal && exclude any existing tracks
+    // cause multiple tracks can be added at the same time
+    // (track) => track.addedAt >= latestAddedAt
+    (track) => track.addedAt > latestAddedAt
   );
 
   return newTracks;

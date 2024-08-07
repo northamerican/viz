@@ -1,13 +1,12 @@
-import { JSONFilePreset } from "lowdb/node";
-import { accountsDbPath } from "../consts";
+import { accountsDbName } from "../consts";
 import type { Account, AccountDbItem } from "Viz";
+import { VizEventPreset } from "./adapter/VizEventAdapter";
 
 type AccountsDbType = {
   [accountId: string]: AccountDbItem;
 };
 
-const accountsDb = await JSONFilePreset<AccountsDbType>(accountsDbPath, {});
-await accountsDb.read();
+const accountsDb = await VizEventPreset<AccountsDbType>(accountsDbName, {});
 
 export const AccountsDb = {
   get accounts() {

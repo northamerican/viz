@@ -6,6 +6,12 @@ export type VizStoreDbType = Pick<VizStore, "settings">;
 export type ReceiverAspectRatios = number;
 export type DisplayAspectRatios = number;
 
+export type ServerEventName =
+  | "accounts:write"
+  | "queues:write"
+  | "store:write"
+  | "videos:write";
+
 export type VizSettings = {
   sourceId: SourceId;
   downloadQueueItems: boolean;
@@ -29,4 +35,8 @@ export type VizStore = {
   updateSettings: () => Promise<void>;
   updateAccounts: () => Promise<void>;
   updateQueues: () => Promise<void>;
+  onServerEvent(
+    eventName: ServerEventName,
+    callback: () => Promise<void>
+  ): Promise<void>;
 };

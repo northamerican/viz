@@ -1,7 +1,7 @@
-import { JSONFilePreset } from "lowdb/node";
-import { videosDbPath } from "../consts";
+import { videosDbName } from "../consts";
 import type { AddVideoProps, Video, Videos } from "Viz";
 import { processExists } from "process-exists";
+import { VizEventPreset } from "./adapter/VizEventAdapter";
 
 type VideosDbType = {
   videos: Videos;
@@ -10,11 +10,10 @@ type VideosDbType = {
 const videosDbDefault = {
   videos: {},
 };
-const videosDb = await JSONFilePreset<VideosDbType>(
-  videosDbPath,
+const videosDb = await VizEventPreset<VideosDbType>(
+  videosDbName,
   structuredClone(videosDbDefault)
 );
-await videosDb.read();
 
 export const VideosDb = {
   async read() {
@@ -25,21 +24,30 @@ export const VideosDb = {
     return videosDb.data.videos;
   },
 
+  get processingVideoIds() {
+    return Object.values(this.videos)
+      .filter(({ pid }) => pid)
+      .map(({ id }) => id);
+  },
+
   getVideo(videoId: string) {
     return this.videos[videoId];
   },
 
   async killVideoProcess(videoId: string) {
-    const { pid } = this.getVideo(videoId);
+    const pid = this.getVideo(videoId)?.pid;
     if (pid && (await processExists(pid))) {
       process.kill(pid, "SIGTERM");
+      return Promise.resolve();
     }
   },
 
-  killAllVideoProcesses() {
-    Object.values(this.videos)
-      .filter((video) => video.pid)
-      .map((video) => this.killVideoProcess(video.id));
+  async killVideoProcesses(videoIds: string[]) {
+    await Promise.all(
+      videoIds
+        .filter((videoId) => this.videos[videoId].pid)
+        .map((videoId) => this.killVideoProcess(videoId))
+    );
   },
 
   async clearDownloading() {

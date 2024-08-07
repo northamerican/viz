@@ -8,8 +8,8 @@ import { dialogAlternateVideoCount } from "../consts";
 
 const props = defineProps<{ item: QueueItem; onClose: () => void }>();
 const dialogEl = ref<HTMLDialogElement>(null);
-const alternateVideos = computed(
-  () => props.item.video.alternateVideos?.slice(0, dialogAlternateVideoCount)
+const alternateVideos = computed(() =>
+  props.item.video.alternateVideos?.slice(0, dialogAlternateVideoCount)
 );
 </script>
 

@@ -30,7 +30,6 @@ const addToQueue = async (tracks: Track[]) => {
     updatesQueue: false,
     type: tracks[0].type,
   });
-  store.updateQueues();
 };
 
 const deselectPlaylist = () => {

@@ -1,7 +1,7 @@
-import { JSONFilePreset } from "lowdb/node";
-import { storeDbPath } from "../consts";
+import { storeDbName } from "../consts";
 import sources from "../sources";
 import { VizStoreDbType } from "../../types/VizStore";
+import { VizEventPreset } from "./adapter/VizEventAdapter";
 
 const storeDbDefault: VizStoreDbType = {
   // TODO view:
@@ -14,11 +14,10 @@ const storeDbDefault: VizStoreDbType = {
   },
 };
 
-const storeDb = await JSONFilePreset<VizStoreDbType>(
-  storeDbPath,
+const storeDb = await VizEventPreset<VizStoreDbType>(
+  storeDbName,
   storeDbDefault
 );
-await storeDb.read();
 
 export const StoreDb = {
   async read() {

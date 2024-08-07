@@ -5,8 +5,7 @@ import { m3u8Path } from "../consts";
 import { VideosDb } from "./db/VideosDb";
 
 // Init
-// console.log("clear downloading");
-// VideosDb.clearDownloading();
+VideosDb.clearDownloading();
 
 const app = express();
 

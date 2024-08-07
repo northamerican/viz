@@ -20,6 +20,7 @@ import type {
 import { maxVideoDuration } from "../../consts.ts";
 import { StoreDb } from "../db/StoreDb.ts";
 import maxBy from "lodash.maxby";
+// import chrome from "chrome-cookies-secure";
 
 function durationToSeconds(duration: string) {
   return duration.split(":").reduce((acc, time) => 60 * acc + +time, 0);
@@ -99,6 +100,13 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
   console.log(`Downloading video ${videoId}...`);
   console.time(wroteToDbMsg);
 
+  // const cookies: unknown = [];
+  // const cookies = await chrome.getCookiesPromised(
+  //   "https://www.youtube.com",
+  //   "object",
+  //   "Default"
+  // );
+
   // Circumvent age-restricted videos
   const ytCookies = ["__Secure-1PSID", "__Secure-1PSIDTS", "LOGIN_INFO"].map(
     (ytCookieName) => ({
@@ -120,7 +128,7 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
       agent,
       quality: "highestvideo",
       filter: (format) => {
-        return format.codecs.startsWith("avc1") && format.height <= maxQuality;
+        return format.codecs?.startsWith("avc1") && format.height <= maxQuality;
       },
     });
 
@@ -183,7 +191,7 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
     // For debugging
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     muxingProcess.stdio[2].on("data", async (data) => {
-      //   console.log(data.toString());
+      // console.log(data.toString());
     });
 
     return new Promise((resolve) => {
@@ -200,7 +208,7 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
         console.log(`Processing video ${videoId}...`);
         const filterProcess = cp.spawn(ffmpegPath, [
           "-loglevel",
-          "48",
+          "32",
 
           "-thread_queue_size",
           ffmpegThreadQueueSize,
@@ -227,27 +235,28 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
           pid: filterProcess.pid,
         });
 
-        const filterProcessAddSegments = setInterval(() => {
-          try {
-            VideosDb.editVideo(videoId, {
-              segmentDurations: getSegmentDurations(m3u8FilePath),
-              duration: getSegmentDurations(m3u8FilePath).reduce(
-                durationTotal,
-                0
-              ),
-            });
-          } catch {
-            //
-          }
-        }, 2000);
-
-        // For debugging
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         filterProcess.stdio[2].on("data", async (data) => {
-          // console.log(data.toString());
+          // Check for writing to file output
+          const wroteToFile = [".ts", "for writing"].every((str) =>
+            data.toString().includes(str)
+          );
+
+          // Write segments to video db
+          if (wroteToFile) {
+            try {
+              VideosDb.editVideo(videoId, {
+                segmentDurations: getSegmentDurations(m3u8FilePath),
+                duration: getSegmentDurations(m3u8FilePath).reduce(
+                  durationTotal,
+                  0
+                ),
+              });
+            } catch {
+              // TODO
+            }
+          }
         });
         filterProcess.on("close", async (code) => {
-          clearInterval(filterProcessAddSegments);
           if (code === 255) {
             await cancelDownload(videoId);
             return resolve();

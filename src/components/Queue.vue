@@ -15,7 +15,6 @@ import {
   onDownloadVideo,
   onRemoveQueueItem,
   onPlayQueue,
-  onGetNextDownloadingInQueue,
   onUpdateQueueFromPlaylists,
   onGetNextDownloadableQueueItem,
   onClearQueue,
@@ -24,7 +23,7 @@ import {
 import { store } from "../store";
 import players from "../players";
 import { onLoadPlaylist } from "./Playlists.telefunc";
-import { newTracksInterval, updateQueuesInterval } from "../consts";
+import { newTracksInterval } from "../consts";
 import { trackArtistsJoin } from "../server/helpers";
 
 const props = defineProps<{ queue: Queue }>();
@@ -57,7 +56,6 @@ const updatePlaylist = async (
 
 const removeItem = async (queueItem: QueueItem) => {
   await onRemoveQueueItem(queueItem.id);
-  store.updateQueues();
 };
 
 const playQueue = async () => {
@@ -70,22 +68,11 @@ const playQueue = async () => {
 
 const downloadVideo = async (queueItem: QueueItem) => {
   const { videoId, url } = await onGetVideo(queueItem);
-  await store.updateQueues();
   if (!videoId) return;
   await onDownloadVideo(videoId, url);
-  await store.updateQueues();
   if (store.videoEl.currentTime === 0) {
     playQueue();
   }
-};
-
-const checkForDownloadingQueueItem = async () => {
-  // Recursively check for downloading queue item completion
-  if (await onGetNextDownloadingInQueue()) {
-    return setTimeout(checkForDownloadingQueueItem, 250);
-  }
-  // Update queue on completion
-  await store.updateQueues();
 };
 
 const downloadQueue = async () => {
@@ -102,14 +89,12 @@ const downloadQueue = async () => {
 const clearQueue = async () => {
   const { videoEl } = store;
   await onClearQueue(props.queue.id);
-  await store.updateQueues();
   videoEl.pause();
   videoEl.load();
 };
 
 const updateQueueFromPlaylist = async () => {
   await onUpdateQueueFromPlaylists(props.queue.id);
-  await store.updateQueues();
 };
 
 const openQueueItemDialog = (queueItem: QueueItem) => {
@@ -147,27 +132,20 @@ const actionsMenuOptions = (queueItem: QueueItem) => [
     label: `Go to ${players[queueItem.track.player].name} Song...`,
   },
 ];
-
 onMounted(() => {
+  // TODO these could be server events
   // Download queue items when they are added
   watch(() => props.queue.items.length, downloadQueue);
-  // Watch for undownloaded queue items
+  // Watch for undownloaded queue items, dl recursively
   watch(() => store.settings.downloadQueueItems, downloadQueue, {
     immediate: true,
   });
+
   // Add new items from the queue's playlists
   // When a playlist is added
-  watch(() => props.queue.playlists.length, updateQueueFromPlaylist, {
-    immediate: true,
-  });
+  watch(() => props.queue.playlists.length, updateQueueFromPlaylist);
   // At a regular interval
   setInterval(updateQueueFromPlaylist, newTracksInterval);
-
-  // Update queue at regular interval
-  setInterval(store.updateQueues, updateQueuesInterval);
-
-  // Check for completion of downloading queue item on init
-  checkForDownloadingQueueItem();
 });
 </script>
 

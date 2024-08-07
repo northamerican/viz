@@ -4,11 +4,9 @@ import { VizPlayer } from "../../types/VizPlayer";
 import { Playlist, TrackType } from "Viz";
 import players from "../../players";
 import { tokenPath } from "../../consts";
-import { google, youtube_v3 } from "googleapis";
-import { OAuth2Client } from "google-auth-library";
+import { google, type youtube_v3, Auth } from "googleapis";
 
 const youtubeApi = google.youtube("v3");
-
 const clientId = process.env.YOUTUBE_CLIENT_ID;
 const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
 const redirectUri = new URL(tokenPath(players.youtube.id), appUrl).href;
@@ -22,7 +20,7 @@ export default class YouTubePlayer implements VizPlayer {
     // TODO check if refresh token needed here?
   }
 
-  async getProfile(oauth2Client: OAuth2Client) {
+  async getProfile(oauth2Client: Auth.OAuth2Client) {
     try {
       const channelResult = await youtubeApi.channels.list({
         auth: oauth2Client,

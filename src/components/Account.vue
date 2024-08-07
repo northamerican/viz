@@ -17,12 +17,10 @@ const handleLogin = async () => {
 
 const handleLogout = async () => {
   await onLogout(props.account);
-  store.updateAccounts();
 };
 
 const handleRemove = async () => {
   await onRemove(props.account);
-  store.updateAccounts();
 };
 
 const openProfile = () => {

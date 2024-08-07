@@ -17,8 +17,9 @@ export const hlsSegmentPath = (
   segmentIndex: number | string
 ) => `/hls/${videoId}/${videoId}${segmentIndex}.ts`;
 
-const dbDir = `${projectRoot}src/server/db/data/`;
-export const accountsDbPath = `${dbDir}accounts.json`;
-export const storeDbPath = `${dbDir}store.json`;
-export const queuesDbPath = `${dbDir}queues.json`;
-export const videosDbPath = `${dbDir}videos.json`;
+export const dbDir = `${projectRoot}src/server/db/data/`;
+
+export const accountsDbName = "accounts";
+export const storeDbName = "store";
+export const queuesDbName = "queues";
+export const videosDbName = "videos";

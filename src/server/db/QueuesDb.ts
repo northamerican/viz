@@ -1,5 +1,4 @@
-import { JSONFilePreset } from "lowdb/node";
-import { queuesDbPath } from "../consts";
+import { queuesDbName } from "../consts";
 import type {
   Queue,
   QueueItem,
@@ -12,6 +11,7 @@ import type {
 import { v4 as uuidv4 } from "uuid";
 import { VideosDb } from "./VideosDb";
 import { vizIntroQueueItem } from "./fixtures/queues";
+import { VizEventPreset } from "./adapter/VizEventAdapter";
 
 type QueuesDbType = {
   queues: Queue[];
@@ -31,11 +31,10 @@ const queuesDbDefault: QueuesDbType = {
   ],
 };
 
-const queuesDb = await JSONFilePreset<QueuesDbType>(
-  queuesDbPath,
+const queuesDb = await VizEventPreset<QueuesDbType>(
+  queuesDbName,
   queuesDbDefault
 );
-await queuesDb.read();
 
 export const QueuesDb = {
   async read() {
@@ -69,12 +68,6 @@ export const QueuesDb = {
         duration,
       }));
     });
-  },
-
-  get nextDownloadingInQueue(): QueueItem {
-    return this.activeQueueWithVideos.items.find(
-      (item) => item.video?.downloading && !item.video?.error && !item.error
-    );
   },
 
   get nextDownloadableInQueue(): QueueItem {
@@ -130,7 +123,10 @@ export const QueuesDb = {
   },
 
   async clearQueue(queueId: string) {
-    VideosDb.killAllVideoProcesses(); // TODO for this queue only
+    const queue = this.getQueueWithVideos(queueId);
+    const videoIds = queue.items.map(({ video }) => video.id);
+
+    await VideosDb.killVideoProcesses(videoIds);
     await queuesDb.update(() => {
       Object.assign(this.getQueue(queueId), {
         startTime: Date.now(),
