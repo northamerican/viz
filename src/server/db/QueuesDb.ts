@@ -124,7 +124,7 @@ export const QueuesDb = {
 
   async clearQueue(queueId: string) {
     const queue = this.getQueueWithVideos(queueId);
-    const videoIds = queue.items.map(({ video }) => video.id);
+    const videoIds = queue.items.flatMap(({ video }) => video?.id ?? []);
 
     await VideosDb.killVideoProcesses(videoIds);
     await queuesDb.update(() => {
