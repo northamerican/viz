@@ -1,4 +1,4 @@
-import type { AccountDbItem, Playlist, PlaylistList } from "Viz";
+import type { AccountDbItem, ItemType, Playlist, PlaylistList } from "Viz";
 import { AxiosInstance } from "axios";
 import { google, Auth } from "googleapis";
 
@@ -16,6 +16,7 @@ export interface VizPlayer {
   getPlaylist(playlistId: string): Promise<Playlist>;
   getPlaylists(offset?: number): Promise<Partial<PlaylistList>>;
 }
+
 export interface VizPlayerConstructable {
   new (accountId?: string): VizPlayer;
   authorize(): string;
@@ -25,6 +26,7 @@ export type Players = {
   [playerId: string]: {
     id: PlayerId;
     name: string;
+    types: ItemType[];
   };
 };
 

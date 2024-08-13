@@ -12,7 +12,7 @@
     "lint": "eslint src --ext .ts,.vue --ignore-path .gitignore --fix src"
   },
   "dependencies": {
-    "@distube/ytdl-core": "4.13.7",
+    "@distube/ytdl-core": "^4.14.0",
     "axios": "^1.6.3",
     "chrome-cookies-secure": "^2.1.1",
     "compression": "^1.7.4",

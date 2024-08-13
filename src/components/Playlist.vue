@@ -1,23 +1,36 @@
 <script setup lang="ts">
-import type { Playlist, Track } from "Viz";
+import type { Playlist, Track, ItemType } from "Viz";
 import ListItem from "./ListItem.vue";
 import ActionsMenu from "./ActionsMenu.vue";
-import { onAddToQueue } from "./Playlist.telefunc";
+import { onAddItemsToQueue, onAddPlaylistToQueue } from "./Playlist.telefunc";
 import { store } from "../store";
+import players from "../players";
+import { computed } from "vue";
 
 const props = defineProps<{ playlist: Playlist }>();
 
-const addToQueue = async (tracks: Track[]) => {
-  const { id, name, player, account } = props.playlist;
-  const queueItems = tracks.map((track) => {
-    return {
+const playerAllowedTypes = computed(() => players[props.playlist.player].types);
+
+const addItemsToQueue = async (tracks: Track[], itemType: ItemType) => {
+  const queueId = store.view.queue?.id;
+
+  onAddItemsToQueue(
+    queueId,
+    tracks.map((track) => ({
       track,
       videoId: null,
       removed: false,
       playlistId: props.playlist.id,
-    };
-  });
-  await onAddToQueue(store.view.queue?.id, queueItems, {
+      type: itemType,
+    }))
+  );
+};
+
+const addPlaylistToQueue = async (itemType: ItemType) => {
+  const { id, name, player, account } = props.playlist;
+  const queueId = store.view.queue?.id;
+
+  onAddPlaylistToQueue(queueId, {
     id,
     name,
     player,
@@ -28,7 +41,7 @@ const addToQueue = async (tracks: Track[]) => {
       player: account.player,
     },
     updatesQueue: false,
-    type: tracks[0].type,
+    type: itemType,
   });
 };
 
@@ -36,8 +49,30 @@ const deselectPlaylist = () => {
   store.view.playlist = null;
 };
 
-const actionsMenuOptions = (track: Track) => [
-  { action: () => addToQueue([track]), label: "Add to Queue" },
+const playlistActionsMenuOptions = () => [
+  {
+    action: () => addPlaylistToQueue("track"),
+    label: "Add as Track Playlist",
+    disabled: !playerAllowedTypes.value.includes("track"),
+  },
+  {
+    action: () => addPlaylistToQueue("interstitial"),
+    label: "Add as Interstital Playlist",
+    disabled: !playerAllowedTypes.value.includes("interstitial"),
+  },
+];
+
+const trackActionsMenuOptions = (track: Track) => [
+  {
+    action: () => addItemsToQueue([track], "track"),
+    label: "Add to Queue as Track",
+    disabled: !playerAllowedTypes.value.includes("track"),
+  },
+  {
+    action: () => addItemsToQueue([track], "interstitial"),
+    label: "Add to Queue as Interstitial",
+    disabled: !playerAllowedTypes.value.includes("interstitial"),
+  },
 ];
 </script>
 
@@ -49,9 +84,7 @@ const actionsMenuOptions = (track: Track) => [
         {{ props.playlist.name }}
       </h2>
       <div>
-        <button @click="() => addToQueue(props.playlist.tracks)">+</button>
-        <!-- TODO Function to have queue follow updates to this playlist -->
-        <!-- <button>Follow playlist</button> -->
+        <ActionsMenu :options="playlistActionsMenuOptions()" />
       </div>
     </header>
     <ListItem v-for="track in props.playlist.tracks" :key="track.id">
@@ -67,7 +100,7 @@ const actionsMenuOptions = (track: Track) => [
         </span>
       </div>
       <div class="actions">
-        <ActionsMenu :options="actionsMenuOptions(track)" />
+        <ActionsMenu :options="trackActionsMenuOptions(track)" />
       </div>
     </ListItem>
   </div>

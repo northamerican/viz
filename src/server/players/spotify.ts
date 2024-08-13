@@ -3,7 +3,6 @@ import querystring from "node:querystring";
 import { AccountsDb } from "../db/AccountsDb";
 import { appUrl } from "../consts";
 import { VizPlayer } from "../../types/VizPlayer";
-import type { TrackType } from "Viz";
 import players from "../../players";
 import { tokenPath } from "../../consts";
 
@@ -211,7 +210,6 @@ export default class SpotifyPlayer implements VizPlayer {
           name: item.track.name,
           playerUrl: item.track.external_urls.spotify,
           addedAt: new Date(item.added_at).getTime(),
-          type: "track" as TrackType,
         }));
       });
 

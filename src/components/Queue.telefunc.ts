@@ -1,8 +1,8 @@
 import type {
   QueueItem,
   QueuePlaylistReference,
-  TrackType,
   VideoInfo,
+  NewQueueItem,
 } from "Viz";
 import { VideosDb } from "../server/db/VideosDb";
 import { StoreDb } from "../server/db/StoreDb";
@@ -12,39 +12,35 @@ import { AccountsDb } from "../server/db/AccountsDb";
 import type { PlayerId } from "../types/VizPlayer";
 import { interstitalEveryTracksCount } from "../consts";
 
-type GetVideoInfo = {
-  [k in TrackType as string]: () => Promise<VideoInfo>;
-};
+type GetVideoInfo = () => Promise<VideoInfo>;
 
 export async function onGetVideo(queueItem: QueueItem) {
   const { track, id: queueItemId } = queueItem;
-  const { artists, name, type } = track;
+  const { artists, name, videoId: trackVideoId } = track;
   const artist = artists[0];
 
   try {
-    const getVideoInfo: GetVideoInfo = {
-      track: async () => {
-        console.log(`Getting video for ${name} - ${artist}`);
-        const { createSearchQuery, getVideoInfo } = StoreDb.source;
-        const searchQuery = createSearchQuery({ artist, name });
-        const { videoId, url, thumbnail, alternateVideos } =
-          await getVideoInfo(searchQuery);
-        return { videoId, url, thumbnail, alternateVideos };
-      },
-      interstitial: async () => {
-        console.log(`Getting video ${queueItem.track.videoId}`);
-        return {
-          videoId: queueItem.track.videoId,
-          url: queueItem.track.playerUrl,
-          // TODO thumb via getVideoInfo-like method
-          thumbnail: null,
-          alternateVideos: null,
+    const getVideoInfo: GetVideoInfo = trackVideoId
+      ? async () => {
+          console.log(`Getting video ${trackVideoId}`);
+          return {
+            videoId: queueItem.track.videoId,
+            url: queueItem.track.playerUrl,
+            // TODO thumb via getVideoInfo-like method
+            thumbnail: null,
+            alternateVideos: null,
+          };
+        }
+      : async () => {
+          console.log(`Getting video for ${name} - ${artist}`);
+          const { createSearchQuery, getVideoInfo } = StoreDb.source;
+          const searchQuery = createSearchQuery({ artist, name });
+          const { videoId, url, thumbnail, alternateVideos } =
+            await getVideoInfo(searchQuery);
+          return { videoId, url, thumbnail, alternateVideos };
         };
-      },
-    };
 
-    const { videoId, url, thumbnail, alternateVideos } =
-      await getVideoInfo[type]();
+    const { videoId, url, thumbnail, alternateVideos } = await getVideoInfo();
 
     await VideosDb.addVideo({
       id: videoId,
@@ -140,7 +136,6 @@ export async function onGetNewTracks(queueId: string) {
   return newTracks;
 }
 
-// TODO allow / update from multiple playlists
 export async function onUpdateQueueFromPlaylists(queueId: string) {
   const newTracks = await onGetNewTracks(queueId);
 
@@ -151,11 +146,12 @@ export async function onUpdateQueueFromPlaylists(queueId: string) {
     (playlist) => playlist.type === "track" && playlist.updatesQueue
   );
 
-  const newTrackQueueItems = newTracks.map((track) => ({
+  const newTrackQueueItems: NewQueueItem[] = newTracks.map((track) => ({
     track,
     videoId: null,
     removed: false,
     playlistId: tracksPlaylistReference.id,
+    type: "track",
   }));
 
   // Include interstitials
@@ -183,18 +179,21 @@ export async function onUpdateQueueFromPlaylists(queueId: string) {
   if (!newInterstitials.length)
     return QueuesDb.addItems(queueId, newTrackQueueItems);
 
-  const newInterstitialQueueItems = newInterstitials.map((track) => ({
-    track,
-    videoId: null,
-    removed: false,
-    playlistId: interstitialsPlaylistReference.id,
-  }));
+  const newInterstitialQueueItems: NewQueueItem[] = newInterstitials.map(
+    (track) => ({
+      track,
+      videoId: null,
+      removed: false,
+      playlistId: interstitialsPlaylistReference.id,
+      type: "interstitial",
+    })
+  );
 
   // Insert interstitials between new tracks
   const lastInterstitialCount =
     queueItems.length -
     1 -
-    queueItems.findLastIndex((item) => item.track.type === "interstitial");
+    queueItems.findLastIndex((item) => item.type === "interstitial");
 
   const shouldPrependInterstitial =
     lastInterstitialCount >= interstitalEveryTracksCount;

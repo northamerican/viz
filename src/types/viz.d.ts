@@ -19,7 +19,7 @@ declare module "Viz" {
     refreshToken?: string;
   };
 
-  export type TrackType = "track" | "interstitial" | "videoContent";
+  export type ItemType = "track" | "interstitial" | "videoContent";
 
   export type Track = {
     id: string;
@@ -29,7 +29,6 @@ declare module "Viz" {
     playerUrl: string;
     videoId?: string;
     addedAt: number;
-    type: TrackType;
   };
 
   export type Playlists = {
@@ -114,6 +113,7 @@ declare module "Viz" {
     removed: boolean;
     error?: string;
     playlistId: string;
+    type: ItemType;
   };
   export type NewQueueItem = Omit<QueueItem, "id">;
 
@@ -123,9 +123,9 @@ declare module "Viz" {
     id: string;
     name: string;
     player: PlayerId;
-    account: Pick<AccountBase, "id" | "displayName" | "profileUrl" | "player">;
+    account: Omit<AccountBase, "isLoggedIn">;
     updatesQueue: boolean;
-    type: TrackType;
+    type: ItemType;
   };
 
   export type Queue = {

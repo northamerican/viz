@@ -1,7 +1,7 @@
 import { AccountsDb } from "../db/AccountsDb";
 import { appUrl } from "../consts";
 import { VizPlayer } from "../../types/VizPlayer";
-import { Playlist, TrackType } from "Viz";
+import { Playlist } from "Viz";
 import players from "../../players";
 import { tokenPath } from "../../consts";
 import { google, type youtube_v3, Auth } from "googleapis";
@@ -205,7 +205,6 @@ export default class YouTubePlayer implements VizPlayer {
         playerUrl: `https://youtu.be/${item.snippet.resourceId.videoId}`,
         videoId: item.snippet.resourceId.videoId,
         addedAt: new Date(item.snippet.publishedAt).getTime(),
-        type: "interstitial" as TrackType,
       }));
 
       return {

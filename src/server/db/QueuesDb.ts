@@ -139,16 +139,11 @@ export const QueuesDb = {
   async addPlaylist(queueId: string, newPlaylist: QueuePlaylistReference) {
     await queuesDb.update(() => {
       const queue = this.getQueue(queueId);
-      const existingPlaylistOfType = queue.playlists.find(
-        (playlist) => playlist.type === newPlaylist.type
+      const existingPlaylist = queue.playlists.find(
+        (playlist) => playlist.id === newPlaylist.id
       );
-      if (existingPlaylistOfType) {
-        queue.playlists = queue.playlists.map((playlist) =>
-          playlist === existingPlaylistOfType ? newPlaylist : playlist
-        );
-      } else {
-        queue.playlists.push(newPlaylist);
-      }
+      if (existingPlaylist) return;
+      queue.playlists.push(newPlaylist);
     });
   },
 
@@ -177,12 +172,6 @@ export const QueuesDb = {
     await queuesDb.write();
   },
 
-  async removeItem(queueItemId: string) {
-    this.editItem(queueItemId, { removed: true });
-    const { videoId } = this.getItem(queueItemId);
-    VideosDb.killVideoProcess(videoId);
-  },
-
   async editItem(queueItemId: string, props: Partial<QueueItem>) {
     this.editItems([queueItemId], props);
   },
@@ -192,6 +181,12 @@ export const QueuesDb = {
       Object.assign(queueItem, props);
     });
     await queuesDb.write();
+  },
+
+  async removeItem(queueItemId: string) {
+    this.editItem(queueItemId, { removed: true });
+    const { videoId } = this.getItem(queueItemId);
+    VideosDb.killVideoProcess(videoId);
   },
 
   async deleteDb() {

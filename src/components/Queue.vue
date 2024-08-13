@@ -1,11 +1,5 @@
 <script setup lang="ts">
-import type {
-  Queue,
-  QueueItem,
-  QueuePlaylistReference,
-  Track,
-  TrackType,
-} from "Viz";
+import type { Queue, QueueItem, QueuePlaylistReference, ItemType } from "Viz";
 import ListItem from "./ListItem.vue";
 import ActionsMenu from "./ActionsMenu.vue";
 import QueueItemDialog from "./QueueItemDialog.vue";
@@ -31,9 +25,17 @@ const dialogQueueItem = ref<QueueItem>(null);
 
 // TODO separate queue items, sources
 
-const isInterstitial = (track: Track) => track.type === "interstitial";
-const trackTypeIcon = (type: TrackType) =>
-  type === "interstitial" ? "🎬" : "🎵";
+const isInterstitial = (item: QueueItem) => item.type === "interstitial";
+const itemTypeIcon = (type: ItemType) => {
+  switch (type) {
+    case "interstitial":
+      return "🎬";
+    case "track":
+      return "🎵";
+    default:
+      return "";
+  }
+};
 
 const getPlaylist = async (playlistReference: QueuePlaylistReference) => {
   store.view.playlist = null;
@@ -158,9 +160,9 @@ onMounted(() => {
     <ListItem
       v-for="item in props.queue.items"
       :key="item.id"
-      :class="{ compact: isInterstitial(item.track) }"
+      :class="{ compact: isInterstitial(item) }"
     >
-      <span class="track-type" v-text="trackTypeIcon(item.track.type)" />
+      <span class="track-type" v-text="itemTypeIcon(item.type)" />
       <div class="track-info">
         <strong
           :class="['track-name', { clickable: item.video }]"
@@ -177,7 +179,7 @@ onMounted(() => {
           <span v-else-if="!item.video?.downloaded">❓</span>
         </span>
         <br />
-        <span v-if="!isInterstitial(item.track)">
+        <span v-if="!isInterstitial(item)">
           {{ trackArtistsJoin(item.track.artists) }}
         </span>
       </div>
@@ -191,7 +193,7 @@ onMounted(() => {
       v-for="playlistReference in props.queue.playlists"
       :key="playlistReference.id"
     >
-      <span class="track-type" v-text="trackTypeIcon(playlistReference.type)" />
+      <span class="track-type" v-text="itemTypeIcon(playlistReference.type)" />
       <div>
         <a href="" @click.prevent="getPlaylist(playlistReference)">
           <strong>{{ playlistReference.name }}</strong></a

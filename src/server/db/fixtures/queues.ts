@@ -11,9 +11,9 @@ export const vizIntroQueueItem: QueueItem = {
     playerUrl: "https://youtu.be/2uA2jaEmV9I",
     videoId: "2uA2jaEmV9I",
     addedAt: 0,
-    type: "interstitial",
   },
   videoId: null,
   removed: false,
   playlistId: null,
+  type: "interstitial",
 };
