@@ -159,6 +159,15 @@ export const QueuesDb = {
     });
   },
 
+  async removePlaylist(queueId: string, playlistId: string) {
+    await queuesDb.update(() => {
+      const queue = this.getQueue(queueId);
+      queue.playlists = queue.playlists.filter(
+        (playlist) => playlist.id !== playlistId
+      );
+    });
+  },
+
   async addItem(queueId: string, props: QueueItem) {
     this.addItems(queueId, [props]);
   },

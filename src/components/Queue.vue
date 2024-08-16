@@ -13,6 +13,7 @@ import {
   onGetNextDownloadableQueueItem,
   onClearQueue,
   onUpdatePlaylistReference,
+  onRemovePlaylistReference,
 } from "./Queue.telefunc";
 import { store } from "../store";
 import players from "../players";
@@ -107,7 +108,7 @@ const closeQueueItemDialog = () => {
   dialogQueueItem.value = null;
 };
 
-const actionsMenuOptions = (queueItem: QueueItem) => [
+const queueItemActionsMenuOptions = (queueItem: QueueItem) => [
   {
     action: () => downloadVideo(queueItem),
     label: "Get Video",
@@ -132,6 +133,15 @@ const actionsMenuOptions = (queueItem: QueueItem) => [
       window.open(queueItem.track.playerUrl, "_blank");
     },
     label: `Go to ${players[queueItem.track.player].name} Song...`,
+  },
+];
+const playlistActionsMenuOptions = (
+  playlistReference: QueuePlaylistReference
+) => [
+  {
+    action: () =>
+      onRemovePlaylistReference(props.queue.id, playlistReference.id),
+    label: "Remove playlist",
   },
 ];
 onMounted(() => {
@@ -184,7 +194,7 @@ onMounted(() => {
         </span>
       </div>
       <div class="actions">
-        <ActionsMenu :options="actionsMenuOptions(item)" />
+        <ActionsMenu :options="queueItemActionsMenuOptions(item)" />
       </div>
     </ListItem>
     <hr />
@@ -210,6 +220,9 @@ onMounted(() => {
             @change="updatePlaylist(playlistReference, $event)"
           />Updates Queue</label
         >
+      </div>
+      <div class="actions">
+        <ActionsMenu :options="playlistActionsMenuOptions(playlistReference)" />
       </div>
     </ListItem>
   </div>

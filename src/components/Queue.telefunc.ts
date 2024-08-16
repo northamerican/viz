@@ -3,6 +3,7 @@ import type {
   QueuePlaylistReference,
   VideoInfo,
   NewQueueItem,
+  Queue,
 } from "Viz";
 import { VideosDb } from "../server/db/VideosDb";
 import { StoreDb } from "../server/db/StoreDb";
@@ -94,106 +95,112 @@ export async function onUpdatePlaylistReference(
   await QueuesDb.editPlaylist(queueId, playlistId, props);
 }
 
-async function getPlaylist(playlist: QueuePlaylistReference) {
+export async function onRemovePlaylistReference(
+  queueId: string,
+  playlistId: string
+) {
+  await QueuesDb.removePlaylist(queueId, playlistId);
+}
+
+async function getNewTracks(
+  queue: Queue,
+  playlistReference: QueuePlaylistReference
+) {
   const playlistAccountLoggedIn = AccountsDb.account(
-    playlist.account.id
+    playlistReference.account.id
   )?.isLoggedIn;
 
   if (!playlistAccountLoggedIn) return;
 
   // Get playlist contents
-  const { id, account } = playlist;
+  const { id, account } = playlistReference;
   const player = new playerApi[<PlayerId>account.player](account.id);
-  return player.getPlaylist(id);
-}
+  const playlist = await player.getPlaylist(id);
 
-// TODO allow specifying playlist
-export async function onGetNewTracks(queueId: string) {
-  const { items, playlists } = QueuesDb.getQueue(queueId);
-  const playlistReference = playlists.find(
-    (playlist) => playlist.type === "track" && playlist.updatesQueue
-  );
-  if (!playlistReference) return;
-
-  const playlist = await getPlaylist(playlistReference);
   if (!playlist) return;
 
   // Only get tracks that are newly added to the playlist
-  const queueItems = items.filter((item) => !item.removed);
-  const queueTrackItems = queueItems.filter(
-    (item) => item.playlistId === playlistReference.id
+  const queueItems = queue.items.filter(
+    (item) => !item.removed && item.playlistId === playlistReference.id
   );
   const latestAddedAt = Math.max(
-    ...queueTrackItems.map((item) => item.track.addedAt)
+    ...queueItems.map((item) => item.track.addedAt)
   );
+  // TODO handle generated playlists where all tracks have  addedAt: 0.
+  const existingTrackIds = queue.items.map((item) => item.track.id);
   const newTracks = playlist.tracks.filter(
-    // TODO larger or equal && exclude any existing tracks
-    // cause multiple tracks can be added at the same time
-    // (track) => track.addedAt >= latestAddedAt
-    (track) => track.addedAt > latestAddedAt
+    (track) =>
+      // Track added after the latest added track
+      track.addedAt >= latestAddedAt &&
+      // Is not already in the list
+      !existingTrackIds.includes(track.id)
   );
 
   return newTracks;
 }
 
 export async function onUpdateQueueFromPlaylists(queueId: string) {
-  const newTracks = await onGetNewTracks(queueId);
+  // Tracks
+  const queue = QueuesDb.getQueue(queueId);
+  const { playlists } = queue;
 
-  if (!newTracks?.length) return;
-
-  const { items, playlists } = QueuesDb.getQueue(queueId);
-  const tracksPlaylistReference = playlists.find(
+  const trackPlaylists = playlists.filter(
     (playlist) => playlist.type === "track" && playlist.updatesQueue
   );
+  const newTracks = await Promise.all(
+    trackPlaylists.map((playlist) => getNewTracks(queue, playlist))
+  );
 
-  const newTrackQueueItems: NewQueueItem[] = newTracks.map((track) => ({
-    track,
-    videoId: null,
-    removed: false,
-    playlistId: tracksPlaylistReference.id,
-    type: "track",
-  }));
+  const newTrackQueueItems = newTracks
+    .flatMap((playlist, playlistIndex) =>
+      playlist.map(
+        (track) =>
+          ({
+            track,
+            videoId: null,
+            removed: false,
+            playlistId: trackPlaylists[playlistIndex].id,
+            type: "track",
+          }) as NewQueueItem
+      )
+    )
+    .sort((item1, item2) => item1.track.addedAt - item2.track.addedAt);
 
-  // Include interstitials
-  const interstitialsPlaylistReference = playlists.find(
+  // Interstitials
+  const interstitialsPlaylists = playlists.filter(
     (playlist) => playlist.type === "interstitial" && playlist.updatesQueue
   );
 
-  if (!interstitialsPlaylistReference)
+  if (!interstitialsPlaylists)
     return QueuesDb.addItems(queueId, newTrackQueueItems);
 
-  const interstitialsPlaylist = await getPlaylist(
-    interstitialsPlaylistReference
-  );
-
-  if (!interstitialsPlaylist)
-    return QueuesDb.addItems(queueId, newTrackQueueItems);
-
-  // Get interstitials from playlist not already in queue
-  const queueItems = items.filter((item) => !item.removed);
-  const queueTrackIds = queueItems.map((item) => item.track.id);
-  const newInterstitials = interstitialsPlaylist.tracks.filter(
-    (track) => !queueTrackIds.includes(track.id)
+  const newInterstitials = await Promise.all(
+    trackPlaylists.map((playlist) => getNewTracks(queue, playlist))
   );
 
   if (!newInterstitials.length)
     return QueuesDb.addItems(queueId, newTrackQueueItems);
 
-  const newInterstitialQueueItems: NewQueueItem[] = newInterstitials.map(
-    (track) => ({
-      track,
-      videoId: null,
-      removed: false,
-      playlistId: interstitialsPlaylistReference.id,
-      type: "interstitial",
-    })
-  );
+  const newInterstitialQueueItems = newInterstitials
+    .flatMap((playlist, playlistIndex) =>
+      playlist.map(
+        (track) =>
+          ({
+            track,
+            videoId: null,
+            removed: false,
+            playlistId: interstitialsPlaylists[playlistIndex].id,
+            type: "interstitial",
+          }) as NewQueueItem
+      )
+    )
+    .sort((item1, item2) => item1.track.addedAt - item2.track.addedAt);
 
   // Insert interstitials between new tracks
   const lastInterstitialCount =
-    queueItems.length -
+    queue.items.length -
     1 -
-    queueItems.findLastIndex((item) => item.type === "interstitial");
+    queue.items.findLastIndex((item) => item.type === "interstitial");
 
   const shouldPrependInterstitial =
     lastInterstitialCount >= interstitalEveryTracksCount;
