@@ -19,7 +19,7 @@ import { store } from "../store";
 import players from "../players";
 import { onLoadPlaylist } from "./Playlists.telefunc";
 import { newTracksInterval } from "../consts";
-import { trackArtistsJoin } from "../server/helpers";
+import { trackArtistsJoin } from "../helpers";
 
 const props = defineProps<{ queue: Queue }>();
 const dialogQueueItem = ref<QueueItem>(null);

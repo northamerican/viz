@@ -11,6 +11,10 @@ Turn your playlists into a music video stream.
 
 - Run `yarn server --local`
 
+## Production
+
+= See https://github.com/northamerican/viz/issues/46
+
 ## Tech stack
 - [node](https://nodejs.org/en)
 - [express](https://expressjs.com/)

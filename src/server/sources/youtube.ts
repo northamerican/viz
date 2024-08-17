@@ -186,8 +186,8 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
 
     // For debugging
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    muxingProcess.stdio[2].on("data", async (data) => {
-      // console.log(data.toString());
+    muxingProcess.stdio[2].on("data", async (_data) => {
+      // console.log(_data.toString());
     });
 
     return new Promise((resolve) => {

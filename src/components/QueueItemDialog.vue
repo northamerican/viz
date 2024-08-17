@@ -3,7 +3,7 @@ import type { QueueItem } from "Viz";
 import { computed, ref } from "vue";
 import YouTubeVideoEmbed from "./YouTubeVideoEmbed.vue";
 import { onReplaceQueueItemVideo } from "./QueueItemDialog.telefunc";
-import { trackArtistsJoin } from "../server/helpers";
+import { trackArtistsJoin } from "../helpers";
 import { dialogAlternateVideoCount } from "../consts";
 
 const props = defineProps<{ item: QueueItem; onClose: () => void }>();

@@ -23,7 +23,3 @@ export function durationToSeconds(duration: string) {
 export function durationTotal(total: number, duration: number) {
   return total + duration;
 }
-
-export function trackArtistsJoin(artists: string[]) {
-  return artists.join(", ");
-}
