@@ -47,7 +47,7 @@ const getPlaylist = async (playlistReference: QueuePlaylistReference) => {
   store.view.playlist = playlist;
 };
 
-const updatePlaylist = async (
+const handlePlaylistUpdatesQueue = async (
   playlistReference: QueuePlaylistReference,
   event: Event
 ) => {
@@ -55,6 +55,7 @@ const updatePlaylist = async (
   await onUpdatePlaylistReference(props.queue.id, playlistReference.id, {
     updatesQueue: checked,
   });
+  updateQueueFromPlaylist();
 };
 
 const removeItem = async (queueItem: QueueItem) => {
@@ -153,10 +154,7 @@ onMounted(() => {
     immediate: true,
   });
 
-  // Add new items from the queue's playlists
-  // When a playlist is added
-  watch(() => props.queue.playlists.length, updateQueueFromPlaylist);
-  // At a regular interval
+  // Update queue items from playlist at regular interval
   setInterval(updateQueueFromPlaylist, newTracksInterval);
 });
 </script>
@@ -217,7 +215,7 @@ onMounted(() => {
           <input
             type="checkbox"
             v-model="playlistReference.updatesQueue"
-            @change="updatePlaylist(playlistReference, $event)"
+            @change="handlePlaylistUpdatesQueue(playlistReference, $event)"
           />Updates Queue</label
         >
       </div>
