@@ -1,11 +1,15 @@
-<img alt="viz" width="300" src="https://github.com/northamerican/viz/blob/master/src/assets/viz-logo.png?raw=true"> 
+<img alt="viz" width="300" src="https://i.imgur.com/EGZl7PI.png"> 
 
-# Viz - music video box
-Turn your playlists into a music video stream.
+# viz - music video box
+Live music video streams for your spotify and youtube playlists.
+
+## Build
+- Run `yarn`
 
 ## Usage
 - Run `yarn server`
-- Navigate to url with Safari browser
+- Navigate to url
+- Stream via AirPlay using Safari
 
 ## Development
 
@@ -13,7 +17,7 @@ Turn your playlists into a music video stream.
 
 ## Production
 
-= See https://github.com/northamerican/viz/issues/46
+- See https://github.com/northamerican/viz/issues/46
 
 ## Tech stack
 - [node](https://nodejs.org/en)
@@ -26,4 +30,3 @@ Turn your playlists into a music video stream.
 - [ffmpeg](https://github.com/eugeneware/ffmpeg-static)
 - [lowdb](https://github.com/typicode/lowdb)
 - [telefunc](https://github.com/brillout/telefunc)
-
