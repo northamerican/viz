@@ -19,6 +19,10 @@ Live music video streams for your spotify and youtube playlists.
 
 - See https://github.com/northamerican/viz/issues/46
 
+## Demo
+
+- In active development. Coming soon 8)
+
 ## Tech stack
 - [node](https://nodejs.org/en)
 - [express](https://expressjs.com/)
