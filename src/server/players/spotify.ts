@@ -23,9 +23,7 @@ export default class SpotifyPlayer implements VizPlayer {
         config.headers.Authorization ||= `Bearer ${this.#account?.token}`;
         return config;
       },
-      (error) => {
-        Promise.reject(error);
-      }
+      (error) => Promise.reject(error)
     );
 
     this.#axios.interceptors.response.use(
@@ -35,7 +33,7 @@ export default class SpotifyPlayer implements VizPlayer {
 
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
-          await this.getRefreshToken();
+          await this.login(null, true);
           originalRequest.headers.Authorization = `Bearer ${this.#account?.token}`;
           return this.#axios(originalRequest);
         }
@@ -107,13 +105,8 @@ export default class SpotifyPlayer implements VizPlayer {
       });
     } catch (error) {
       console.error(error);
-      Promise.reject(error);
+      return Promise.reject(error);
     }
-  }
-
-  // TODO remove - just put the body of this fn where it is used
-  async getRefreshToken() {
-    return this.login(null, true);
   }
 
   static authorize() {
@@ -128,14 +121,6 @@ export default class SpotifyPlayer implements VizPlayer {
         redirect_uri: redirectUri,
       })
     );
-  }
-
-  // TODO Move these? dupes
-  async logout() {
-    await AccountsDb.logout(this.#account.id);
-  }
-  async remove() {
-    await AccountsDb.remove(this.#account.id);
   }
 
   // TODO pagination

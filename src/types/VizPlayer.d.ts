@@ -11,8 +11,6 @@ export interface VizPlayer {
     token: Auth.OAuth2Client | string
   ): Promise<{ id: string; displayName: string; profileUrl: string }>;
   login(code: string, refresh?: boolean): Promise<void>;
-  logout(): Promise<void>;
-  remove(): Promise<void>;
   getPlaylist(playlistId: string): Promise<Playlist>;
   getPlaylists(offset?: number): Promise<Partial<PlaylistList>>;
 }

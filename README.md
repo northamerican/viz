@@ -12,16 +12,18 @@ Live music video streams for your spotify and youtube playlists.
 - Stream via AirPlay using Safari
 
 ## Development
-
 - Run `yarn server --local`
 
 ## Production
-
 - See https://github.com/northamerican/viz/issues/46
 
 ## Demo
-
 - In active development. Coming soon 8)
+
+## Config
+Configure auth access for 3rd party services at:
+- console.cloud.google.com and search for youtube
+- developer.spotify.com/dashboard
 
 ## Tech stack
 - [node](https://nodejs.org/en)

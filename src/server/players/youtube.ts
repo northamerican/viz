@@ -11,25 +11,32 @@ const clientId = process.env.YOUTUBE_CLIENT_ID;
 const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
 const redirectUri = new URL(tokenPath(players.youtube.id), appUrl).href;
 
+const oauth2Client = new google.auth.OAuth2(
+  clientId,
+  clientSecret,
+  redirectUri
+);
+
 export default class YouTubePlayer implements VizPlayer {
   #account;
 
   constructor(accountId?: string) {
     this.#account = AccountsDb.account(accountId);
-
-    // TODO check if refresh token needed here?
   }
 
   async getProfile(oauth2Client: Auth.OAuth2Client) {
     try {
       const channelResult = await youtubeApi.channels.list({
         auth: oauth2Client,
-        part: ["snippet", "contentDetails", "contentOwnerDetails"], // TODO test w snippet only
+        part: ["snippet", "contentDetails", "contentOwnerDetails"],
         mine: true,
         maxResults: 50,
       });
 
-      const channelInfo = channelResult.data.items[0];
+      const channelInfo = channelResult.data.items?.[0];
+
+      if (!channelInfo)
+        throw new Error("Google account has no YouTube Channel");
 
       return {
         id: channelInfo.id,
@@ -43,18 +50,11 @@ export default class YouTubePlayer implements VizPlayer {
   }
 
   async login(code: string, refresh?: boolean) {
-    // TODO move to constructor
-    const oauth2Client = new google.auth.OAuth2(
-      clientId,
-      clientSecret,
-      redirectUri
-    );
-
-    if (refresh) {
-      await oauth2Client.refreshAccessToken();
-    }
-
     try {
+      if (refresh) {
+        await oauth2Client.refreshAccessToken();
+      }
+
       const { tokens } = await oauth2Client.getToken(code);
       oauth2Client.credentials = tokens;
 
@@ -72,47 +72,25 @@ export default class YouTubePlayer implements VizPlayer {
       });
     } catch (error) {
       console.error(error);
-      Promise.reject(error);
+      return Promise.reject(error);
     }
   }
 
-  // TODO this is not called from anywhere
-  async getRefreshToken() {
-    return this.login(null, true);
-  }
-
   static authorize() {
-    const oauth2Client = new google.auth.OAuth2(
-      clientId,
-      clientSecret,
-      redirectUri
-    );
     const scopes = ["https://www.googleapis.com/auth/youtube.readonly"];
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: "offline",
       scope: scopes,
+      prompt: "select_account",
     });
 
     return authUrl;
-  }
-
-  // TODO Move these? dupes
-  async logout() {
-    await AccountsDb.logout(this.#account.id);
-  }
-  async remove() {
-    await AccountsDb.remove(this.#account.id);
   }
 
   // TODO pagination
   async getPlaylists() {
     const maxResults = 50;
 
-    const oauth2Client = new google.auth.OAuth2(
-      clientId,
-      clientSecret,
-      redirectUri
-    );
     oauth2Client.credentials = {
       refresh_token: this.#account.refreshToken,
       access_token: this.#account.token,
@@ -146,11 +124,6 @@ export default class YouTubePlayer implements VizPlayer {
   async getPlaylist(playlistId: string): Promise<Playlist> {
     const maxResults = 50;
 
-    const oauth2Client = new google.auth.OAuth2(
-      clientId,
-      clientSecret,
-      redirectUri
-    );
     oauth2Client.credentials = {
       refresh_token: this.#account.refreshToken,
       access_token: this.#account.token,

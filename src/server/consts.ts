@@ -4,10 +4,9 @@ const localIp = getLocalIp();
 if (!localIp) throw "Unable to determine local IP";
 
 const isLocal = process.argv.includes("--local");
-const remoteHost = localIp;
 const localHost = process.env.LOCALHOST;
 export const port = +process.env.PORT;
-export const appHost = isLocal ? localHost : remoteHost;
+export const appHost = isLocal ? localHost : localIp;
 export const appUrl = `http://${appHost}:${port}/`;
 
 export const projectRoot = new URL(import.meta.url + "/../../..").pathname;

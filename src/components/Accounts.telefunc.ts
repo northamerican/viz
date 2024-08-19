@@ -8,6 +8,10 @@ export async function onReadToken({
   playerId: PlayerId;
   code: string;
 }) {
-  const player = new playerApi[playerId]();
-  await player.login(code);
+  try {
+    const player = new playerApi[playerId]();
+    await player.login(code);
+  } catch (e) {
+    console.error(e);
+  }
 }
