@@ -61,7 +61,7 @@ export default class YouTubePlayer implements VizPlayer {
       const { id, displayName, profileUrl } =
         await this.getProfile(oauth2Client);
 
-      AccountsDb.edit(id, {
+      AccountsDb.add(id, {
         id,
         displayName,
         profileUrl,

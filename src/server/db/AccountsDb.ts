@@ -30,9 +30,9 @@ export const AccountsDb = {
     return accountsDb.data?.[accountId];
   },
 
-  async edit(accountId: string, props: Partial<AccountDbItem>) {
+  async add(accountId: string, props: AccountDbItem) {
     await accountsDb.update((data) => {
-      Object.assign(data[accountId] ?? {}, props);
+      data[accountId] = props;
     });
   },
 
