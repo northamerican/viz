@@ -1,6 +1,6 @@
-import { eventsPath, serverEventNames } from "../consts";
-import { store } from "../store";
-import type { VizStoreMethods } from "./VizStore";
+import { eventsPath, serverEventNames } from "./consts";
+import { store } from "./store";
+import type { VizStoreMethods } from "./types/VizStore";
 
 const serverEventMap: {
   [EventName in (typeof serverEventNames)[number]]: keyof VizStoreMethods;
