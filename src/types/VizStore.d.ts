@@ -1,16 +1,8 @@
 import type { Account, Playlist, Playlists, Queue, QueueWithVideos } from "Viz";
 import { SourceId } from "./VizSource";
 
-export type VizStoreDbType = Pick<VizStore, "settings">;
-
 export type ReceiverAspectRatios = number;
 export type DisplayAspectRatios = number;
-
-export type ServerEventName =
-  | "accounts:write"
-  | "queues:write"
-  | "store:write"
-  | "videos:write";
 
 export type VizSettings = {
   sourceId: SourceId;
@@ -20,7 +12,7 @@ export type VizSettings = {
   displayAspectRatio: DisplayAspectRatios;
 };
 
-export type VizStore = {
+export type VizStoreData = {
   videoEl: HTMLMediaElement;
   accounts: Account[];
   queues: QueueWithVideos[];
@@ -31,12 +23,13 @@ export type VizStore = {
     queue: Queue;
   };
   settings: VizSettings;
+};
 
+export type VizStoreMethods = {
   updateSettings: () => Promise<void>;
   updateAccounts: () => Promise<void>;
   updateQueues: () => Promise<void>;
-  onServerEvent(
-    eventName: ServerEventName,
-    callback: () => Promise<void>
-  ): Promise<void>;
 };
+
+export type VizStore = VizStoreData & VizStoreMethods;
+export type VizStoreDbType = Pick<VizStoreData, "settings">;

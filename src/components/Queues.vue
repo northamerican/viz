@@ -5,9 +5,6 @@ import Queue from "./Queue.vue";
 
 onMounted(async () => {
   await store.updateQueues();
-  // TODO only update single queue or relevant queue item?
-  store.onServerEvent("queues:write", () => store.updateQueues());
-  store.onServerEvent("videos:write", () => store.updateQueues());
 });
 </script>
 

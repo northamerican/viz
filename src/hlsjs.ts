@@ -14,6 +14,6 @@ window.addEventListener("load", () => {
   hls.loadSource(m3u8Path);
 
   hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
-    console.log(data);
+    console.debug(data);
   });
 });

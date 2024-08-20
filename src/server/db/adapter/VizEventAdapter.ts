@@ -1,9 +1,6 @@
 import { Low } from "lowdb";
 import { JSONFile } from "lowdb/node";
-import EventEmitter from "node:events";
 import { dbDir } from "../../consts";
-
-export const vizEventEmitter = new EventEmitter();
 
 export class VizEventAdapter<T> extends JSONFile<T> {
   #write = super.write;

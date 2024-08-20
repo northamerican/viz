@@ -4,7 +4,7 @@ import { computed, ref } from "vue";
 import YouTubeVideoEmbed from "./YouTubeVideoEmbed.vue";
 import { onReplaceQueueItemVideo } from "./QueueItemDialog.telefunc";
 import { trackArtistsJoin } from "../helpers";
-import { dialogAlternateVideoCount } from "../consts";
+import { dialogAlternateVideoCount, hlsPath } from "../consts";
 
 const props = defineProps<{ item: QueueItem; onClose: () => void }>();
 const dialogEl = ref<HTMLDialogElement>(null);
@@ -22,7 +22,7 @@ const alternateVideos = computed(() =>
       </div>
       <!-- <button class="close-button" @click="props.onClose">X</button> -->
       <video
-        :src="`/hls/${props.item.videoId}/${props.item.videoId}.mp4`"
+        :src="`${hlsPath}/${props.item.videoId}/${props.item.videoId}.mp4`"
         :poster="props.item.video.thumbnail?.url"
         controls
         playsinline

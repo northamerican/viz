@@ -11,7 +11,6 @@ import type { PlayerId } from "../types/VizPlayer";
 
 onMounted(async () => {
   store.updateAccounts();
-  store.onServerEvent("accounts:write", () => store.updateAccounts());
 
   const readToken = document.location.pathname.includes(tokenPath());
   if (readToken) {

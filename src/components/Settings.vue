@@ -10,7 +10,6 @@ import { onMounted } from "vue";
 
 onMounted(() => {
   store.updateSettings();
-  store.onServerEvent("store:write", () => store.updateSettings());
 });
 </script>
 

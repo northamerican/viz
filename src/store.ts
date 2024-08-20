@@ -1,6 +1,5 @@
 import { reactive } from "vue";
 import {
-  onServerEvent,
   onGetAccountsAsArray,
   onGetQueuesWithVideos,
   onGetSettings,
@@ -35,13 +34,5 @@ export const store = reactive<VizStore>({
   },
   async updateQueues() {
     this.queues = await onGetQueuesWithVideos();
-  },
-
-  // Polling for a server event
-  async onServerEvent(eventName, callback) {
-    await onServerEvent(eventName);
-    await callback();
-    // Recursive polling
-    this.onServerEvent(eventName, callback);
   },
 });

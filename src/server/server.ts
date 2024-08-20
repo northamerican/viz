@@ -1,13 +1,14 @@
 import express from "express";
 import compression from "compression";
 import { appHost, port, projectRoot, appUrl, hlsDir } from "./consts";
-import { m3u8Path } from "../consts";
+import { eventsPath, hlsPath, m3u8Path, serverEventNames } from "../consts";
 import { VideosDb } from "./db/VideosDb";
-
-// Init
-VideosDb.clearDownloading();
+import { HttpStatusCode } from "axios";
+import "./vizEventEmitter";
 
 const app = express();
+// Init
+VideosDb.clearDownloading();
 
 app.use(express.text());
 
@@ -28,7 +29,24 @@ app.get(m3u8Path, compression({ filter: () => true }), async (_, res) => {
   return res.type("application/vnd.apple.mpegurl").send(m3u8);
 });
 
-app.use("/hls", express.static(hlsDir));
+app.use(hlsPath, express.static(hlsDir));
+
+app.get(eventsPath, async (req, res) => {
+  res.writeHead(HttpStatusCode.Ok, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    "Content-Encoding": "none",
+    Connection: "keep-alive",
+  });
+
+  serverEventNames.forEach((eventName) => {
+    vizEventEmitter.on(eventName, () => {
+      res.write(`event: ${eventName}\ndata:\n\n`);
+    });
+  });
+
+  req.on("close", () => res.end());
+});
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(`${projectRoot}/dist/client`));

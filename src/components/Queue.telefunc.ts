@@ -166,12 +166,14 @@ export async function onUpdateQueueFromPlaylists(queueId: string) {
     )
     .sort((item1, item2) => item1.track.addedAt - item2.track.addedAt);
 
+  if (!newTrackQueueItems.length) return;
+
   // Interstitials
   const interstitialsPlaylists = playlists.filter(
     (playlist) => playlist.type === "interstitial" && playlist.updatesQueue
   );
 
-  if (!interstitialsPlaylists)
+  if (!interstitialsPlaylists.length)
     return QueuesDb.addItems(queueId, newTrackQueueItems);
 
   const newInterstitials = await Promise.all(

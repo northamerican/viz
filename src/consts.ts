@@ -1,5 +1,14 @@
 export const m3u8Path = "/m3u8";
+export const hlsPath = "/hls";
+export const eventsPath = "/events";
 export const tokenPath = (playerId = "") => `/token/${playerId}`;
+
+export const serverEventNames = [
+  "accounts:write",
+  "queues:write",
+  "store:write",
+  "videos:write",
+] as const;
 
 export const maxVideoDuration = 12 * 60;
 export const interstitalEveryTracksCount = 2;
