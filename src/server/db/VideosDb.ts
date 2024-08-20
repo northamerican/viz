@@ -1,7 +1,7 @@
 import { videosDbName } from "../consts";
 import type { AddVideoProps, Video, Videos } from "Viz";
 import { processExists } from "process-exists";
-import { VizEventPreset } from "./adapter/VizEventAdapter";
+import { VizEventPreset } from "./adapters/VizEventAdapter";
 
 type VideosDbType = {
   videos: Videos;

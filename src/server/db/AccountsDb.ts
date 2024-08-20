@@ -1,6 +1,6 @@
 import { accountsDbName } from "../consts";
 import type { Account, AccountDbItem } from "Viz";
-import { VizEventPreset } from "./adapter/VizEventAdapter";
+import { VizEventPreset } from "./adapters/VizEventAdapter";
 
 type AccountsDbType = {
   [accountId: string]: AccountDbItem;

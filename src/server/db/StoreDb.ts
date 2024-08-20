@@ -1,7 +1,7 @@
 import { storeDbName } from "../consts";
 import sources from "../sources";
 import { VizStoreDbType } from "../../types/VizStore";
-import { VizEventPreset } from "./adapter/VizEventAdapter";
+import { VizEventPreset } from "./adapters/VizEventAdapter";
 
 const storeDbDefault: VizStoreDbType = {
   // TODO view:

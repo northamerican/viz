@@ -11,7 +11,7 @@ import type {
 import { v4 as uuidv4 } from "uuid";
 import { VideosDb } from "./VideosDb";
 import { vizIntroQueueItem } from "./fixtures/queues";
-import { VizEventPreset } from "./adapter/VizEventAdapter";
+import { VizEventPreset } from "./adapters/VizEventAdapter";
 
 type QueuesDbType = {
   queues: Queue[];
