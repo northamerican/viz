@@ -22,8 +22,9 @@ Live music video streams for your spotify and youtube playlists.
 
 ## Config
 Configure auth access for 3rd party services at:
-- console.cloud.google.com and search for youtube
+- console.cloud.google.com -> youtube data api v3
 - developer.spotify.com/dashboard
+- copy `.env.example` to `.env` with api keys
 
 ## Tech stack
 - [node](https://nodejs.org/en)
