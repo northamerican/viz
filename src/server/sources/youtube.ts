@@ -4,7 +4,7 @@ import { join } from "path";
 import ytsr from "ytsr"; // TODO deprecated lol
 import ytdl from "@distube/ytdl-core";
 import ffmpegPath from "ffmpeg-static";
-// import maxBy from "lodash.maxby";
+import maxBy from "lodash.maxby";
 import { VideosDb } from "../db/VideosDb.ts";
 import { hlsDir } from "../consts.ts";
 import {
@@ -19,7 +19,6 @@ import type {
 } from "../../types/VizSource.d.ts";
 import { maxVideoDuration } from "../../consts.ts";
 import { StoreDb } from "../db/StoreDb.ts";
-import maxBy from "lodash.maxby";
 // import chrome from "chrome-cookies-secure";
 
 const baseUrl = "https://youtu.be/";
@@ -197,9 +196,39 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
           return resolve();
         }
 
-        // const videoFilter = `[1:v]scale=2*round((iw*${aspectRatioCorrectionFactor})/2):ih,setsar=1[v]`;
-        const videoFilter = `scale=2*round((iw*${aspectRatioCorrectionFactor})/2):ih,setsar=1`;
-        // TODO crop/scale videos wider than 16:9
+        // const cropDetectProcess = cp.spawn(ffmpegPath, [
+        //   "-i",
+        //   videoFilePath,
+        //   "-ss",
+        //   "1",
+        //   "-vframes",
+        //   "10",
+        //   "-vf",
+        //   "cropdetect",
+        //   "-f",
+        //   "null",
+        //   " -",
+        // ]);
+
+        // let width, height, outputWidth, outputHeight;
+
+        // cropDetectProcess.stdio[2].on("data", async (data) => {
+        //   const dataStr = data.toString();
+        //   console.log("cropdetect");
+        //   console.log(dataStr);
+        //   if (dataStr.includes("Video:")) {
+        //     const [, widthMatch, heightMatch] = dataStr.match(/\s(\d*)x(\d*)\s/);
+
+        //     console.log("VIDEO WIDTH HEIGHT: ", width, height);
+        //   }
+        // });
+        // cropDetectProcess.on("close", async (code) => {});
+
+        const videoFilter = [
+          // "crop=944:704:164:6",
+          `scale=2*round((iw*${aspectRatioCorrectionFactor})/2):ih`,
+          "setsar=1",
+        ].join(",");
 
         console.log(`Processing video ${videoId}...`);
         const filterProcess = cp.spawn(ffmpegPath, [
