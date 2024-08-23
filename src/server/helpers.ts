@@ -8,12 +8,16 @@ export function getLocalIp() {
 }
 
 export function getSegmentDurations(filePath: fs.PathOrFileDescriptor) {
-  return fs
-    .readFileSync(filePath)
-    .toString()
-    .split("\n")
-    .filter((line) => line.startsWith("#EXTINF"))
-    .map((extInfDuration) => +extInfDuration.match(/#EXTINF:([\d.]+),/)[1]);
+  try {
+    return fs
+      .readFileSync(filePath)
+      .toString()
+      .split("\n")
+      .filter((line) => line.startsWith("#EXTINF"))
+      .map((extInfDuration) => +extInfDuration.match(/#EXTINF:([\d.]+),/)[1]);
+  } catch (error) {
+    return [];
+  }
 }
 
 export function durationToSeconds(duration: string) {

@@ -17,9 +17,8 @@ import type {
   GetVideoInfo,
   DownloadVideo,
 } from "../../types/VizSource.d.ts";
-import { maxVideoDuration } from "../../consts.ts";
+import { aspectRatioFull, maxVideoDuration } from "../../consts.ts";
 import { StoreDb } from "../db/StoreDb.ts";
-// import chrome from "chrome-cookies-secure";
 
 const baseUrl = "https://youtu.be/";
 
@@ -70,15 +69,6 @@ const getVideoInfo: GetVideoInfo = async (query: string) => {
   };
 };
 
-const cancelDownload = async (videoId: string) => {
-  console.log(`User cancelled download of video ${videoId}.`);
-  return await VideosDb.editVideo(videoId, {
-    downloading: false,
-    error: null,
-    pid: null,
-  });
-};
-
 const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
   const hlsVideoDir = join(hlsDir, videoId);
   const videoFilePath = join(hlsVideoDir, `${videoId}.mp4`);
@@ -86,33 +76,32 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
   const wroteToDbMsg = `Wrote ${videoId} segments to videos db in`;
   const { aspectRatioCorrectionFactor } = StoreDb;
   const { maxQuality } = StoreDb.settings;
-  const ffmpegThreadQueueSize = "512";
+  const logToConsole = false; // For debugging
+  const ffmpegLogLevel = "32"; // 32 = ffmpeg default
+  const ffmpegThreadQueueSize = "1024";
+  const sigtermCode = 255;
 
   if (!fs.existsSync(hlsVideoDir)) {
     fs.mkdirSync(hlsVideoDir);
   }
 
-  console.log(`Downloading video ${videoId}...`);
-  console.time(wroteToDbMsg);
+  type AnalysisProps = {
+    outputWidth?: number;
+    outputX?: number;
+  };
 
-  // const cookies: unknown = [];
-  // const cookies = await chrome.getCookiesPromised(
-  //   "https://www.youtube.com",
-  //   "object",
-  //   "Default"
-  // );
+  async function muxingProcess(): Promise<void> {
+    console.log(`Downloading video ${videoId}...`);
 
-  // Circumvent age-restricted videos
-  const ytCookies = ["__Secure-1PSID", "__Secure-1PSIDTS", "LOGIN_INFO"].map(
-    (ytCookieName) => ({
-      name: ytCookieName,
-      secure: true,
-      value: process.env[ytCookieName],
-    })
-  );
-  const agent = ytdl.createAgent(ytCookies);
-
-  try {
+    // Circumvent age-restricted videos
+    const ytCookies = ["__Secure-1PSID", "__Secure-1PSIDTS", "LOGIN_INFO"].map(
+      (ytCookieName) => ({
+        name: ytCookieName,
+        secure: true,
+        value: process.env[ytCookieName],
+      })
+    );
+    const agent = ytdl.createAgent(ytCookies);
     const videoInfo = await ytdl.getInfo(url, { agent });
     const audioStream = ytdl.downloadFromInfo(videoInfo, {
       agent,
@@ -127,42 +116,28 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
       },
     });
 
-    // const { width, height } = maxBy(videoInfo.formats, "width");
-    // const videoAspectRatio = width / height;
-
     const muxingProcess = cp.spawn(
       ffmpegPath,
+      // prettier-ignore
       [
-        "-loglevel",
-        "32",
-
-        "-thread_queue_size",
-        ffmpegThreadQueueSize,
-        "-i",
-        "pipe:3",
-
-        "-thread_queue_size",
-        ffmpegThreadQueueSize,
-        "-i",
-        "pipe:4",
-
+        "-loglevel", ffmpegLogLevel,
+        // Pipe streams
+        "-thread_queue_size", ffmpegThreadQueueSize,
+        "-i", "pipe:3",
+        "-thread_queue_size", ffmpegThreadQueueSize,
+        "-i", "pipe:4",
         // Map audio and video
-        "-map",
-        "0:a",
-        "-map",
-        "1:v",
-        "-c",
-        "copy",
-
+        "-map", "0:a",
+        "-map", "1:v",
+        "-c", "copy",
         // Overwrite file
         "-y",
         // Output
-        "-f",
-        // "hls",
-        "mp4",
+        "-f", "mp4",
         videoFilePath,
       ],
       {
+        // prettier-ignore
         stdio: [
           // stdin, stdout, stderr
           "inherit",
@@ -174,148 +149,226 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
         ],
       }
     );
-    //@ts-expect-error nodejs dumb
-    audioStream.pipe(muxingProcess.stdio[3]);
-    //@ts-expect-error nodejs dumb
-    videoStream.pipe(muxingProcess.stdio[4]);
 
     await VideosDb.editVideo(videoId, {
       pid: muxingProcess.pid,
     });
 
+    //@ts-expect-error nodejs dumb
+    audioStream.pipe(muxingProcess.stdio[3]);
+    //@ts-expect-error nodejs dumb
+    videoStream.pipe(muxingProcess.stdio[4]);
+
     // For debugging
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    muxingProcess.stdio[2].on("data", async (_data) => {
-      // console.log(_data.toString());
+    // ffmpeg always outputs to stderr
+    muxingProcess.stderr.on("data", async (data) => {
+      if (logToConsole) {
+        const dataStr = data.toString();
+        console.debug(dataStr);
+      }
     });
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+      // Suppress errors in streams as they are interrupted on cancel / SIGTERM
+      muxingProcess.stdio[3].on("error", () => {});
+      muxingProcess.stdio[4].on("error", () => {});
       muxingProcess.on("close", async (code) => {
-        if (code === 255) {
-          await cancelDownload(videoId);
-          return resolve();
+        if (code === sigtermCode) {
+          return reject(sigtermCode);
         }
 
-        // const cropDetectProcess = cp.spawn(ffmpegPath, [
-        //   "-i",
-        //   videoFilePath,
-        //   "-ss",
-        //   "1",
-        //   "-vframes",
-        //   "10",
-        //   "-vf",
-        //   "cropdetect",
-        //   "-f",
-        //   "null",
-        //   " -",
-        // ]);
-
-        // let width, height, outputWidth, outputHeight;
-
-        // cropDetectProcess.stdio[2].on("data", async (data) => {
-        //   const dataStr = data.toString();
-        //   console.log("cropdetect");
-        //   console.log(dataStr);
-        //   if (dataStr.includes("Video:")) {
-        //     const [, widthMatch, heightMatch] = dataStr.match(/\s(\d*)x(\d*)\s/);
-
-        //     console.log("VIDEO WIDTH HEIGHT: ", width, height);
-        //   }
-        // });
-        // cropDetectProcess.on("close", async (code) => {});
-
-        const videoFilter = [
-          // "crop=944:704:164:6",
-          `scale=2*round((iw*${aspectRatioCorrectionFactor})/2):ih`,
-          "setsar=1",
-        ].join(",");
-
-        console.log(`Processing video ${videoId}...`);
-        const filterProcess = cp.spawn(ffmpegPath, [
-          "-loglevel",
-          "32",
-
-          "-thread_queue_size",
-          ffmpegThreadQueueSize,
-
-          "-i",
-          videoFilePath,
-
-          "-filter_complex",
-          videoFilter,
-
-          "-start_number",
-          "0",
-          "-hls_time",
-          "10",
-          "-hls_list_size",
-          "0 ",
-
-          "-f",
-          "hls",
-          m3u8FilePath,
-        ]);
-
-        await VideosDb.editVideo(videoId, {
-          pid: filterProcess.pid,
-        });
-
-        filterProcess.stdio[2].on("data", async (data) => {
-          // Check for writing to file output
-          const wroteToFile = [".ts", "for writing"].every((str) =>
-            data.toString().includes(str)
-          );
-
-          // Write segments to video db
-          if (wroteToFile) {
-            try {
-              VideosDb.editVideo(videoId, {
-                segmentDurations: getSegmentDurations(m3u8FilePath),
-                duration: getSegmentDurations(m3u8FilePath).reduce(
-                  durationTotal,
-                  0
-                ),
-              });
-            } catch {
-              // TODO
-            }
-          }
-        });
-        filterProcess.on("close", async (code) => {
-          if (code === 255) {
-            await cancelDownload(videoId);
-            return resolve();
-          }
-
-          await VideosDb.editVideo(videoId, {
-            segmentDurations: getSegmentDurations(m3u8FilePath),
-            duration: getSegmentDurations(m3u8FilePath).reduce(
-              durationTotal,
-              0
-            ),
-            downloaded: true,
-            downloading: false,
-            pid: null,
-          });
-
-          // TODO process.uptime() (maybe before close?)
-          console.timeEnd(wroteToDbMsg);
-          resolve();
-        });
+        resolve();
       });
     });
-  } catch (e) {
-    const error = e instanceof Error ? e.message : String(e);
-    console.error(error);
+  }
 
+  async function analysisProcess(): Promise<AnalysisProps> {
+    console.log(`Analyzing video ${videoId}...`);
+
+    // Analyze video for pillarboxing
+    const analysisProcess = cp.spawn(
+      ffmpegPath,
+      // prettier-ignore
+      [
+        "-i", videoFilePath,
+        "-ss", "1", // Skip first second
+        "-t", "60", // Limit 60 seconds
+        "-vf", 'cropdetect',
+        "-f", "null",
+        " -",
+      ]
+    );
+
+    await VideosDb.editVideo(videoId, {
+      pid: analysisProcess.pid,
+    });
+
+    const videoWidthRegex = /\s(\d+)x\d+\s/;
+    const cropdetectRegex = /w:(\d+).*x:(\d+)/;
+    const cropdetectKey = "Parsed_cropdetect";
+
+    let videoInfoOutput: string;
+    let cropdetectOutput: string;
+
+    analysisProcess.stderr.on("data", (data) => {
+      const dataStr = data.toString();
+
+      if (logToConsole) {
+        console.debug(dataStr);
+      }
+
+      if (dataStr.includes(cropdetectKey) && cropdetectRegex.test(dataStr)) {
+        cropdetectOutput = dataStr;
+        return;
+      }
+      if (videoWidthRegex.test(dataStr)) {
+        videoInfoOutput = dataStr;
+      }
+    });
+
+    return new Promise<AnalysisProps>((resolve, reject) => {
+      analysisProcess.on("close", async (code) => {
+        if (code === sigtermCode) {
+          return reject(sigtermCode);
+        }
+
+        const widescreenKey = "DAR 16:9";
+        const isWidescreen = videoInfoOutput.includes(widescreenKey);
+
+        if (!isWidescreen) return resolve({});
+
+        try {
+          const [, outputWidth, outputX] = cropdetectOutput
+            .match(cropdetectRegex)
+            .map(Number);
+
+          const [, width] = videoInfoOutput.match(videoWidthRegex).map(Number);
+
+          // Account for pillarboxed 4:3 inside 16:9 videos with
+          // artifacts making them appear a little narrower than they are.
+          const maxAspectWidthThreshold = 0.05;
+          const outputWidthRatio = width / outputWidth;
+          const isPillarbox =
+            Math.abs(outputWidthRatio - aspectRatioFull) <
+            maxAspectWidthThreshold;
+
+          if (isPillarbox) {
+            return resolve({ outputWidth, outputX });
+          }
+
+          return resolve({});
+        } catch {
+          //
+        }
+      });
+    });
+  }
+
+  async function filterProcess({ outputWidth, outputX }: AnalysisProps) {
+    console.log(`Processing video ${videoId}...`);
+
+    const shouldCrop = outputWidth && outputX;
+    const shouldCorrectAspectRatio = aspectRatioCorrectionFactor !== 1;
+    const videoFilters = [
+      shouldCrop ? `crop=${outputWidth}:ih:${outputX}:0` : "",
+      shouldCorrectAspectRatio
+        ? `scale=2*round((iw*${aspectRatioCorrectionFactor})/2):ih`
+        : "",
+      "setsar=1",
+    ]
+      .filter(Boolean)
+      .join(",");
+
+    const filterProcess = cp.spawn(
+      ffmpegPath,
+      // prettier-ignore
+      [
+        "-loglevel", ffmpegLogLevel,
+        "-thread_queue_size", ffmpegThreadQueueSize,
+        "-i", videoFilePath,
+        "-filter_complex", videoFilters,
+        "-start_number", "0",
+        "-hls_time", "10",
+        "-hls_list_size", "0 ",
+        "-f", "hls",
+        m3u8FilePath,
+      ]
+    );
+
+    await VideosDb.editVideo(videoId, {
+      pid: filterProcess.pid,
+    });
+
+    filterProcess.stderr.on("data", async (data) => {
+      const dataStr = data.toString();
+
+      if (logToConsole) {
+        console.debug(dataStr);
+      }
+
+      // Check for writing to file output
+      const wroteToFileMsg = [".ts", "for writing"].every((str) =>
+        dataStr.includes(str)
+      );
+      if (!wroteToFileMsg) return;
+
+      // Write segments to video db
+      const segmentDurations = getSegmentDurations(m3u8FilePath);
+      VideosDb.editVideo(videoId, {
+        segmentDurations: segmentDurations,
+        duration: segmentDurations.reduce(durationTotal, 0),
+      });
+    });
+
+    return new Promise<void>((resolve, reject) => {
+      filterProcess.on("close", async (code) => {
+        if (code === sigtermCode) {
+          return reject(sigtermCode);
+        }
+
+        const segmentDurations = getSegmentDurations(m3u8FilePath);
+        await VideosDb.editVideo(videoId, {
+          segmentDurations: segmentDurations,
+          duration: segmentDurations.reduce(durationTotal, 0),
+          downloaded: true,
+          downloading: false,
+          pid: null,
+        });
+
+        resolve();
+      });
+    });
+  }
+
+  try {
+    console.time(wroteToDbMsg);
+    await muxingProcess();
+    // TODO move analysisProcess and filterProcess out of this file for use with any player
+    const analysisProps = await analysisProcess();
+    await filterProcess(analysisProps);
+  } catch (e) {
+    if (e === sigtermCode) {
+      console.log(`User cancelled download of video ${videoId}.`);
+      VideosDb.editVideo(videoId, {
+        downloading: false,
+        error: null,
+        pid: null,
+      });
+      return Promise.resolve();
+    }
+    const error = e instanceof Error ? e.message : String(e);
+    console.error(`An error occurred downloading ${videoId}.`);
+    console.error(error);
     await VideosDb.editVideo(videoId, {
       downloading: false,
       error,
       pid: null,
     });
-
-    return Promise.resolve();
+  } finally {
+    console.timeEnd(wroteToDbMsg);
   }
+
+  return Promise.resolve();
 };
 
 export const youtube = {

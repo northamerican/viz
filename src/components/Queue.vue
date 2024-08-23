@@ -113,7 +113,7 @@ const queueItemActionsMenuOptions = (queueItem: QueueItem) => [
   {
     action: () => downloadVideo(queueItem),
     label: "Get Video",
-    disabled: queueItem.video?.downloaded || queueItem.video?.downloading,
+    // disabled: queueItem.video?.downloaded || queueItem.video?.downloading,
   },
   {
     action: () => openQueueItemDialog(queueItem),

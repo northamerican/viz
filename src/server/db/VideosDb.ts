@@ -36,7 +36,8 @@ export const VideosDb = {
 
   async killVideoProcess(videoId: string) {
     const pid = this.getVideo(videoId)?.pid;
-    if (pid && (await processExists(pid))) {
+    const videoProcessExists = await processExists(pid);
+    if (pid && videoProcessExists) {
       process.kill(pid, "SIGTERM");
       return Promise.resolve();
     }

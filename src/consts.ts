@@ -22,20 +22,23 @@ export const maxQualityOptions = [
   { label: "2160p", value: 2160 },
 ];
 
+export const aspectRatioWide = 1.7777777777777777;
+export const aspectRatioFull = 1.3333333333333333;
+
 export const receiverAspectRatios = [
   {
     label: "16:9",
-    value: 1.7777777777777777,
+    value: aspectRatioWide,
   },
 ];
 
 export const displayAspectRatios = [
   {
     label: "16:9",
-    value: 1.7777777777777777,
+    value: aspectRatioWide,
   },
   {
     label: "4:3",
-    value: 1.3333333333333333,
+    value: aspectRatioFull,
   },
 ];
