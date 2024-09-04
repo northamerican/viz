@@ -203,7 +203,7 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
       pid: analysisProcess.pid,
     });
 
-    const videoWidthRegex = /\s(\d+)x\d+\s/;
+    const videoWidthRegex = /\s(\d+)x\d+[,\s]/;
     const cropdetectRegex = /w:(\d+).*x:(\d+)/;
     const cropdetectKey = "Parsed_cropdetect";
 
@@ -258,7 +258,7 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
 
           return resolve({});
         } catch {
-          //
+          // TODO
         }
       });
     });
