@@ -16,10 +16,10 @@ export const dialogAlternateVideoCount = 6;
 export const newTracksInterval = 15000;
 
 export const maxQualityOptions = [
-  { label: "720p", value: 720 },
-  { label: "1080p", value: 1080 },
-  { label: "1440p", value: 1440 },
   { label: "2160p", value: 2160 },
+  { label: "1440p", value: 1440 },
+  { label: "1080p", value: 1080 },
+  { label: "720p", value: 720 },
 ];
 
 export const aspectRatioWide = 1.7777777777777777;

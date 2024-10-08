@@ -22,7 +22,7 @@ onMounted(() => {
           type="checkbox"
           v-model="store.settings.downloadQueueItems"
           @change="() => onSaveSettings(store.settings)"
-        />Download Queue Items</label
+        />Download queue items</label
       >
 
       <div>
