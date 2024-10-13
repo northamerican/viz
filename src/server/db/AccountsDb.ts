@@ -34,6 +34,8 @@ export const AccountsDb = {
     await accountsDb.update((data) => {
       data[accountId] = props;
     });
+
+    return this.accounts[accountId];
   },
 
   async logout(accountId: string) {

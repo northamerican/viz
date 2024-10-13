@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "server": "yarn tsx --env-file .env ./src/server/server.ts",
+    "server-inspect": "yarn tsx --inspect-brk --env-file .env ./src/server/server.ts",
     "dev": "vite",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",

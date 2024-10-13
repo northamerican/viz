@@ -94,7 +94,7 @@ export default class SpotifyPlayer implements VizPlayer {
         data.access_token
       );
 
-      AccountsDb.add(id, {
+      this.#account = await AccountsDb.add(id, {
         id,
         displayName,
         profileUrl,
