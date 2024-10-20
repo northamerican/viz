@@ -1,9 +1,9 @@
-import { storeDbName } from "../consts";
+import { settingsDbName } from "../consts";
 import sources from "../sources";
-import { VizStoreDbType } from "../../types/VizStore";
+import { VizSettingsDbType } from "../../types/VizStore";
 import { VizEventPreset } from "./adapters/VizEventAdapter";
 
-const storeDbDefault: VizStoreDbType = {
+const settingsDbDefault: VizSettingsDbType = {
   // TODO view:
   settings: {
     sourceId: "youtube",
@@ -14,27 +14,27 @@ const storeDbDefault: VizStoreDbType = {
   },
 };
 
-const storeDb = await VizEventPreset<VizStoreDbType>(
-  storeDbName,
-  storeDbDefault
+const settingsDb = await VizEventPreset<VizSettingsDbType>(
+  settingsDbName,
+  settingsDbDefault
 );
 
-export const StoreDb = {
+export const SettingsDb = {
   async read() {
-    await storeDb.read();
+    await settingsDb.read();
   },
 
-  async update(newData: Partial<VizStoreDbType>) {
-    await storeDb.update((data) => {
+  async update(newData: Partial<VizSettingsDbType>) {
+    await settingsDb.update((data) => {
       Object.assign(data, newData);
     });
   },
 
   get data() {
-    return storeDb.data;
+    return settingsDb.data;
   },
   get settings() {
-    return storeDb.data.settings;
+    return settingsDb.data.settings;
   },
   get sourceId() {
     return this.settings.sourceId;
@@ -43,7 +43,7 @@ export const StoreDb = {
     return sources[this.sourceId];
   },
   get aspectRatioCorrectionFactor() {
-    const { receiverAspectRatio, displayAspectRatio } = StoreDb.settings;
+    const { receiverAspectRatio, displayAspectRatio } = SettingsDb.settings;
     return receiverAspectRatio / displayAspectRatio;
   },
 };

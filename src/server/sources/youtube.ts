@@ -18,7 +18,7 @@ import type {
   DownloadVideo,
 } from "../../types/VizSource.d.ts";
 import { aspectRatioFull, maxVideoDuration } from "../../consts.ts";
-import { StoreDb } from "../db/StoreDb.ts";
+import { SettingsDb } from "../db/SettingsDb.ts";
 
 const baseUrl = "https://youtu.be/";
 
@@ -74,8 +74,8 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
   const videoFilePath = join(hlsVideoDir, `${videoId}.mp4`);
   const m3u8FilePath = join(hlsVideoDir, `${videoId}.m3u8`);
   const wroteToDbMsg = `Wrote ${videoId} segments to videos db in`;
-  const { aspectRatioCorrectionFactor } = StoreDb;
-  const { maxQuality } = StoreDb.settings;
+  const { aspectRatioCorrectionFactor } = SettingsDb;
+  const { maxQuality } = SettingsDb.settings;
   const logToConsole = false; // For debugging
   const ffmpegLogLevel = "32"; // 32 = ffmpeg default
   const ffmpegThreadQueueSize = "512";

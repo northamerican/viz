@@ -19,6 +19,6 @@ export const hlsSegmentPath = (
 export const dbDir = `${projectRoot}src/server/db/data/`;
 
 export const accountsDbName = "accounts";
-export const storeDbName = "store";
+export const settingsDbName = "settings";
 export const queuesDbName = "queues";
 export const videosDbName = "videos";

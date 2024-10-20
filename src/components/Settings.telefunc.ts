@@ -1,17 +1,17 @@
 import { readdirSync, rmSync } from "fs";
 import { VideosDb } from "../server/db/VideosDb";
 import { hlsDir } from "../server/consts";
-import { StoreDb } from "../server/db/StoreDb";
+import { SettingsDb } from "../server/db/SettingsDb";
 import { store } from "../store";
 
 export async function onSaveSettings(settings: typeof store.settings) {
-  StoreDb.update({ settings });
+  SettingsDb.update({ settings });
 }
 
 export async function onDeleteVideos() {
-  await StoreDb.update({
+  await SettingsDb.update({
     settings: {
-      ...StoreDb.settings,
+      ...SettingsDb.settings,
       downloadQueueItems: false,
     },
   });

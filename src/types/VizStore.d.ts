@@ -32,4 +32,4 @@ export type VizStoreMethods = {
 };
 
 export type VizStore = VizStoreData & VizStoreMethods;
-export type VizStoreDbType = Pick<VizStoreData, "settings">;
+export type VizSettingsDbType = Pick<VizStoreData, "settings">;

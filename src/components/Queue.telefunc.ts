@@ -6,7 +6,7 @@ import type {
   Queue,
 } from "Viz";
 import { VideosDb } from "../server/db/VideosDb";
-import { StoreDb } from "../server/db/StoreDb";
+import { SettingsDb } from "../server/db/SettingsDb";
 import { QueuesDb } from "../server/db/QueuesDb";
 import playerApi from "../server/players";
 import { AccountsDb } from "../server/db/AccountsDb";
@@ -34,7 +34,7 @@ export async function onGetVideo(queueItem: QueueItem) {
         }
       : async () => {
           console.log(`Getting video for ${name} - ${artist}`);
-          const { createSearchQuery, getVideoInfo } = StoreDb.source;
+          const { createSearchQuery, getVideoInfo } = SettingsDb.source;
           const searchQuery = createSearchQuery({ artist, name });
           const { videoId, url, thumbnail, alternateVideos } =
             await getVideoInfo(searchQuery);
@@ -45,7 +45,7 @@ export async function onGetVideo(queueItem: QueueItem) {
 
     await VideosDb.addVideo({
       id: videoId,
-      source: StoreDb.sourceId,
+      source: SettingsDb.sourceId,
       sourceUrl: url,
       thumbnail,
       alternateVideos,
@@ -66,7 +66,7 @@ export async function onGetVideo(queueItem: QueueItem) {
 }
 
 export async function onDownloadVideo(videoId: string, url: string) {
-  const { downloadVideo } = StoreDb.source;
+  const { downloadVideo } = SettingsDb.source;
   return await downloadVideo({ videoId, url });
 }
 

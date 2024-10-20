@@ -1,9 +1,9 @@
 import { AccountsDb } from "./server/db/AccountsDb";
 import { QueuesDb } from "./server/db/QueuesDb";
-import { StoreDb } from "./server/db/StoreDb";
+import { SettingsDb } from "./server/db/SettingsDb";
 
 export async function onGetSettings() {
-  return StoreDb.settings;
+  return SettingsDb.settings;
 }
 
 export async function onGetQueuesWithVideos() {
