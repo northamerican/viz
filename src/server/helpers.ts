@@ -16,7 +16,7 @@ export function getSegmentDurations(filePath: fs.PathOrFileDescriptor) {
       .filter((line) => line.startsWith("#EXTINF"))
       .map((extInfDuration) => +extInfDuration.match(/#EXTINF:([\d.]+),/)[1]);
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return [];
   }
 }

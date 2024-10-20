@@ -30,7 +30,7 @@ const createSearchQuery: CreateSearchQuery = (track) => {
 
 const filterVideos = (items: ytsr.Item[]): ytsr.Video[] | null => {
   const filteredItems = items.filter(
-    //@ts-expect-error ytsr is wrong
+    //@ts-expect-error items is ytsr.Video[]
     ({ duration }) => duration && durationToSeconds(duration) < maxVideoDuration
     // TODO logic here, filtering out unwanted videos
   );
@@ -78,7 +78,7 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
   const { maxQuality } = StoreDb.settings;
   const logToConsole = false; // For debugging
   const ffmpegLogLevel = "32"; // 32 = ffmpeg default
-  const ffmpegThreadQueueSize = "1024";
+  const ffmpegThreadQueueSize = "512";
   const sigtermCode = 255;
 
   if (!fs.existsSync(hlsVideoDir)) {
@@ -86,21 +86,30 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
   }
 
   type AnalysisProps = {
-    outputWidth?: number;
-    outputX?: number;
+    cropWidth?: number;
+    cropX?: number;
+    measured_I: string;
+    measured_TP: string;
+    measured_LRA: string;
+    measured_thresh: string;
+    offset: string;
   };
 
   async function muxingProcess(): Promise<void> {
     console.log(`Downloading video ${videoId}...`);
 
     // Circumvent age-restricted videos
-    const ytCookies = ["__Secure-1PSID", "__Secure-1PSIDTS", "LOGIN_INFO"].map(
-      (ytCookieName) => ({
-        name: ytCookieName,
-        secure: true,
-        value: process.env[ytCookieName],
-      })
-    );
+    const ageRestrictionCookieNames = [
+      "__Secure-1PSID",
+      "__Secure-1PSIDTS",
+      "LOGIN_INFO",
+    ];
+    const ytCookies = ageRestrictionCookieNames.map((ytCookieName) => ({
+      name: ytCookieName,
+      secure: true,
+      value: process.env[ytCookieName],
+    }));
+
     const agent = ytdl.createAgent(ytCookies);
     const videoInfo = await ytdl.getInfo(url, { agent });
     const audioStream = ytdl.downloadFromInfo(videoInfo, {
@@ -185,7 +194,6 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
   async function analysisProcess(): Promise<AnalysisProps> {
     console.log(`Analyzing video ${videoId}...`);
 
-    // Analyze video for pillarboxing
     const analysisProcess = cp.spawn(
       ffmpegPath,
       // prettier-ignore
@@ -193,7 +201,8 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
         "-i", videoFilePath,
         "-ss", "1", // Skip first second
         "-t", "60", // Limit 60 seconds
-        "-vf", 'cropdetect',
+        "-vf", "cropdetect",
+        "-af", "loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json",
         "-f", "null",
         " -",
       ]
@@ -206,9 +215,12 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
     const videoWidthRegex = /\s(\d+)x\d+[,\s]/;
     const cropdetectRegex = /w:(\d+).*x:(\d+)/;
     const cropdetectKey = "Parsed_cropdetect";
+    const loudnormKey = "Parsed_loudnorm";
+    const loudnormRegex = /{[\s\S]*}/;
 
     let videoInfoOutput: string;
     let cropdetectOutput: string;
+    let loudnormOutput: string;
 
     analysisProcess.stderr.on("data", (data) => {
       const dataStr = data.toString();
@@ -216,9 +228,12 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
       if (logToConsole) {
         console.debug(dataStr);
       }
-
       if (dataStr.includes(cropdetectKey) && cropdetectRegex.test(dataStr)) {
         cropdetectOutput = dataStr;
+        return;
+      }
+      if (dataStr.includes(loudnormKey)) {
+        loudnormOutput = dataStr.match(loudnormRegex);
         return;
       }
       if (videoWidthRegex.test(dataStr)) {
@@ -232,45 +247,82 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
           return reject(sigtermCode);
         }
 
-        const widescreenKey = "DAR 16:9";
-        const isWidescreen = videoInfoOutput.includes(widescreenKey);
+        const isWidescreen = videoInfoOutput.includes("DAR 16:9");
 
-        if (!isWidescreen) return resolve({});
+        let cropWidth,
+          cropX,
+          measured_I,
+          measured_TP,
+          measured_LRA,
+          measured_thresh,
+          offset;
+
+        if (isWidescreen) {
+          try {
+            const [, width] = videoInfoOutput
+              .match(videoWidthRegex)
+              .map(Number);
+
+            const [, outputWidth, outputX] = cropdetectOutput
+              .match(cropdetectRegex)
+              .map(Number);
+
+            // Account for pillarboxed 4:3 inside 16:9 videos with
+            // artifacts making them appear a little narrower than they are.
+            const maxAspectWidthThreshold = 0.05;
+            const outputWidthRatio = width / outputWidth;
+            const isPillarbox =
+              Math.abs(outputWidthRatio - aspectRatioFull) <
+              maxAspectWidthThreshold;
+
+            if (isPillarbox) {
+              [cropWidth, cropX] = [outputWidth, outputX];
+            }
+          } catch {
+            //
+          }
+        }
 
         try {
-          const [, outputWidth, outputX] = cropdetectOutput
-            .match(cropdetectRegex)
-            .map(Number);
-
-          const [, width] = videoInfoOutput.match(videoWidthRegex).map(Number);
-
-          // Account for pillarboxed 4:3 inside 16:9 videos with
-          // artifacts making them appear a little narrower than they are.
-          const maxAspectWidthThreshold = 0.05;
-          const outputWidthRatio = width / outputWidth;
-          const isPillarbox =
-            Math.abs(outputWidthRatio - aspectRatioFull) <
-            maxAspectWidthThreshold;
-
-          if (isPillarbox) {
-            return resolve({ outputWidth, outputX });
-          }
-
-          return resolve({});
+          ({
+            input_i: measured_I,
+            input_tp: measured_TP,
+            input_lra: measured_LRA,
+            input_thresh: measured_thresh,
+            target_offset: offset,
+          } = JSON.parse(loudnormOutput));
         } catch {
           // TODO
         }
+
+        return resolve({
+          cropWidth,
+          cropX,
+          measured_I,
+          measured_TP,
+          measured_LRA,
+          measured_thresh,
+          offset,
+        });
       });
     });
   }
 
-  async function filterProcess({ outputWidth, outputX }: AnalysisProps) {
+  async function filterProcess({
+    cropWidth,
+    cropX,
+    measured_I,
+    measured_TP,
+    measured_LRA,
+    measured_thresh,
+    offset,
+  }: AnalysisProps) {
     console.log(`Processing video ${videoId}...`);
 
-    const shouldCrop = outputWidth && outputX;
+    const shouldCrop = cropWidth && cropX;
     const shouldCorrectAspectRatio = aspectRatioCorrectionFactor !== 1;
     const videoFilters = [
-      shouldCrop ? `crop=${outputWidth}:ih:${outputX}:0` : "",
+      shouldCrop ? `crop=${cropWidth}:ih:${cropX}:0` : "",
       shouldCorrectAspectRatio
         ? `scale=2*round((iw*${aspectRatioCorrectionFactor})/2):ih`
         : "",
@@ -278,6 +330,12 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
     ]
       .filter(Boolean)
       .join(",");
+    const shouldLoudnorm = measured_I;
+    const audioFilters = shouldLoudnorm
+      ? `loudnorm=I=-16:TP=-1.5:LRA=11:measured_I=${measured_I}:measured_TP=${measured_TP}:measured_LRA=${measured_LRA}:measured_thresh=${measured_thresh}:offset=${offset}:linear=true`
+      : "";
+    // TODO ^ test that blank audioFilters works
+    const filterComplex = `[0:v]${videoFilters}[v];[0:a]${audioFilters}[a]`;
 
     const filterProcess = cp.spawn(
       ffmpegPath,
@@ -286,10 +344,11 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
         "-loglevel", ffmpegLogLevel,
         "-thread_queue_size", ffmpegThreadQueueSize,
         "-i", videoFilePath,
-        "-filter_complex", videoFilters,
+        "-filter_complex", filterComplex,
+        "-map", `[v]`, "-map", `[a]`,
         "-start_number", "0",
         "-hls_time", "10",
-        "-hls_list_size", "0 ",
+        "-hls_list_size", "0",
         "-f", "hls",
         m3u8FilePath,
       ]
@@ -312,7 +371,7 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
       );
       if (!wroteToFileMsg) return;
 
-      // Write segments to video db
+      // Write segments to video db as they are processed
       const segmentDurations = getSegmentDurations(m3u8FilePath);
       VideosDb.editVideo(videoId, {
         segmentDurations: segmentDurations,
