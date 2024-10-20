@@ -1,19 +1,38 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, ComputedRef, onMounted, ref, watch } from "vue";
 import { store } from "../store";
 import { m3u8Path } from "../consts";
 import { onGetTvState, onToggleTv } from "./VideoPlayer.telefunc";
+import type { QueueWithVideos } from "Viz";
+import { trackArtistsJoin } from "../helpers";
+import vizLogo from "../assets/viz-logo.png";
 // import '../hlsjs.ts'
 
 const currentTime = ref(0);
-const currentTimeDisplay = ref(0);
 const tvState = ref<boolean>(null);
 const isPlaying = ref<boolean>(false);
 const airPlayButton = ref<HTMLButtonElement>(null);
+const canSetMediaSession = "mediaSession" in navigator;
+
+const activeQueue = computed(() =>
+  store.queues.find(({ active }) => active)
+) as ComputedRef<QueueWithVideos>;
 
 const totalDuration = computed(() =>
-  Math.round(store.queues.find(({ active }) => active)?.totalDuration)
+  Math.round(activeQueue.value?.totalDuration)
 );
+
+const currentTimeDisplay = computed(() => Math.round(currentTime.value));
+
+const currentQueueItem = computed(() => {
+  if (!activeQueue.value) return null;
+  let accumulatedTime = 0;
+  const queueItems = activeQueue.value.items;
+  return queueItems.find((item) => {
+    accumulatedTime += item.video.duration;
+    return currentTime.value <= accumulatedTime;
+  });
+});
 
 const seekTo = (e: Event) =>
   store.videoEl.fastSeek(+(e.target as HTMLInputElement).value);
@@ -27,6 +46,28 @@ const toggleTv = async () => {
   tvState.value = await onToggleTv();
 };
 
+watch(currentQueueItem, (queueItem) => {
+  if (canSetMediaSession) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: `viz - ${queueItem.track.name}`,
+      artist: trackArtistsJoin(queueItem.track.artists),
+      album: activeQueue.value.name,
+      artwork: [
+        "96x96",
+        "128x128",
+        "192x192",
+        "256x256",
+        "384x384",
+        "512x512",
+      ].map((sizes) => ({
+        src: queueItem.video.thumbnail?.url || vizLogo,
+        sizes,
+        type: queueItem.video.thumbnail ? "image/jpeg" : "image/png",
+      })),
+    });
+  }
+});
+
 onMounted(async () => {
   store.videoEl.addEventListener("pause", () => {
     isPlaying.value = false;
@@ -38,7 +79,6 @@ onMounted(async () => {
 
   store.videoEl.addEventListener("timeupdate", () => {
     currentTime.value = store.videoEl?.currentTime;
-    currentTimeDisplay.value = Math.round(store.videoEl?.currentTime);
   });
 
   // @ts-expect-error WebKit vendor specific
@@ -66,6 +106,7 @@ onMounted(async () => {
         id="video"
         :ref="(el) => (store.videoEl = el as HTMLMediaElement)"
         :src="m3u8Path"
+        @click="playPause"
         playsinline
       />
       <div class="controls">

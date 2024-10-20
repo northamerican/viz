@@ -13,33 +13,30 @@ import { AccountsDb } from "../server/db/AccountsDb";
 import type { PlayerId } from "../types/VizPlayer";
 import { interstitalEveryTracksCount } from "../consts";
 
-type GetVideoInfo = () => Promise<VideoInfo>;
-
 export async function onGetVideo(queueItem: QueueItem) {
   const { track, id: queueItemId } = queueItem;
   const { artists, name, videoId: trackVideoId } = track;
   const artist = artists[0];
 
   try {
-    const getVideoInfo: GetVideoInfo = trackVideoId
-      ? async () => {
-          console.log(`Getting video ${trackVideoId}`);
-          return {
-            videoId: queueItem.track.videoId,
-            url: queueItem.track.playerUrl,
-            // TODO thumb via getVideoInfo-like method
-            thumbnail: null,
-            alternateVideos: null,
-          };
-        }
-      : async () => {
-          console.log(`Getting video for ${name} - ${artist}`);
-          const { createSearchQuery, getVideoInfo } = SettingsDb.source;
-          const searchQuery = createSearchQuery({ artist, name });
-          const { videoId, url, thumbnail, alternateVideos } =
-            await getVideoInfo(searchQuery);
-          return { videoId, url, thumbnail, alternateVideos };
-        };
+    const getVideoInfo = async (): Promise<VideoInfo> => {
+      // Get video directly via id
+      if (trackVideoId) {
+        console.log(`Getting video ${trackVideoId}`);
+        const { getVideoInfo } = SettingsDb.source;
+        return await getVideoInfo(queueItem.track.videoId);
+      }
+
+      // Get video id from name, artist
+      console.log(`Getting video for ${name} - ${artist}`);
+      const { createSearchQuery, searchVideo, getVideoInfoFromSearchResults } =
+        SettingsDb.source;
+      const searchQuery = createSearchQuery({ artist, name });
+      const videoSearchResults = await searchVideo(searchQuery);
+      const { videoId, url, thumbnail, alternateVideos } =
+        await getVideoInfoFromSearchResults(videoSearchResults);
+      return { videoId, url, thumbnail, alternateVideos };
+    };
 
     const { videoId, url, thumbnail, alternateVideos } = await getVideoInfo();
 

@@ -1,26 +1,27 @@
 import cp from "child_process";
 import fs from "fs";
 import { join } from "path";
-import ytsr from "ytsr"; // TODO deprecated lol
 import ytdl from "@distube/ytdl-core";
 import ffmpegPath from "ffmpeg-static";
-import maxBy from "lodash.maxby";
 import { VideosDb } from "../db/VideosDb.ts";
 import { hlsDir } from "../consts.ts";
-import {
-  getSegmentDurations,
-  durationTotal,
-  durationToSeconds,
-} from "../helpers.ts";
+import { getSegmentDurations, durationTotal } from "../helpers.ts";
 import type {
   CreateSearchQuery,
   GetVideoInfo,
   DownloadVideo,
 } from "../../types/VizSource.d.ts";
-import { aspectRatioFull, maxVideoDuration } from "../../consts.ts";
+import { aspectRatioFull } from "../../consts.ts";
 import { SettingsDb } from "../db/SettingsDb.ts";
 
+import { google, type youtube_v3 } from "googleapis";
+import { VideoInfo, VideoThumbnail } from "Viz";
+
 const baseUrl = "https://youtu.be/";
+const youtubeApi = google.youtube({
+  version: "v3",
+  auth: process.env.YOUTUBE_API_KEY,
+});
 
 const createSearchQuery: CreateSearchQuery = (track) => {
   const { artist, name } = track;
@@ -28,44 +29,56 @@ const createSearchQuery: CreateSearchQuery = (track) => {
   return `${artist} ${name} music video`;
 };
 
-const filterVideos = (items: ytsr.Item[]): ytsr.Video[] | null => {
-  const filteredItems = items.filter(
-    //@ts-expect-error items is ytsr.Video[]
-    ({ duration }) => duration && durationToSeconds(duration) < maxVideoDuration
+const filterVideos = (items: youtube_v3.Schema$SearchResult[]) => {
+  return items.filter(
     // TODO logic here, filtering out unwanted videos
+    () => true
   );
-
-  return filteredItems.length ? (filteredItems as ytsr.Video[]) : null;
 };
 
-const getVideoInfo: GetVideoInfo = async (query: string) => {
-  const filters1 = await ytsr.getFilters(query);
-  const filter1 = filters1.get("Type").get("Video");
-  const { items } = await ytsr(filter1.url, {
-    safeSearch: false,
-    limit: 20,
+const searchVideo = async (
+  query: string
+): Promise<youtube_v3.Schema$SearchResult[]> => {
+  const response = await youtubeApi.search.list({
+    part: ["snippet", "contentDetails"],
+    q: query,
+    maxResults: 10,
+    type: ["video"],
+    safeSearch: "none",
   });
 
-  const videos = filterVideos(items);
-  const video = videos[0];
-  if (!video) throw null;
+  return filterVideos(response.data.items);
+};
 
-  const { id: videoId, url } = video;
-  const thumbnail = maxBy(videos[0].thumbnails, "width");
-  const alternateVideos = videos
-    .slice(1)
-    .map(({ id, title, author, thumbnails }) => ({
-      id,
-      name: title,
-      author: author.name,
-      thumbnail: maxBy(thumbnails, "width"),
-    }));
+const getVideoInfoFromSearchResults: GetVideoInfo = async (items) => {
+  if (!items[0]) throw null;
 
   return {
-    videoId,
-    url,
-    thumbnail,
-    alternateVideos,
+    videoId: items[0].id.videoId,
+    url: `${baseUrl}${items[0].id.videoId}`,
+    thumbnail: items[0].snippet.thumbnails.default as VideoThumbnail,
+    alternateVideos: items.slice(1).map((item) => ({
+      id: item.id.videoId,
+      name: item.snippet.title,
+      author: item.snippet.channelTitle,
+      thumbnail: item.snippet.thumbnails.default as VideoThumbnail,
+    })),
+  };
+};
+
+const getVideoInfo = async (videoId: string): Promise<VideoInfo> => {
+  const detailsResponse = await youtubeApi.videos.list({
+    part: ["snippet", "contentDetails"],
+    id: [videoId],
+  });
+
+  const [video] = detailsResponse.data.items;
+
+  return {
+    videoId: video.id,
+    url: `${baseUrl}${video.id}`,
+    thumbnail: video.snippet.thumbnails.default as VideoThumbnail,
+    alternateVideos: null,
   };
 };
 
@@ -433,6 +446,8 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
 export const youtube = {
   baseUrl,
   createSearchQuery,
+  searchVideo,
+  getVideoInfoFromSearchResults,
   getVideoInfo,
   downloadVideo,
 };

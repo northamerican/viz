@@ -10,7 +10,6 @@ export const serverEventNames = [
   "videos:write",
 ] as const;
 
-export const maxVideoDuration = 12 * 60;
 export const interstitalEveryTracksCount = 2;
 export const dialogAlternateVideoCount = 6;
 export const newTracksInterval = 15000;

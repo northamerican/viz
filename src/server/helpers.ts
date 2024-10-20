@@ -21,10 +21,6 @@ export function getSegmentDurations(filePath: fs.PathOrFileDescriptor) {
   }
 }
 
-export function durationToSeconds(duration: string) {
-  return duration.split(":").reduce((acc, time) => 60 * acc + +time, 0);
-}
-
 export function durationTotal(total: number, duration: number) {
   return total + duration;
 }

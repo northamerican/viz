@@ -20,15 +20,13 @@
     "ffmpeg-static": "^5.2.0",
     "googleapis": "^131.0.0",
     "hls.js": "^1.4.14",
-    "lodash.maxby": "^4.6.0",
     "lodash.throttle": "^4.1.1",
     "lowdb": "^7.0.1",
     "process-exists": "^5.0.0",
     "telefunc": "^0.1.67",
     "tsx": "^4.7.0",
     "uuid": "^9.0.1",
-    "vue": "^3.4.0",
-    "ytsr": "^3.8.4"
+    "vue": "^3.4.0"
   },
   "devDependencies": {
     "@types/compression": "^1.7.5",
