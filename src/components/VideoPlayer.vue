@@ -29,7 +29,7 @@ const currentQueueItem = computed(() => {
   let accumulatedTime = 0;
   const queueItems = activeQueue.value.items;
   return queueItems.find((item) => {
-    accumulatedTime += item.video.duration;
+    accumulatedTime += item.video?.duration;
     return currentTime.value <= accumulatedTime;
   });
 });
