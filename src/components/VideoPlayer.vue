@@ -2,14 +2,13 @@
 import { computed, ComputedRef, onMounted, ref, watch } from "vue";
 import { store } from "../store";
 import { m3u8Path } from "../consts";
-import { onGetTvState, onToggleTv } from "./VideoPlayer.telefunc";
 import type { QueueWithVideos } from "Viz";
 import { trackArtistsJoin } from "../helpers";
 import vizLogo from "../assets/viz-logo.png";
+import TvState from "./TvState.vue";
 // import '../hlsjs.ts'
 
 const currentTime = ref(0);
-const tvState = ref<boolean>(null);
 const isPlaying = ref<boolean>(false);
 const airPlayButton = ref<HTMLButtonElement>(null);
 const canSetMediaSession = "mediaSession" in navigator;
@@ -17,13 +16,10 @@ const canSetMediaSession = "mediaSession" in navigator;
 const activeQueue = computed(() =>
   store.queues.find(({ active }) => active)
 ) as ComputedRef<QueueWithVideos>;
-
 const totalDuration = computed(() =>
   Math.round(activeQueue.value?.totalDuration)
 );
-
 const currentTimeDisplay = computed(() => Math.round(currentTime.value));
-
 const currentQueueItem = computed(() => {
   if (!activeQueue.value) return null;
   let accumulatedTime = 0;
@@ -36,14 +32,9 @@ const currentQueueItem = computed(() => {
 
 const seekTo = (e: Event) =>
   store.videoEl.fastSeek(+(e.target as HTMLInputElement).value);
-
 const playPause = () => {
   const { videoEl } = store;
   isPlaying.value ? videoEl.pause() : videoEl.play();
-};
-
-const toggleTv = async () => {
-  tvState.value = await onToggleTv();
 };
 
 watch(currentQueueItem, (queueItem) => {
@@ -94,8 +85,6 @@ onMounted(async () => {
       store.videoEl.webkitShowPlaybackTargetPicker()
     );
   }
-
-  tvState.value = await onGetTvState();
 });
 </script>
 
@@ -127,9 +116,7 @@ onMounted(async () => {
           totalDuration || "-"
         }}</small>
         <button ref="airPlayButton" hidden>AirPlay</button>
-        <button @click="toggleTv" v-if="tvState !== null">
-          {{ tvState ? "🌝" : "🌚" }}
-        </button>
+        <TvState />
       </div>
     </div>
   </section>
