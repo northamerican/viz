@@ -40,7 +40,7 @@ const searchVideo = async (
   query: string
 ): Promise<youtube_v3.Schema$SearchResult[]> => {
   const response = await youtubeApi.search.list({
-    part: ["snippet", "contentDetails"],
+    part: ["snippet"],
     q: query,
     maxResults: 10,
     type: ["video"],
