@@ -6,7 +6,7 @@ export const tokenPath = (playerId = "") => `/token/${playerId}`;
 export const serverEventNames = [
   "accounts:write",
   "queues:write",
-  "store:write",
+  "settings:write",
   "videos:write",
 ] as const;
 

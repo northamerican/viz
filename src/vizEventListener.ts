@@ -8,7 +8,7 @@ type ServerEventMap = {
 
 const serverEventMap: ServerEventMap = {
   "accounts:write": "updateAccounts",
-  "store:write": "updateSettings",
+  "settings:write": "updateSettings",
   "queues:write": "updateQueues",
   "videos:write": "updateQueues",
 };
