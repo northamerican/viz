@@ -38,7 +38,7 @@ const playPause = () => {
 };
 
 watch(currentQueueItem, (queueItem) => {
-  if (canSetMediaSession) {
+  if (canSetMediaSession && currentQueueItem.value?.track) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: `viz - ${queueItem.track.name}`,
       artist: trackArtistsJoin(queueItem.track.artists),
