@@ -3,6 +3,7 @@ import { execSync } from "child_process";
 type TvState = "Yes" | "No";
 
 export async function onGetTvState() {
+  // TODO handle offline (Error: Read/Write operation failed.)
   const tvStateBuffer = execSync(
     'shortcuts run "Get Viz monitors state" | tee'
   );

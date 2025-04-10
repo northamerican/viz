@@ -11,6 +11,11 @@ const toggleTv = async () => {
 onMounted(async () => {
   tvState.value = await onGetTvState();
 });
+
+// TODO: handle offline/online events
+window.addEventListener("offline", () => {
+  console.log("isoffline");
+});
 </script>
 
 <template>
