@@ -4,6 +4,9 @@ import Library from "./Library.vue";
 import Settings from "./Settings.vue";
 import { onBeforeUnmount, onMounted } from "vue";
 import { vizEventListener } from "../vizEventListener";
+import { useMediaSessionMetadata } from "../composables/useMediaSessionMetadata";
+
+useMediaSessionMetadata();
 
 onMounted(() => {
   const eventSource = vizEventListener();

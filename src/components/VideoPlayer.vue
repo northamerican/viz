@@ -1,91 +1,17 @@
 <script setup lang="ts">
-import { computed, ComputedRef, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { store } from "../store";
 import { m3u8Path } from "../consts";
-import type { QueueWithVideos } from "Viz";
-import { trackArtistsJoin } from "../helpers";
-import vizLogo from "../assets/viz-logo.png";
 import TvState from "./TvState.vue";
+import { usePlayback } from "../composables/usePlayback";
+import AirPlayControl from "./AirPlayControl.vue";
+const { currentVideoTime, isPlaying, totalDuration, playPause } = usePlayback();
 // import '../hlsjs.ts'
-
-const currentTime = ref(0);
-const isPlaying = ref<boolean>(false);
-const airPlayButton = ref<HTMLButtonElement>(null);
-const canSetMediaSession = "mediaSession" in navigator;
-
-const activeQueue = computed(() =>
-  store.queues.find(({ active }) => active)
-) as ComputedRef<QueueWithVideos>;
-const totalDuration = computed(() =>
-  Math.round(activeQueue.value?.totalDuration)
-);
-const currentTimeDisplay = computed(() => Math.round(currentTime.value));
-const currentQueueItem = computed(() => {
-  if (!activeQueue.value) return null;
-  let accumulatedTime = 0;
-  const queueItems = activeQueue.value.items;
-  return queueItems.find((item) => {
-    accumulatedTime += item.video?.duration;
-    return currentTime.value <= accumulatedTime;
-  });
-});
 
 const seekTo = (e: Event) =>
   store.videoEl.fastSeek(+(e.target as HTMLInputElement).value);
-const playPause = () => {
-  const { videoEl } = store;
-  isPlaying.value ? videoEl.pause() : videoEl.play();
-};
 
-watch(currentQueueItem, (queueItem) => {
-  if (canSetMediaSession && currentQueueItem.value?.track) {
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: `viz - ${queueItem.track.name}`,
-      artist: trackArtistsJoin(queueItem.track.artists),
-      album: activeQueue.value.name,
-      artwork: [
-        "96x96",
-        "128x128",
-        "192x192",
-        "256x256",
-        "384x384",
-        "512x512",
-      ].map((sizes) => ({
-        src: queueItem.video.thumbnail?.url || vizLogo,
-        sizes,
-        type: queueItem.video.thumbnail ? "image/jpeg" : "image/png",
-      })),
-    });
-  }
-});
-
-onMounted(async () => {
-  store.videoEl.addEventListener("pause", () => {
-    isPlaying.value = false;
-  });
-
-  store.videoEl.addEventListener("play", () => {
-    isPlaying.value = true;
-  });
-
-  store.videoEl.addEventListener("timeupdate", () => {
-    currentTime.value = store.videoEl?.currentTime;
-  });
-
-  // @ts-expect-error WebKit vendor specific
-  if (window.WebKitPlaybackTargetAvailabilityEvent) {
-    store.videoEl.addEventListener(
-      "webkitplaybacktargetavailabilitychanged",
-      (event) =>
-        // @ts-expect-error WebKit vendor specific
-        (airPlayButton.value.hidden = event.availability === "not-available")
-    );
-    airPlayButton.value.addEventListener("click", () =>
-      // @ts-expect-error WebKit vendor specific
-      store.videoEl.webkitShowPlaybackTargetPicker()
-    );
-  }
-});
+const currentTimeDisplay = computed(() => Math.round(currentVideoTime.value));
 </script>
 
 <template>
@@ -106,7 +32,7 @@ onMounted(async () => {
         <input
           class="seeker"
           type="range"
-          :value="currentTime"
+          :value="currentVideoTime"
           min="0"
           step="0.1"
           :max="totalDuration"
@@ -115,7 +41,7 @@ onMounted(async () => {
         <small class="time-display time-display--total">{{
           totalDuration || "-"
         }}</small>
-        <button ref="airPlayButton" hidden>AirPlay</button>
+        <AirPlayControl />
         <TvState />
       </div>
     </div>

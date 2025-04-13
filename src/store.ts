@@ -1,4 +1,4 @@
-import { reactive } from "vue";
+import { computed, reactive } from "vue";
 import {
   onGetAccountsAsArray,
   onGetQueuesWithVideos,
@@ -6,7 +6,7 @@ import {
 } from "./store.telefunc";
 import { VizStore } from "./types/VizStore";
 
-export const store = reactive<VizStore>({
+export const store: VizStore = reactive({
   videoEl: null,
   accounts: [],
   queues: [],

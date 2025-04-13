@@ -20,7 +20,9 @@ import players from "../players";
 import { onLoadPlaylist } from "./Playlists.telefunc";
 import { newTracksInterval } from "../consts";
 import { trackArtistsJoin } from "../helpers";
+import { usePlayback } from "../composables/usePlayback";
 
+const { currentQueueItem } = usePlayback();
 const props = defineProps<{ queue: Queue }>();
 const dialogQueueItem = ref<QueueItem>(null);
 
@@ -171,6 +173,7 @@ onMounted(() => {
       :class="{ compact: isInterstitial(item) }"
     >
       <span class="track-type" v-text="itemTypeIcon(item.type)" />
+      <span v-if="currentQueueItem === item">▶</span>
       <div class="track-info">
         <strong
           :class="['track-name', { clickable: item.video }]"
