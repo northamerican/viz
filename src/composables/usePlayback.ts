@@ -64,7 +64,7 @@ export function usePlayback() {
     const queueItems = activeQueue.value.items;
 
     return queueItems.find((item) => {
-      accumulatedTime += item.video?.duration;
+      accumulatedTime += item.video?.duration || 0;
       return currentVideoTime.value <= accumulatedTime;
     });
   });
