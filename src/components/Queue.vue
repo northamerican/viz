@@ -176,8 +176,8 @@ onMounted(() => {
       <span v-if="currentQueueItem === item">▶</span>
       <div class="track-info">
         <strong
-          :class="['track-name', { clickable: item.video }]"
-          @click="item.video ? openQueueItemDialog(item) : null"
+          :class="['track-name', { clickable: item.video?.downloaded }]"
+          @click="item.video?.downloaded ? openQueueItemDialog(item) : null"
           >{{ item.track.name }}</strong
         >
         <span class="track-state">
