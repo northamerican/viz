@@ -9,6 +9,7 @@ export const port = +process.env.PORT;
 export const appHost = isLocal ? localHost : localIp;
 export const appUrl = `http://${appHost}:${port}/`;
 
+// Dirs
 export const projectRoot = new URL(import.meta.url + "/../../..").pathname;
 export const hlsDir = `${projectRoot}public/hls/`;
 export const hlsSegmentPath = (
@@ -16,8 +17,13 @@ export const hlsSegmentPath = (
   segmentIndex: number | string
 ) => `/hls/${videoId}/${videoId}${segmentIndex}.ts`;
 
-export const dbDir = `${projectRoot}src/server/db/data/`;
+// FFmpeg
+export const sigtermCode = 255;
+export const ffmpegLogLevel = "32"; // 32 = ffmpeg default
+export const ffmpegThreadQueueSize = "1024";
 
+// DB
+export const dbDir = `${projectRoot}src/server/db/data/`;
 export const accountsDbName = "accounts";
 export const settingsDbName = "settings";
 export const queuesDbName = "queues";

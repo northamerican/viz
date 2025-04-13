@@ -4,18 +4,22 @@ import { join } from "path";
 import ytdl from "@distube/ytdl-core";
 import ffmpegPath from "ffmpeg-static";
 import { VideosDb } from "../db/VideosDb.ts";
-import { hlsDir } from "../consts.ts";
-import { getSegmentDurations, durationTotal } from "../helpers.ts";
+import {
+  ffmpegLogLevel,
+  ffmpegThreadQueueSize,
+  hlsDir,
+  sigtermCode,
+} from "../consts.ts";
 import type {
   CreateSearchQuery,
   GetVideoInfo,
   DownloadVideo,
 } from "../../types/VizSource.d.ts";
-import { aspectRatioFull } from "../../consts.ts";
 import { SettingsDb } from "../db/SettingsDb.ts";
 
 import { google, type youtube_v3 } from "googleapis";
 import { VideoInfo, VideoThumbnail } from "Viz";
+import { analysisProcess, filterProcess } from "./processVideo.ts";
 
 const baseUrl = "https://youtu.be/";
 const youtubeApi = google.youtube({
@@ -85,28 +89,13 @@ const getVideoInfo = async (videoId: string): Promise<VideoInfo> => {
 const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
   const hlsVideoDir = join(hlsDir, videoId);
   const videoFilePath = join(hlsVideoDir, `${videoId}.mp4`);
-  const m3u8FilePath = join(hlsVideoDir, `${videoId}.m3u8`);
   const wroteToDbMsg = `Wrote ${videoId} segments to videos db in`;
-  const { aspectRatioCorrectionFactor } = SettingsDb;
   const { maxQuality } = SettingsDb.settings;
   const logToConsole = false; // For debugging
-  const ffmpegLogLevel = "32"; // 32 = ffmpeg default
-  const ffmpegThreadQueueSize = "512";
-  const sigtermCode = 255;
 
   if (!fs.existsSync(hlsVideoDir)) {
     fs.mkdirSync(hlsVideoDir);
   }
-
-  type AnalysisProps = {
-    cropWidth?: number;
-    cropX?: number;
-    measured_I: string;
-    measured_TP: string;
-    measured_LRA: string;
-    measured_thresh: string;
-    offset: string;
-  };
 
   async function muxingProcess(): Promise<void> {
     console.log(`Downloading video ${videoId}...`);
@@ -128,7 +117,9 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
     const audioStream = ytdl.downloadFromInfo(videoInfo, {
       agent,
       quality: "highestaudio",
-      filter: (format) => format.container === "mp4",
+      filter: (format) => {
+        return format.container === "mp4";
+      },
     });
     const videoStream = ytdl.downloadFromInfo(videoInfo, {
       agent,
@@ -181,16 +172,40 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
     //@ts-expect-error nodejs dumb
     videoStream.pipe(muxingProcess.stdio[4]);
 
+    let lastFrameMessage: string;
+    let repeatCount = 1;
+    const repeatLimit = 5;
     // For debugging
     // ffmpeg always outputs to stderr
-    muxingProcess.stderr.on("data", async (data) => {
+    muxingProcess.stderr.on("data", (data) => {
+      const dataStr = data.toString();
+
       if (logToConsole) {
-        const dataStr = data.toString();
         console.debug(dataStr);
+      }
+
+      // Track consecutive identical frame numbers to detect stalling
+      const frameMessage = dataStr.match(/frame=\s*(\d+)/)?.[0];
+
+      if (frameMessage && frameMessage === lastFrameMessage) {
+        if (++repeatCount >= repeatLimit) {
+          console.error("FFmpeg appears to be stalling. Killing process.");
+          muxingProcess.kill();
+        }
+      } else if (frameMessage) {
+        lastFrameMessage = frameMessage;
+        repeatCount = 1;
       }
     });
 
     return new Promise((resolve, reject) => {
+      audioStream.on("error", (err) => {
+        reject(`Audio stream error: ${err.message}`);
+      });
+      videoStream.on("error", (err) => {
+        reject(`Video stream error: ${err.message}`);
+      });
+
       // Suppress errors in streams as they are interrupted on cancel / SIGTERM
       muxingProcess.stdio[3].on("error", () => {});
       muxingProcess.stdio[4].on("error", () => {});
@@ -204,220 +219,12 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
     });
   }
 
-  async function analysisProcess(): Promise<AnalysisProps> {
-    console.log(`Analyzing video ${videoId}...`);
-
-    const analysisProcess = cp.spawn(
-      ffmpegPath,
-      // prettier-ignore
-      [
-        "-i", videoFilePath,
-        "-ss", "1", // Skip first second
-        "-t", "60", // Limit 60 seconds
-        "-vf", "cropdetect",
-        "-af", "loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json",
-        "-f", "null",
-        " -",
-      ]
-    );
-
-    await VideosDb.editVideo(videoId, {
-      pid: analysisProcess.pid,
-    });
-
-    const videoWidthRegex = /\s(\d+)x\d+[,\s]/;
-    const cropdetectRegex = /w:(\d+).*x:(\d+)/;
-    const cropdetectKey = "Parsed_cropdetect";
-    const loudnormKey = "Parsed_loudnorm";
-    const loudnormRegex = /{[\s\S]*}/;
-
-    let videoInfoOutput: string;
-    let cropdetectOutput: string;
-    let loudnormOutput: string;
-
-    analysisProcess.stderr.on("data", (data) => {
-      const dataStr = data.toString();
-
-      if (logToConsole) {
-        console.debug(dataStr);
-      }
-      if (dataStr.includes(cropdetectKey) && cropdetectRegex.test(dataStr)) {
-        cropdetectOutput = dataStr;
-        return;
-      }
-      if (dataStr.includes(loudnormKey)) {
-        loudnormOutput = dataStr.match(loudnormRegex);
-        return;
-      }
-      if (videoWidthRegex.test(dataStr)) {
-        videoInfoOutput = dataStr;
-      }
-    });
-
-    return new Promise<AnalysisProps>((resolve, reject) => {
-      analysisProcess.on("close", async (code) => {
-        if (code === sigtermCode) {
-          return reject(sigtermCode);
-        }
-
-        const isWidescreen = videoInfoOutput.includes("DAR 16:9");
-
-        let cropWidth,
-          cropX,
-          measured_I,
-          measured_TP,
-          measured_LRA,
-          measured_thresh,
-          offset;
-
-        if (isWidescreen) {
-          try {
-            const [, width] = videoInfoOutput
-              .match(videoWidthRegex)
-              .map(Number);
-
-            const [, outputWidth, outputX] = cropdetectOutput
-              .match(cropdetectRegex)
-              .map(Number);
-
-            // Account for pillarboxed 4:3 inside 16:9 videos with
-            // artifacts making them appear a little narrower than they are.
-            const maxAspectWidthThreshold = 0.05;
-            const outputWidthRatio = width / outputWidth;
-            const isPillarbox =
-              Math.abs(outputWidthRatio - aspectRatioFull) <
-              maxAspectWidthThreshold;
-
-            if (isPillarbox) {
-              [cropWidth, cropX] = [outputWidth, outputX];
-            }
-          } catch {
-            //
-          }
-        }
-
-        try {
-          ({
-            input_i: measured_I,
-            input_tp: measured_TP,
-            input_lra: measured_LRA,
-            input_thresh: measured_thresh,
-            target_offset: offset,
-          } = JSON.parse(loudnormOutput));
-        } catch {
-          // TODO
-        }
-
-        return resolve({
-          cropWidth,
-          cropX,
-          measured_I,
-          measured_TP,
-          measured_LRA,
-          measured_thresh,
-          offset,
-        });
-      });
-    });
-  }
-
-  async function filterProcess({
-    cropWidth,
-    cropX,
-    measured_I,
-    measured_TP,
-    measured_LRA,
-    measured_thresh,
-    offset,
-  }: AnalysisProps) {
-    console.log(`Processing video ${videoId}...`);
-
-    const shouldCrop = cropWidth && cropX;
-    const shouldCorrectAspectRatio = aspectRatioCorrectionFactor !== 1;
-    const videoFilters = [
-      shouldCrop ? `crop=${cropWidth}:ih:${cropX}:0` : "",
-      shouldCorrectAspectRatio
-        ? `scale=2*round((iw*${aspectRatioCorrectionFactor})/2):ih`
-        : "",
-      "setsar=1",
-    ]
-      .filter(Boolean)
-      .join(",");
-    const shouldLoudnorm = measured_I;
-    const audioFilters = shouldLoudnorm
-      ? `loudnorm=I=-16:TP=-1.5:LRA=11:measured_I=${measured_I}:measured_TP=${measured_TP}:measured_LRA=${measured_LRA}:measured_thresh=${measured_thresh}:offset=${offset}:linear=true`
-      : "";
-    // TODO ^ test that blank audioFilters works
-    const filterComplex = `[0:v]${videoFilters}[v];[0:a]${audioFilters}[a]`;
-
-    const filterProcess = cp.spawn(
-      ffmpegPath,
-      // prettier-ignore
-      [
-        "-loglevel", ffmpegLogLevel,
-        "-thread_queue_size", ffmpegThreadQueueSize,
-        "-i", videoFilePath,
-        "-filter_complex", filterComplex,
-        "-map", `[v]`, "-map", `[a]`,
-        "-start_number", "0",
-        "-hls_time", "10",
-        "-hls_list_size", "0",
-        "-f", "hls",
-        m3u8FilePath,
-      ]
-    );
-
-    await VideosDb.editVideo(videoId, {
-      pid: filterProcess.pid,
-    });
-
-    filterProcess.stderr.on("data", async (data) => {
-      const dataStr = data.toString();
-
-      if (logToConsole) {
-        console.debug(dataStr);
-      }
-
-      // Check for writing to file output
-      const wroteToFileMsg = [".ts", "for writing"].every((str) =>
-        dataStr.includes(str)
-      );
-      if (!wroteToFileMsg) return;
-
-      // Write segments to video db as they are processed
-      const segmentDurations = getSegmentDurations(m3u8FilePath);
-      VideosDb.editVideo(videoId, {
-        segmentDurations: segmentDurations,
-        duration: segmentDurations.reduce(durationTotal, 0),
-      });
-    });
-
-    return new Promise<void>((resolve, reject) => {
-      filterProcess.on("close", async (code) => {
-        if (code === sigtermCode) {
-          return reject(sigtermCode);
-        }
-
-        const segmentDurations = getSegmentDurations(m3u8FilePath);
-        await VideosDb.editVideo(videoId, {
-          segmentDurations: segmentDurations,
-          duration: segmentDurations.reduce(durationTotal, 0),
-          downloaded: true,
-          downloading: false,
-          pid: null,
-        });
-
-        resolve();
-      });
-    });
-  }
-
   try {
     console.time(wroteToDbMsg);
     await muxingProcess();
-    // TODO move analysisProcess and filterProcess out of this file for use with any player
-    const analysisProps = await analysisProcess();
-    await filterProcess(analysisProps);
+    const analysisProps = await analysisProcess({ videoId, logToConsole });
+    await filterProcess({ videoId, logToConsole, ...analysisProps });
+    console.timeEnd(wroteToDbMsg);
   } catch (e) {
     if (e === sigtermCode) {
       console.log(`User cancelled download of video ${videoId}.`);
@@ -436,8 +243,6 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
       error,
       pid: null,
     });
-  } finally {
-    console.timeEnd(wroteToDbMsg);
   }
 
   return Promise.resolve();
