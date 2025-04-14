@@ -1,7 +1,9 @@
 import cp from "child_process";
 import fs from "fs";
 import { join } from "path";
+import ytdl from "@distube/ytdl-core";
 import ffmpegPath from "ffmpeg-static";
+import { VideosDb } from "../db/VideosDb.ts";
 import {
   ffmpegLogLevel,
   ffmpegThreadQueueSize,
@@ -14,14 +16,12 @@ import type {
   DownloadVideo,
 } from "../../types/VizSource";
 import { SettingsDb } from "../db/SettingsDb.ts";
-import { VideosDb } from "../db/VideosDb.ts";
 
 import { google, type youtube_v3 } from "googleapis";
 import { VideoInfo, VideoThumbnail } from "Viz";
 import { analysisProcess, filterProcess } from "./processVideo.ts";
-import { Payload } from "youtube-dl-exec";
 
-const baseUrl = "https://www.youtube.com/watch?v=";
+const baseUrl = "https://youtu.be/";
 const youtubeApi = google.youtube({
   version: "v3",
   auth: process.env.YOUTUBE_API_KEY,
@@ -91,7 +91,7 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
   const videoFilePath = join(hlsVideoDir, `${videoId}.mp4`);
   const wroteToDbMsg = `Wrote ${videoId} segments to videos db in`;
   const { maxQuality } = SettingsDb.settings;
-  const logToConsole = true; // For debugging
+  const logToConsole = false; // For debugging
 
   if (!fs.existsSync(hlsVideoDir)) {
     fs.mkdirSync(hlsVideoDir);
@@ -100,118 +100,67 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
   async function muxingProcess(): Promise<void> {
     console.log(`Downloading video ${videoId}...`);
 
-    const ytDlpPath =
-      "/Users/home/Documents/viz/node_modules/youtube-dl-exec/bin/yt-dlp";
+    // Circumvent age-restricted videos
+    const ageRestrictionCookieNames = [
+      "__Secure-1PSID",
+      "__Secure-1PSIDTS",
+      "LOGIN_INFO",
+    ];
+    const ytCookies = ageRestrictionCookieNames.map((ytCookieName) => ({
+      name: ytCookieName,
+      secure: true,
+      value: process.env[ytCookieName],
+    }));
 
-    const ytdlOutput = await new Promise<{ stdout: string; stderr: string }>(
-      (resolve, reject) => {
-        cp.exec(
-          `"${ytDlpPath}" "${url}" --cookies-from-browser "safari" --dump-single-json`,
-          (error, stdout, stderr) => {
-            if (error) {
-              console.error("yt-dlp error output:", stderr);
-              reject(error);
-              return;
-            }
-            resolve({ stdout, stderr });
-          }
-        );
-      }
-    );
-
-    const videoInfo: Payload = JSON.parse(ytdlOutput.stdout);
-    console.log(`Got video info for ${videoId}`);
-
-    // Find best audio format (sort by bitrate)
-    const audioFormats = videoInfo.formats
-      .filter((format) => format.acodec !== "none" && format.vcodec === "none")
-      .sort((a, b) => b.abr - a.abr);
-
-    // Find best video format that meets max quality setting (sort by resolution)
-    const videoFormats = videoInfo.formats
-      .filter(
-        (format) =>
-          format.vcodec !== "none" &&
-          format.acodec === "none" &&
-          format.height <= maxQuality
-      )
-      .sort((a, b) => b.height - a.height);
-
-    if (!audioFormats.length || !videoFormats.length) {
-      throw new Error(
-        `Couldn't find suitable audio/video formats for ${videoId}`
-      );
-    }
-
-    const bestAudio = audioFormats[0];
-    const bestVideo = videoFormats[0];
-
-    // Download audio stream with cp.exec instead of youtubedl.exec
-    const audioProcess = cp.spawn(ytDlpPath, [
-      url,
-      "--output",
-      "-",
-      "--format",
-      bestAudio.format_id,
-      "--cookies-from-browser",
-      "safari",
-    ]);
-
-    // Download video stream with cp.exec instead of youtubedl.exec
-    const videoProcess = cp.spawn(ytDlpPath, [
-      url,
-      "--output",
-      "-",
-      "--format",
-      bestVideo.format_id,
-      "--cookies-from-browser",
-      "safari",
-    ]);
-
-    // Create readable streams from processes
-    const audioStream = audioProcess.stdout;
-    const videoStream = videoProcess.stdout;
-
-    // Handle errors on the processes themselves
-    audioProcess.on("error", (err) => {
-      console.error("Audio process error:", err);
+    const agent = ytdl.createAgent(ytCookies);
+    console.log(JSON.stringify({ agent }));
+    const videoInfo = await ytdl.getInfo(url, { agent });
+    const audioStream = ytdl.downloadFromInfo(videoInfo, {
+      agent,
+      quality: "highestaudio",
+      filter: (format) => {
+        return format.container === "mp4";
+      },
     });
-
-    videoProcess.on("error", (err) => {
-      console.error("Video process error:", err);
+    const videoStream = ytdl.downloadFromInfo(videoInfo, {
+      agent,
+      quality: "highestvideo",
+      filter: (format) => {
+        return format.codecs?.startsWith("avc1") && format.height <= maxQuality;
+      },
     });
 
     const muxingProcess = cp.spawn(
       ffmpegPath,
       // prettier-ignore
       [
-          "-loglevel", ffmpegLogLevel,
-          // Pipe streams
-          "-thread_queue_size", ffmpegThreadQueueSize,
-          "-i", "pipe:3",
-          "-thread_queue_size", ffmpegThreadQueueSize,
-          "-i", "pipe:4",
-          // Map audio and video
-          "-map", "0:a",
-          "-map", "1:v",
-          "-c", "copy",
-          // Overwrite file
-          "-y",
-          // Output
-          "-f", "mp4",
-          videoFilePath,
-        ],
+        "-loglevel", ffmpegLogLevel,
+        // Pipe streams
+        "-thread_queue_size", ffmpegThreadQueueSize,
+        "-i", "pipe:3",
+        "-thread_queue_size", ffmpegThreadQueueSize,
+        "-i", "pipe:4",
+        // Map audio and video
+        "-map", "0:a",
+        "-map", "1:v",
+        "-c", "copy",
+        // Overwrite file
+        "-y",
+        // Output
+        "-f", "mp4",
+        videoFilePath,
+      ],
       {
         // prettier-ignore
         stdio: [
-            // stdin, stdout, stderr
-            "inherit",
-            "inherit",
-            "pipe",
-            // audio, video
-            "pipe",
-            "pipe",
-          ],
+          // stdin, stdout, stderr
+          "inherit",
+          "inherit",
+          "pipe",
+          // audio, video
+          "pipe",
+          "pipe",
+        ],
       }
     );
 
@@ -251,6 +200,13 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
     });
 
     return new Promise((resolve, reject) => {
+      audioStream.on("error", (err) => {
+        reject(`Audio stream error: ${err.message}`);
+      });
+      videoStream.on("error", (err) => {
+        reject(`Video stream error: ${err.message}`);
+      });
+
       // Suppress errors in streams as they are interrupted on cancel / SIGTERM
       muxingProcess.stdio[3].on("error", () => {});
       muxingProcess.stdio[4].on("error", () => {});

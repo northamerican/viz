@@ -25,7 +25,8 @@
     "telefunc": "^0.1.67",
     "tsx": "^4.7.0",
     "uuid": "^9.0.1",
-    "vue": "^3.4.0"
+    "vue": "^3.4.0",
+    "youtube-dl-exec": "^3.0.20"
   },
   "devDependencies": {
     "@types/compression": "^1.7.5",
