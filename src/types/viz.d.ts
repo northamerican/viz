@@ -38,7 +38,7 @@ declare module "Viz" {
   export type PlaylistSummary = {
     id: string;
     name: string;
-    total: number;
+    total: number | null;
   };
 
   export type PlaylistMeta = {

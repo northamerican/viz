@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed } from "vue";
 import { store } from "../store";
 import { m3u8Path } from "../consts";
 import TvState from "./TvState.vue";
 import { usePlayback } from "../composables/usePlayback";
 import AirPlayControl from "./AirPlayControl.vue";
 const { currentVideoTime, isPlaying, totalDuration, playPause } = usePlayback();
-// import '../hlsjs.ts'
+// import "../hlsjs.ts";
 
 const seekTo = (e: Event) =>
   store.videoEl.fastSeek(+(e.target as HTMLInputElement).value);

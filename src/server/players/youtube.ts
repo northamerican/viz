@@ -112,7 +112,7 @@ export default class YouTubePlayer implements VizPlayer {
         items: data.items.map((item) => ({
           id: item.id,
           name: item.snippet.title,
-          total: null,
+          total: null as null,
         })),
       };
     } catch (error) {

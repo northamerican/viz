@@ -2,9 +2,9 @@
 import { ref } from "vue";
 
 type Options = Partial<{
-  action?: () => void;
-  label?: string;
-  disabled?: boolean;
+  action: () => void;
+  label: string;
+  disabled: boolean;
 }>[];
 
 const props = defineProps<{ options: Options }>();

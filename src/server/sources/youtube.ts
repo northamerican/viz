@@ -91,7 +91,7 @@ const downloadVideo: DownloadVideo = async ({ videoId, url }) => {
   const videoFilePath = join(hlsVideoDir, `${videoId}.mp4`);
   const wroteToDbMsg = `Wrote ${videoId} segments to videos db in`;
   const { maxQuality } = SettingsDb.settings;
-  const logToConsole = true; // For debugging
+  const logToConsole = false; // For debugging
 
   if (!fs.existsSync(hlsVideoDir)) {
     fs.mkdirSync(hlsVideoDir);

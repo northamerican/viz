@@ -99,9 +99,8 @@ const clearQueue = async () => {
   videoEl.load();
 };
 
-const updateQueueFromPlaylist = async () => {
-  await onUpdateQueueFromPlaylists(props.queue.id);
-};
+const updateQueueFromPlaylist = () =>
+  onUpdateQueueFromPlaylists(props.queue.id);
 
 const openQueueItemDialog = (queueItem: QueueItem) => {
   dialogQueueItem.value = queueItem;

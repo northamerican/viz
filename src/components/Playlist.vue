@@ -18,7 +18,7 @@ const addItemsToQueue = async (tracks: Track[], itemType: ItemType) => {
     queueId,
     tracks.map((track) => ({
       track,
-      videoId: null,
+      videoId: null as null,
       removed: false,
       playlistId: props.playlist.id,
       type: itemType,
