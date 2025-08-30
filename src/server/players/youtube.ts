@@ -22,6 +22,11 @@ export default class YouTubePlayer implements VizPlayer {
 
   constructor(accountId?: string) {
     this.#account = AccountsDb.account(accountId);
+    if (!this.#account) {
+      throw new Error(
+        `YouTube account ${accountId} not found or not logged in`
+      );
+    }
   }
 
   async getProfile(oauth2Client: Auth.OAuth2Client) {
@@ -87,6 +92,27 @@ export default class YouTubePlayer implements VizPlayer {
     return authUrl;
   }
 
+  async #refreshAndUpdateToken() {
+    try {
+      const { credentials } = await oauth2Client.refreshAccessToken();
+      if (!credentials.access_token) {
+        throw new Error();
+      }
+      AccountsDb.add(this.#account.id, {
+        ...this.#account,
+        token: credentials.access_token,
+        isLoggedIn: true,
+      });
+      oauth2Client.credentials.access_token = credentials.access_token;
+    } catch (error) {
+      AccountsDb.add(this.#account.id, {
+        ...this.#account,
+        isLoggedIn: false,
+      });
+      throw new Error("YouTube credentials expired. Please log in again.");
+    }
+  }
+
   // TODO pagination
   async getPlaylists() {
     const maxResults = 50;
@@ -96,7 +122,7 @@ export default class YouTubePlayer implements VizPlayer {
       access_token: this.#account.token,
     };
 
-    await oauth2Client.refreshAccessToken();
+    await this.#refreshAndUpdateToken();
 
     try {
       const { data } = await youtubeApi.playlists.list({
@@ -129,44 +155,39 @@ export default class YouTubePlayer implements VizPlayer {
       access_token: this.#account.token,
     };
 
-    // Get playlist name from playlists.list
-    const { data } = await youtubeApi.playlists.list({
-      auth: oauth2Client,
-      id: [playlistId],
-      part: ["snippet"],
-    });
-    const playlistName = data.items[0].snippet.title;
-    const allItems: youtube_v3.Schema$PlaylistItem[] = [];
-
-    const fetchPlaylistItems = async (params = {}) => {
-      return new Promise<youtube_v3.Schema$PlaylistItem[]>((resolve) => {
-        setTimeout(async () => {
-          const { data } = await youtubeApi.playlistItems.list({
-            playlistId,
-            auth: oauth2Client,
-            part: ["snippet"],
-            maxResults,
-            ...params,
-          });
-
-          const nextPageToken = data.nextPageToken;
-
-          allItems.push(...data.items);
-
-          if (nextPageToken) {
-            resolve(
-              fetchPlaylistItems({
-                pageToken: nextPageToken,
-              })
-            );
-          }
-
-          resolve(allItems);
-        });
-      });
-    };
+    await this.#refreshAndUpdateToken();
 
     try {
+      // Get playlist name from playlists.list
+      const { data } = await youtubeApi.playlists.list({
+        auth: oauth2Client,
+        id: [playlistId],
+        part: ["snippet"],
+      });
+      const playlistName = data.items[0].snippet.title;
+      const allItems: youtube_v3.Schema$PlaylistItem[] = [];
+
+      const fetchPlaylistItems = async (params = {}) => {
+        const { data } = await youtubeApi.playlistItems.list({
+          playlistId,
+          auth: oauth2Client,
+          part: ["snippet"],
+          maxResults,
+          ...params,
+        });
+
+        const nextPageToken = data.nextPageToken;
+        allItems.push(...data.items);
+
+        if (nextPageToken) {
+          return await fetchPlaylistItems({
+            pageToken: nextPageToken,
+          });
+        }
+
+        return allItems;
+      };
+
       const items: youtube_v3.Schema$PlaylistItem[] =
         await fetchPlaylistItems();
 

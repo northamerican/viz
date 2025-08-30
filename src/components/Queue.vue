@@ -21,6 +21,7 @@ import { onLoadPlaylist } from "./Playlists.telefunc";
 import { newTracksInterval } from "../consts";
 import { trackArtistsJoin } from "../helpers";
 import { usePlayback } from "../composables/usePlayback";
+import { PlayerId } from "../types/VizPlayer";
 
 const { currentQueueItem } = usePlayback();
 const props = defineProps<{ queue: Queue }>();
@@ -40,12 +41,13 @@ const itemTypeIcon = (type: ItemType) => {
   }
 };
 
-const getPlaylist = async (playlistReference: QueuePlaylistReference) => {
+const getPlaylist = async (
+  playerId: PlayerId,
+  accountId: string,
+  playlistId: string
+) => {
   store.view.playlist = null;
-  const { playlist } = await onLoadPlaylist(
-    playlistReference.account,
-    playlistReference.id
-  );
+  const { playlist } = await onLoadPlaylist(playerId, accountId, playlistId);
   store.view.playlist = playlist;
 };
 
@@ -114,12 +116,23 @@ const queueItemActionsMenuOptions = (queueItem: QueueItem) => [
   {
     action: () => downloadVideo(queueItem),
     label: "Get Video",
-    // disabled: queueItem.video?.downloaded || queueItem.video?.downloading,
+    disabled: queueItem.video?.downloaded || queueItem.video?.downloading,
   },
   {
     action: () => openQueueItemDialog(queueItem),
-    label: "Get Info...",
+    label: "Get Info",
     disabled: !queueItem.video,
+  },
+  {
+    action: () => {
+      getPlaylist(
+        queueItem.track.player,
+        queueItem.accountId,
+        queueItem.playlistId
+      );
+    },
+    label: "Go to Playlist",
+    disabled: !queueItem.video?.sourceUrl,
   },
   { action: () => removeItem(queueItem), label: "Remove from Queue" },
   {},
@@ -127,14 +140,14 @@ const queueItemActionsMenuOptions = (queueItem: QueueItem) => [
     action: () => {
       window.open(queueItem.video.sourceUrl, "_blank");
     },
-    label: "Go to YouTube Video...",
+    label: "Go to YouTube Video",
     disabled: !queueItem.video?.sourceUrl,
   },
   {
     action: () => {
       window.open(queueItem.track.playerUrl, "_blank");
     },
-    label: `Go to ${players[queueItem.track.player].name} Song...`,
+    label: `Go to ${players[queueItem.track.player].name} Song`,
   },
 ];
 const playlistActionsMenuOptions = (
@@ -205,7 +218,16 @@ onMounted(() => {
     >
       <span class="track-type" v-text="itemTypeIcon(playlistReference.type)" />
       <div>
-        <a href="" @click.prevent="getPlaylist(playlistReference)">
+        <a
+          href=""
+          @click.prevent="
+            getPlaylist(
+              playlistReference.player,
+              playlistReference.account.id,
+              playlistReference.id
+            )
+          "
+        >
           <strong>{{ playlistReference.name }}</strong></a
         >
 

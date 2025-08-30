@@ -32,7 +32,7 @@ const actionsMenuOptions = () => [
     ? { action: handleLogout, label: "Log out" }
     : { action: handleLogin, label: "Log in" },
   { action: handleRemove, label: "Remove" },
-  { action: openProfile, label: "Go to Profile..." },
+  { action: openProfile, label: "Go to Profile" },
 ];
 </script>
 

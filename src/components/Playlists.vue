@@ -8,13 +8,20 @@ import type { Account } from "Viz";
 const props = defineProps<{ account: Account }>();
 
 const getPlaylists = async () => {
-  const { playlists } = await onLoadPlaylists(props.account);
+  const { playlists } = await onLoadPlaylists(
+    props.account.player,
+    props.account.id
+  );
   store.view.playlists = playlists;
 };
 
 const getPlaylist = async (playlistId: string) => {
   store.view.playlist = null;
-  const { playlist } = await onLoadPlaylist(props.account, playlistId);
+  const { playlist } = await onLoadPlaylist(
+    props.account.player,
+    props.account.id,
+    playlistId
+  );
   store.view.playlist = playlist;
 };
 

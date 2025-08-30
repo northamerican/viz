@@ -12,6 +12,7 @@ const props = defineProps<{ playlist: Playlist }>();
 const playerAllowedTypes = computed(() => players[props.playlist.player].types);
 
 const addItemsToQueue = async (tracks: Track[], itemType: ItemType) => {
+  const { id, account } = props.playlist;
   const queueId = store.view.queue?.id;
 
   onAddItemsToQueue(
@@ -20,8 +21,9 @@ const addItemsToQueue = async (tracks: Track[], itemType: ItemType) => {
       track,
       videoId: null as null,
       removed: false,
-      playlistId: props.playlist.id,
+      playlistId: id,
       type: itemType,
+      accountId: account.id,
     }))
   );
 };

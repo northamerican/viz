@@ -114,6 +114,7 @@ declare module "Viz" {
     error?: string;
     playlistId: string;
     type: ItemType;
+    accountId: string;
   };
   export type NewQueueItem = Omit<QueueItem, "id">;
 
