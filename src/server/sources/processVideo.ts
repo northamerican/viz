@@ -234,7 +234,7 @@ export async function filterProcess({
 
       const segmentDurations = getSegmentDurations(m3u8FilePath);
       await VideosDb.editVideo(videoId, {
-        segmentDurations: segmentDurations,
+        segmentDurations,
         duration: segmentDurations.reduce(durationTotal, 0),
         downloaded: true,
         downloading: false,

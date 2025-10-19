@@ -22,11 +22,6 @@ export default class YouTubePlayer implements VizPlayer {
 
   constructor(accountId?: string) {
     this.#account = AccountsDb.account(accountId);
-    if (!this.#account) {
-      throw new Error(
-        `YouTube account ${accountId} not found or not logged in`
-      );
-    }
   }
 
   async getProfile(oauth2Client: Auth.OAuth2Client) {
@@ -86,7 +81,7 @@ export default class YouTubePlayer implements VizPlayer {
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: "offline",
       scope: scopes,
-      prompt: "select_account",
+      prompt: "consent select_account",
     });
 
     return authUrl;
